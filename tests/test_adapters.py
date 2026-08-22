@@ -173,6 +173,17 @@ def test_session_hook_and_protected_legacy_guard() -> None:
     assert "permissionDecision" not in allowed["hookSpecificOutput"]
 
 
+def test_final_cutover_context_removes_the_legacy_guard(tmp_path: Path) -> None:
+    adapter_builder = builder(tmp_path, "final-cutover")
+    adapter_builder.legacy_root = None
+    adapter_builder.build_all()
+    context = json.loads(
+        (tmp_path / "final-cutover" / "codex" / "fractal" / "context.json").read_text()
+    )
+    assert context["protected_legacy_roots"] == []
+    assert context["authority"]["legacy_removal_enabled"] is True
+
+
 def test_hook_cli_expands_home_context(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

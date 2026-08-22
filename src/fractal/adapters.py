@@ -68,7 +68,7 @@ class AdapterBuilder:
         public_commit: str,
         private_commit: str,
         system_version: str,
-        legacy_root: Path,
+        legacy_root: Path | None,
         runtime_python: Path | None = None,
     ) -> None:
         self.public_root = Path(public_root)
@@ -77,7 +77,7 @@ class AdapterBuilder:
         self.public_commit = public_commit
         self.private_commit = private_commit
         self.system_version = system_version
-        self.legacy_root = Path(legacy_root)
+        self.legacy_root = Path(legacy_root) if legacy_root is not None else None
         self.runtime_python = str(runtime_python) if runtime_python is not None else "python"
         if any(len(item) != 40 for item in (public_commit, private_commit)):
             raise AdapterError("Adapter source commits must be full Git object ids")
@@ -167,9 +167,11 @@ class AdapterBuilder:
             "authority": {
                 "project_completion": policy["authorities"]["project_completion"],
                 "external_action": policy["authorities"]["external_action"],
-                "legacy_removal_enabled": False,
+                "legacy_removal_enabled": self.legacy_root is None,
             },
-            "protected_legacy_roots": [str(self.legacy_root)],
+            "protected_legacy_roots": (
+                [str(self.legacy_root)] if self.legacy_root is not None else []
+            ),
             "instruction_authority": "generated-from-canonical-private-state",
         }
 
