@@ -229,7 +229,10 @@ def _tool_permissions(identifier: str) -> tuple[str, list[str]]:
 
 def _tool_dependencies(tool: dict[str, Any]) -> list[str]:
     """Link a live Tool to the registered transport or Plugin that exposes it."""
+    identifier = tool.get("name", "")
     source = tool.get("source", "")
+    if identifier.startswith("mcp__computer_history__"):
+        return ["mcp-computer-history"]
     if source.startswith("mcp:"):
         return [technical_id("mcp", source.removeprefix("mcp:"))]
     if source.startswith("plugin:"):
@@ -274,12 +277,19 @@ def build_component_registry(policy_path: Path, output_path: Path) -> dict[str, 
         plugin_identifier = plugin["external_identifier"]
         plugin_platforms = plugin.get("platforms", ["codex"])
         plugin_hash = tree_sha256(root)
+        plugin_active = plugin.get("active", True)
+        plugin_disposition = (
+            plugin.get("disposition", "platform-managed-adapter")
+            if plugin_active
+            else "inactive-quarantined"
+        )
+        plugin_projection_mode = "platform-reference" if plugin_active else "quarantine"
         components.append(
             _record(
                 component_id=technical_id("plugin", plugin_identifier),
                 human_name=plugin.get("human_name", plugin_identifier),
                 kind="plugin",
-                disposition="platform-managed-adapter",
+                disposition=plugin_disposition,
                 external_identifier=plugin_identifier,
                 owner_id=plugin["owner_id"],
                 source_controlled_by_owner=False,
@@ -297,12 +307,12 @@ def build_component_registry(policy_path: Path, output_path: Path) -> dict[str, 
                 trigger_description=(
                     "Available only through its registered platform Plugin surface."
                 ),
-                discoverable=True,
-                active=True,
+                discoverable=plugin_active,
+                active=plugin_active,
                 execution=plugin.get("execution", "available-unverified"),
                 evidence_ids=["live-plugin-inventory"],
                 platforms=plugin_platforms,
-                projection_mode="platform-reference",
+                projection_mode=plugin_projection_mode,
                 projection_target=str(root),
                 projection_sha256=plugin_hash,
                 overlap_decision=(
@@ -327,10 +337,11 @@ def build_component_registry(policy_path: Path, output_path: Path) -> dict[str, 
                         "external_identifier": identifier,
                         "owner_id": plugin["owner_id"],
                         "version": plugin["version"],
-                        "disposition": "platform-managed-adapter",
+                        "disposition": plugin_disposition,
                         "platforms": plugin_platforms,
-                        "projection_mode": "platform-reference",
+                        "projection_mode": plugin_projection_mode,
                         "projection_target": str(skill_file.parent),
+                        "active": plugin_active,
                         "execution": plugin.get("execution", "available-unverified"),
                         "evidence_ids": ["codex-live-skill-discovery"],
                         "trigger_mode": "platform",

@@ -471,6 +471,57 @@ def test_governed_component_install_quarantines_and_restores_extras(
     assert "skills/fable-loop" in restored["restored_quarantine"]
 
 
+def test_codex_mcp_activation_projection_preserves_config_and_secrets() -> None:
+    config = """theme = \"dark\"
+
+[mcp_servers.node_repl]
+command = \"node\"
+
+[mcp_servers.firecrawl]
+enabled = true
+command = \"npx\"
+
+[mcp_servers.firecrawl.env]
+FIRECRAWL_API_KEY = \"secret-value\"
+
+[mcp_servers.higgsfield]
+url = \"https://example.invalid/mcp\"
+"""
+    registry = {
+        "components": [
+            {
+                "kind": "mcp",
+                "platforms": ["codex"],
+                "source": {
+                    "locator": "~/.codex/config.toml#mcp_servers.node_repl"
+                },
+                "status": {"active": True},
+            },
+            {
+                "kind": "mcp",
+                "platforms": ["codex"],
+                "source": {
+                    "locator": "~/.codex/config.toml#mcp_servers.firecrawl"
+                },
+                "status": {"active": True},
+            },
+            {
+                "kind": "mcp",
+                "platforms": ["codex"],
+                "source": {
+                    "locator": "~/.codex/config.toml#mcp_servers.higgsfield"
+                },
+                "status": {"active": False},
+            },
+        ]
+    }
+    projected = CodexComponentInstaller._project_mcp_activation(config, registry)
+    assert "[mcp_servers.node_repl]\nenabled = true\ncommand" in projected
+    assert "[mcp_servers.firecrawl]\nenabled = true\ncommand" in projected
+    assert "[mcp_servers.higgsfield]\nenabled = false\nurl" in projected
+    assert 'FIRECRAWL_API_KEY = "secret-value"' in projected
+
+
 def test_claude_component_install_merges_settings_and_restores_extras(
     tmp_path: Path,
 ) -> None:

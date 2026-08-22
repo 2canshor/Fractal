@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import uuid
 from pathlib import Path
@@ -34,6 +35,13 @@ class CodexComponentInstaller:
         if not registry_path.is_file():
             raise ComponentInstallationError("Candidate lacks a universal component registry")
         registry = load_component_registry(registry_path)
+        config_target = home / "config.toml"
+        config_text = config_target.read_text(encoding="utf-8") if config_target.is_file() else None
+        projected_config = (
+            self._project_mcp_activation(config_text, registry)
+            if config_text is not None
+            else None
+        )
         install_id = f"component-install-{uuid.uuid4()}"
         state = self.state_root / install_id
         backup = state / "backup"
@@ -63,6 +71,8 @@ class CodexComponentInstaller:
 
         previous: dict[str, dict[str, str]] = {}
         managed = [*sorted(links), "hooks.json"]
+        if projected_config is not None and projected_config != config_text:
+            managed.append("config.toml")
         for relative in managed:
             target = home / relative
             previous[relative] = self._preserve(target, backup / relative)
@@ -93,6 +103,8 @@ class CodexComponentInstaller:
             target.symlink_to(source)
         hooks_target = home / "hooks.json"
         shutil.copy2(built / "hooks.json", hooks_target)
+        if "config.toml" in managed:
+            config_target.write_text(projected_config, encoding="utf-8")
 
         record = {
             "record_type": "codex-component-install",
@@ -112,6 +124,53 @@ class CodexComponentInstaller:
             encoding="utf-8",
         )
         return record
+
+    @staticmethod
+    def _project_mcp_activation(config_text: str, registry: dict[str, Any]) -> str:
+        """Project registered config-backed MCP activation without exposing secrets."""
+        projected = config_text
+        for component in registry["components"]:
+            if component["kind"] != "mcp" or "codex" not in component["platforms"]:
+                continue
+            locator = component["source"]["locator"]
+            if not locator.startswith("~/.codex/config.toml#mcp_servers."):
+                continue
+            name = locator.rsplit(".", 1)[-1]
+            header = f"[mcp_servers.{name}]"
+            header_match = re.search(
+                rf"(?m)^\[mcp_servers\.{re.escape(name)}\]\s*$", projected
+            )
+            if header_match is None:
+                if component["status"]["active"]:
+                    raise ComponentInstallationError(
+                        f"Registered active MCP is missing from Codex config: {name}"
+                    )
+                continue
+            next_header = re.search(r"(?m)^\[", projected[header_match.end() :])
+            section_end = (
+                header_match.end() + next_header.start()
+                if next_header is not None
+                else len(projected)
+            )
+            body = projected[header_match.end() : section_end]
+            desired = "true" if component["status"]["active"] else "false"
+            enabled_match = re.search(r"(?m)^enabled\s*=\s*(?:true|false)\s*$", body)
+            if enabled_match is None:
+                replacement = f"{header}\nenabled = {desired}"
+                projected = (
+                    projected[: header_match.start()]
+                    + replacement
+                    + projected[header_match.end() :]
+                )
+            else:
+                absolute_start = header_match.end() + enabled_match.start()
+                absolute_end = header_match.end() + enabled_match.end()
+                projected = (
+                    projected[:absolute_start]
+                    + f"enabled = {desired}"
+                    + projected[absolute_end:]
+                )
+        return projected
 
     def restore(self, install_id: str) -> dict[str, Any]:
         """Restore the exact pre-install paths and quarantined extras."""
@@ -202,6 +261,11 @@ class ClaudeComponentInstaller(CodexComponentInstaller):
         active_plugins = {
             item["external_identifier"] for item in active if item["kind"] == "plugin"
         }
+        registered_plugins = {
+            item["external_identifier"]
+            for item in registry["components"]
+            if item["kind"] == "plugin" and "claude" in item["platforms"]
+        }
         enabled_plugins = settings.get("enabledPlugins", {})
         if not isinstance(enabled_plugins, dict):
             raise ComponentInstallationError("Claude enabledPlugins must be an object")
@@ -282,9 +346,8 @@ class ClaudeComponentInstaller(CodexComponentInstaller):
         fragment = json.loads((built / "settings.fragment.json").read_text(encoding="utf-8"))
         settings["hooks"] = fragment["hooks"]
         settings["enabledPlugins"] = {
-            identifier: value
-            for identifier, value in enabled_plugins.items()
-            if identifier in active_plugins
+            identifier: identifier in active_plugins
+            for identifier in sorted(registered_plugins)
         }
         settings_target.write_text(
             json.dumps(settings, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
@@ -301,7 +364,7 @@ class ClaudeComponentInstaller(CodexComponentInstaller):
             "previous": previous,
             "quarantined": quarantined,
             "disabled_unregistered_plugins": sorted(
-                set(enabled_plugins).difference(active_plugins)
+                set(enabled_plugins).difference(registered_plugins)
             ),
             "persistent_system_version_activated": False,
             "smoke": smoke,
