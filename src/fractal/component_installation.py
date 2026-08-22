@@ -345,6 +345,33 @@ class ClaudeComponentInstaller(CodexComponentInstaller):
             target.symlink_to(source)
         fragment = json.loads((built / "settings.fragment.json").read_text(encoding="utf-8"))
         settings["hooks"] = fragment["hooks"]
+        model_route = fragment.get("model_route")
+        applied_model_route = None
+        if model_route is not None:
+            environment = settings.setdefault("env", {})
+            if not isinstance(environment, dict):
+                raise ComponentInstallationError("Claude settings env must be an object")
+            if not any(
+                environment.get(name) for name in ("ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY")
+            ):
+                raise ComponentInstallationError(
+                    "Claude model route requires an existing platform-owned credential"
+                )
+            for name in model_route["remove_environment"]:
+                environment.pop(name, None)
+            environment.update(model_route["environment"])
+            environment["ANTHROPIC_BASE_URL"] = model_route["gateway"]["base_url"]
+            settings["model"] = model_route["model"]
+            settings["availableModels"] = model_route["available_models"]
+            settings["enforceAvailableModels"] = model_route["enforce_available_models"]
+            settings["modelOverrides"] = model_route["model_overrides"]
+            applied_model_route = {
+                "component_id": "claude-model-route",
+                "gateway_component_id": model_route["gateway"]["component_id"],
+                "model": model_route["model"],
+                "model_overrides": model_route["model_overrides"],
+                "platform_version": model_route["platform_version"],
+            }
         settings["enabledPlugins"] = {
             identifier: identifier in active_plugins
             for identifier in sorted(registered_plugins)
@@ -366,6 +393,7 @@ class ClaudeComponentInstaller(CodexComponentInstaller):
             "disabled_unregistered_plugins": sorted(
                 set(enabled_plugins).difference(registered_plugins)
             ),
+            "applied_model_route": applied_model_route,
             "persistent_system_version_activated": False,
             "smoke": smoke,
         }

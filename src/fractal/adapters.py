@@ -442,6 +442,9 @@ class AdapterBuilder:
                 '"""\n',
             )
         elif platform == "claude":
+            model_route = self._claude_model_route()
+            if model_route is not None:
+                self._write_json(destination / "fractal" / "model-route.json", model_route)
             context = "~/.claude/fractal/context.json"
             session_command = (
                 f"{shlex.quote(self.runtime_python)} -m fractal.adapter_hook "
@@ -500,6 +503,8 @@ class AdapterBuilder:
                     ],
                 }
             }
+            if model_route is not None:
+                fragment["model_route"] = model_route
             self._write_json(destination / "settings.fragment.json", fragment)
             self._write_text(
                 destination / "agents" / "fractal-verifier.md",
@@ -527,6 +532,84 @@ class AdapterBuilder:
                 "Compare alternatives without changing Project or System state.\n"
                 "Return candidate findings to Project Review or System Review as directed.\n",
             )
+
+    def _claude_model_route(self) -> dict[str, Any] | None:
+        """Load one non-secret, Private-owned Claude model route when present."""
+        path = self.private_root / "adapters" / "claude" / "model-route.json"
+        if not path.is_file():
+            return None
+        route = json.loads(path.read_text(encoding="utf-8"))
+        required = {
+            "record_type",
+            "record_version",
+            "platform",
+            "platform_version",
+            "model",
+            "available_models",
+            "enforce_available_models",
+            "model_overrides",
+            "environment",
+            "remove_environment",
+            "gateway",
+        }
+        if set(route) != required:
+            raise AdapterError("Claude model route fields are incomplete or unexpected")
+        if route["record_type"] != "claude-model-route" or route["record_version"] != 1:
+            raise AdapterError("Claude model route record identity is invalid")
+        if route["platform"] != "claude-code":
+            raise AdapterError("Claude model route platform is invalid")
+        if not isinstance(route["platform_version"], str) or not route["platform_version"]:
+            raise AdapterError("Claude model route must pin a platform version")
+        available = route["available_models"]
+        if (
+            not isinstance(available, list)
+            or not available
+            or any(not isinstance(item, str) or not item for item in available)
+            or route["model"] not in available
+        ):
+            raise AdapterError("Claude model route must select one available model")
+        overrides = route["model_overrides"]
+        if (
+            not isinstance(overrides, dict)
+            or not overrides
+            or any(
+                not isinstance(key, str)
+                or not key.startswith("claude-")
+                or not isinstance(value, str)
+                or not value
+                for key, value in overrides.items()
+            )
+        ):
+            raise AdapterError("Claude model route overrides are invalid")
+        environment = route["environment"]
+        allowed_environment = {
+            "CLAUDE_CODE_MAX_CONTEXT_TOKENS",
+            "CLAUDE_CODE_SUBAGENT_MODEL",
+        }
+        if not isinstance(environment, dict) or set(environment).difference(allowed_environment):
+            raise AdapterError("Claude model route contains an unapproved environment setting")
+        if any(not isinstance(value, str) or not value for value in environment.values()):
+            raise AdapterError("Claude model route environment values must be non-empty strings")
+        remove_environment = route["remove_environment"]
+        if remove_environment != ["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"]:
+            raise AdapterError("Claude model route removal boundary is invalid")
+        gateway = route["gateway"]
+        gateway_fields = {"api_format", "base_url", "component_id", "models", "version"}
+        if not isinstance(gateway, dict) or set(gateway) != gateway_fields:
+            raise AdapterError("Claude model route gateway fields are invalid")
+        if gateway["api_format"] != "anthropic-messages":
+            raise AdapterError("Claude model route requires the Anthropic Messages format")
+        if not str(gateway["base_url"]).startswith(("http://", "https://")):
+            raise AdapterError("Claude model route gateway URL is invalid")
+        if gateway["component_id"] != "ollama-gateway":
+            raise AdapterError("Claude model route gateway registration is invalid")
+        if not isinstance(gateway["models"], list) or not set(overrides.values()).issubset(
+            gateway["models"]
+        ):
+            raise AdapterError("Claude model route selects a model absent from the gateway")
+        if not isinstance(route["enforce_available_models"], bool):
+            raise AdapterError("Claude model route enforcement flag must be Boolean")
+        return route
 
     def _root_router(self, platform: str) -> str:
         context_root = {

@@ -68,6 +68,37 @@ def private_workspace(root: Path) -> Path:
     return root
 
 
+def add_claude_model_route(root: Path) -> None:
+    route = root / "adapters" / "claude" / "model-route.json"
+    route.parent.mkdir(parents=True)
+    route.write_text(
+        json.dumps(
+            {
+                "gateway": {
+                    "api_format": "anthropic-messages",
+                    "base_url": "http://gateway.test:8000",
+                    "component_id": "ollama-gateway",
+                    "models": ["gemma4:12b", "qwen3.5:9b"],
+                    "version": "0.32.14",
+                },
+                "model": "sonnet",
+                "available_models": ["sonnet"],
+                "enforce_available_models": True,
+                "model_overrides": {"claude-sonnet-5": "gemma4:12b"},
+                "environment": {
+                    "CLAUDE_CODE_MAX_CONTEXT_TOKENS": "65536",
+                    "CLAUDE_CODE_SUBAGENT_MODEL": "inherit",
+                },
+                "platform": "claude-code",
+                "platform_version": "2.1.237",
+                "record_type": "claude-model-route",
+                "record_version": 1,
+                "remove_environment": ["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"],
+            }
+        )
+    )
+
+
 def builder(tmp_path: Path, output: str) -> AdapterBuilder:
     return AdapterBuilder(
         public_root=ROOT,
@@ -540,13 +571,28 @@ url = \"https://example.invalid/mcp\"
 def test_claude_component_install_merges_settings_and_restores_extras(
     tmp_path: Path,
 ) -> None:
-    governed_builder(tmp_path, "governed-claude").build_all()
+    adapter_builder = governed_builder(tmp_path, "governed-claude")
+    add_claude_model_route(adapter_builder.private_root)
+    adapter_builder.build_all()
     built = tmp_path / "governed-claude" / "claude"
     home = tmp_path / "claude-home"
     (home / "skills" / "legacy-extra").mkdir(parents=True)
     (home / "skills" / "legacy-extra" / "SKILL.md").write_text("legacy extra")
     (home / "CLAUDE.md").write_text("previous entrypoint")
-    (home / "settings.json").write_text(json.dumps({"theme": "dark", "enabledPlugins": {}}))
+    (home / "settings.json").write_text(
+        json.dumps(
+            {
+                "theme": "dark",
+                "enabledPlugins": {},
+                "model": "old-model",
+                "env": {
+                    "ANTHROPIC_AUTH_TOKEN": "platform-secret",
+                    "ANTHROPIC_BASE_URL": "http://old-gateway.test",
+                    "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
+                },
+            }
+        )
+    )
     installer = ClaudeComponentInstaller(tmp_path / "component-installs", tmp_path / "quarantine")
     record = installer.install(built, home)
     installed_settings = json.loads((home / "settings.json").read_text())
@@ -555,11 +601,29 @@ def test_claude_component_install_merges_settings_and_restores_extras(
     assert not (home / "skills" / "legacy-extra").exists()
     assert installed_settings["theme"] == "dark"
     assert set(installed_settings["hooks"]) == {"PreToolUse", "SessionStart", "Stop"}
+    assert installed_settings["model"] == "sonnet"
+    assert installed_settings["availableModels"] == ["sonnet"]
+    assert installed_settings["modelOverrides"] == {"claude-sonnet-5": "gemma4:12b"}
+    assert installed_settings["env"]["ANTHROPIC_AUTH_TOKEN"] == "platform-secret"
+    assert installed_settings["env"]["ANTHROPIC_BASE_URL"] == "http://gateway.test:8000"
+    assert "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY" not in installed_settings["env"]
+    assert record["applied_model_route"]["gateway_component_id"] == "ollama-gateway"
     assert record["persistent_system_version_activated"] is False
     restored = installer.restore(record["install_id"])
     assert (home / "CLAUDE.md").read_text() == "previous entrypoint"
     assert (home / "skills" / "legacy-extra" / "SKILL.md").read_text() == "legacy extra"
     assert "skills/legacy-extra" in restored["restored_quarantine"]
+
+
+def test_claude_model_route_rejects_secret_material(tmp_path: Path) -> None:
+    adapter_builder = governed_builder(tmp_path, "unsafe-claude-route")
+    add_claude_model_route(adapter_builder.private_root)
+    route = adapter_builder.private_root / "adapters" / "claude" / "model-route.json"
+    value = json.loads(route.read_text())
+    value["environment"]["ANTHROPIC_AUTH_TOKEN"] = "must-not-enter-canonical-state"
+    route.write_text(json.dumps(value))
+    with pytest.raises(AdapterError, match="unapproved environment setting"):
+        adapter_builder.build_all()
 
 
 def test_gemini_component_install_switches_and_restores_skills(tmp_path: Path) -> None:
