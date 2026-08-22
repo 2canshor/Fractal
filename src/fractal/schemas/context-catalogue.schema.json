@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/2canshor/fractal/schemas/context-catalogue.schema.json",
+  "title": "Fractal Context Catalogue",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_type", "record_version", "sources"],
+  "properties": {
+    "record_type": {"const": "context-catalogue"},
+    "record_version": {"const": 1},
+    "sources": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/source"}
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root_id",
+        "path",
+        "source_type",
+        "sensitivity",
+        "instruction_authority",
+        "personalisation",
+        "topics",
+        "applicability",
+        "include_suffixes"
+      ],
+      "properties": {
+        "root_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+        "path": {"type": "string", "minLength": 1},
+        "source_type": {
+          "enum": ["guide", "canonical_record", "accepted_policy", "memory_candidate", "reference"]
+        },
+        "sensitivity": {"enum": ["public", "private", "restricted"]},
+        "instruction_authority": {
+          "enum": ["reference_only", "canonical_state", "accepted_policy", "candidate_only"]
+        },
+        "personalisation": {"type": "boolean"},
+        "topics": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "applicability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["task_types", "keywords", "project_ids"],
+          "properties": {
+            "task_types": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "keywords": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "project_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+          }
+        },
+        "include_suffixes": {"type": "array", "items": {"pattern": "^\\."}, "minItems": 1, "uniqueItems": true}
+      }
+    }
+  }
+}

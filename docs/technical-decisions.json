@@ -69,6 +69,18 @@
       "status": "open",
       "decision": "Do not add a licence until the repository owner explicitly selects one",
       "reason": "Licence selection changes downstream legal permissions and is not a technical default."
+    },
+    {
+      "id": "TD-008",
+      "subject": "context-retrieval",
+      "status": "accepted",
+      "decision": "Use a canonical source catalogue, local SQLite FTS5 derived index, bounded result packages, explicit sensitivity, and separate instruction authority",
+      "reason": "Local evidence showed FTS5 is available and rebuildable; targeted Guide evidence supports progressive disclosure and metadata-first loading without importing platform-specific layouts.",
+      "sources": [
+        "https://www.sqlite.org/fts5.html",
+        "https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models",
+        "https://claude.com/blog/steering-claude-code-skills-hooks-rules-subagents-and-more"
+      ]
     }
   ]
 }
