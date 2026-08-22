@@ -1,0 +1,321 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from fractal.improvement import TrialBoundary, TrialMeasurement
+from fractal.models import ProjectRecord
+from fractal.storage import AuthorityError
+from fractal.system_review import (
+    SYSTEM_REVIEW_STAGES,
+    AgentCandidate,
+    ExperimentRunner,
+    IndependentBranch,
+    SystemReviewError,
+    build_change_proposal,
+    decide_change_proposal,
+    detect_reversals,
+    order_improvement_options,
+    record_system_review_stage,
+    review_feedback,
+    select_lightest_capable_agent,
+    start_system_review,
+    verify_branch_independence,
+    warrants_two_sided_review,
+)
+
+
+def completed_project() -> ProjectRecord:
+    return ProjectRecord(
+        project_id="completed-project",
+        title="Completed Project",
+        system_version="0.1.0-alpha.1",
+        status="completed",
+        completion={
+            "requested_at": "2026-08-22T00:00:00Z",
+            "completed_at": "2026-08-22T00:01:00Z",
+            "completed_by": "primary-user",
+        },
+    )
+
+
+def safe_boundary(**overrides: bool) -> TrialBoundary:
+    values = {
+        "small": True,
+        "reversible": True,
+        "isolated": True,
+        "restore_verified": True,
+        "no_real_data_change": True,
+        "no_external_action": True,
+        "no_new_recipient": True,
+        "no_cost": True,
+        "no_goal_change": True,
+        "no_scope_expansion": True,
+        "no_persistent_change": True,
+        "same_representative_work": True,
+    }
+    values.update(overrides)
+    return TrialBoundary(**values)
+
+
+def test_full_system_review_accepts_no_change_as_a_real_result() -> None:
+    review = start_system_review(completed_project())
+    for stage in SYSTEM_REVIEW_STAGES:
+        result = {"summary": f"Observed {stage}"}
+        if stage == "two-sided-review":
+            result = {"status": "not-warranted", "reason": "No consequential proposal"}
+        if stage == "final-assessment":
+            result = {"suggestion": "no-change", "synthesised_by": "main-agent"}
+        if stage == "result":
+            result = {"outcome": "no-change", "reason": "No evidence supports mutation"}
+        review = record_system_review_stage(
+            review,
+            stage=stage,
+            result=result,
+            evidence_ids=["evidence-a"],
+        )
+    assert review["status"] == "completed"
+    assert review["result"]["outcome"] == "no-change"
+    assert len(review["stages"]) == len(SYSTEM_REVIEW_STAGES)
+
+
+def test_system_review_cannot_start_before_primary_user_completion() -> None:
+    project = completed_project()
+    project.status = "in_progress"
+    project.completion["completed_by"] = None
+    with pytest.raises(AuthorityError, match="Project Completion"):
+        start_system_review(project)
+
+
+def test_system_review_stages_cannot_skip_order() -> None:
+    review = start_system_review(completed_project())
+    with pytest.raises(SystemReviewError, match="Expected stage project-assessment"):
+        record_system_review_stage(
+            review,
+            stage="issue-scan",
+            result={"summary": "Too early"},
+            evidence_ids=[],
+        )
+
+
+def test_final_suggestion_and_change_result_fail_closed() -> None:
+    review = start_system_review(completed_project())
+    for stage in SYSTEM_REVIEW_STAGES[:12]:
+        review = record_system_review_stage(
+            review,
+            stage=stage,
+            result={"summary": f"Observed {stage}"},
+            evidence_ids=["evidence-a"],
+        )
+    with pytest.raises(SystemReviewError, match="Main Agent"):
+        record_system_review_stage(
+            review,
+            stage="final-assessment",
+            result={"suggestion": "change", "synthesised_by": "review-subagent"},
+            evidence_ids=["evidence-a"],
+        )
+    review = record_system_review_stage(
+        review,
+        stage="final-assessment",
+        result={"suggestion": "change", "synthesised_by": "main-agent"},
+        evidence_ids=["evidence-a"],
+    )
+    with pytest.raises(SystemReviewError, match="proposal id"):
+        record_system_review_stage(
+            review,
+            stage="result",
+            result={"outcome": "change-proposal"},
+            evidence_ids=["evidence-a"],
+        )
+
+
+def test_lightest_agent_and_independent_research_and_debate_branches() -> None:
+    candidates = [
+        AgentCandidate("large", 3, 3, True, frozenset({"web", "citations"})),
+        AgentCandidate("small", 1, 1, True, frozenset({"web", "citations"})),
+        AgentCandidate("failed", 0, 0, False, frozenset({"web", "citations"})),
+    ]
+    selected = select_lightest_capable_agent(
+        candidates,
+        required_capabilities={"web", "citations"},
+    )
+    assert selected.agent_id == "small"
+    branches = [
+        IndependentBranch(
+            "branch-external",
+            "external-research",
+            "a" * 64,
+            ("project-brief",),
+            "external-output",
+            ("source-a",),
+            "small",
+            "External finding",
+        ),
+        IndependentBranch(
+            "branch-internal",
+            "internal-review",
+            "b" * 64,
+            ("project-record",),
+            "internal-output",
+            ("record-a",),
+            "small",
+            "Internal finding",
+        ),
+    ]
+    verified = verify_branch_independence(
+        branches,
+        required_roles={"external-research", "internal-review"},
+    )
+    assert verified["independent"] is True
+    assert warrants_two_sided_review({"evidence_conflict": True}) is True
+    debate = [
+        IndependentBranch(
+            "case-for",
+            "case-for",
+            "c" * 64,
+            ("proposal",),
+            "for-output",
+            ("evidence-a",),
+            "small",
+            "Strongest case for",
+        ),
+        IndependentBranch(
+            "case-against",
+            "case-against",
+            "d" * 64,
+            ("proposal",),
+            "against-output",
+            ("evidence-b",),
+            "small",
+            "Strongest case against",
+        ),
+    ]
+    assert verify_branch_independence(
+        debate,
+        required_roles={"case-for", "case-against"},
+    )["independent"]
+    contaminated = [branches[0], IndependentBranch(
+        "branch-internal",
+        "internal-review",
+        "b" * 64,
+        ("external-output",),
+        "internal-output",
+        ("record-a",),
+        "small",
+        "Contaminated",
+    )]
+    with pytest.raises(SystemReviewError, match="another branch output"):
+        verify_branch_independence(
+            contaminated,
+            required_roles={"external-research", "internal-review"},
+        )
+
+
+def test_subtraction_first_reversal_and_change_proposal_authority() -> None:
+    options = order_improvement_options(
+        [
+            {"kind": "add", "summary": "Add a layer"},
+            {"kind": "merge", "summary": "Merge two components"},
+            {"kind": "delete", "summary": "Delete obsolete logic"},
+        ]
+    )
+    assert [item["kind"] for item in options] == ["delete", "merge", "add", "no-change"]
+    reversals = detect_reversals(
+        [
+            {
+                "component_id": "router",
+                "direction": "add",
+                "recorded_at": "2026-01-01",
+                "outcome": "slow",
+            },
+            {
+                "component_id": "router",
+                "direction": "remove",
+                "recorded_at": "2026-02-01",
+                "outcome": "simple",
+            },
+        ]
+    )
+    assert reversals[0]["hidden_dimension"] == "unknown"
+    proposal = build_change_proposal(
+        title="Simplify a route",
+        change_kind="remove",
+        baseline={"routes": 2},
+        candidate={"routes": 1},
+        expected_effect={"summary": "Less duplication"},
+        local_effect={"risk": "low"},
+        global_effect={"coverage": "unchanged"},
+        evidence_ids=["evidence-a"],
+        restore_plan={"action": "restore previous manifest"},
+    )
+    assert proposal["active"] is False
+    with pytest.raises(AuthorityError, match="primary user"):
+        decide_change_proposal(
+            proposal,
+            decision="approve",
+            actor="main-agent",
+            human_action=False,
+        )
+    approved = decide_change_proposal(
+        proposal,
+        decision="approve",
+        actor="primary-user",
+        human_action=True,
+    )
+    assert approved["decision_status"] == "approved-for-version"
+    assert approved["active"] is False
+    rejected = decide_change_proposal(
+        proposal,
+        decision="reject",
+        actor="primary-user",
+        human_action=True,
+    )
+    assert rejected["decision_status"] == "rejected"
+
+
+def test_experiment_runner_safe_and_approval_required_paths() -> None:
+    runner = ExperimentRunner()
+
+    def baseline(path: Path) -> TrialMeasurement:
+        path.mkdir(parents=True)
+        (path / "result.txt").write_text("same outcome")
+        return TrialMeasurement(True, 1.0, 10.0, None, 0.99, False)
+
+    def candidate(path: Path) -> TrialMeasurement:
+        path.mkdir(parents=True)
+        (path / "result.txt").write_text("same outcome")
+        return TrialMeasurement(True, 1.0, 5.0, None, 0.99, False)
+
+    safe = runner.run(
+        boundary=safe_boundary(),
+        baseline_runner=baseline,
+        candidate_runner=candidate,
+    )
+    assert safe["status"] == "candidate-for-review"
+    assert safe["restore_verified"] is True
+    assert safe["persistent_adoption"] is False
+    blocked = runner.run(
+        boundary=safe_boundary(no_external_action=False),
+        baseline_runner=baseline,
+        candidate_runner=candidate,
+    )
+    assert blocked["status"] == "approval-required-before-trial"
+    assert blocked["executed"] is False
+
+
+def test_feedback_is_evaluated_without_becoming_automatic_instruction() -> None:
+    evidence = review_feedback(
+        feedback="Make the system shorter",
+        source="user-feedback",
+        accepted_scope=None,
+    )
+    assert evidence["instruction_authority"] == "evidence-only"
+    assert evidence["automatic_system_change"] is False
+    accepted = review_feedback(
+        feedback="Use Cantonese for this status update",
+        source="typed-user-action",
+        accepted_scope="current-status-update",
+    )
+    assert accepted["instruction_authority"] == "accepted"
+    assert accepted["accepted_scope"] == "current-status-update"
