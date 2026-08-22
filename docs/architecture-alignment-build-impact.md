@@ -1,6 +1,6 @@
 # Architecture Alignment: Build Impact
 
-This document identifies the implementation work created by the Architecture Lineage correction. It is a proposal for Carson's review. The current live candidate still represents the earlier runtime.
+This document records the runtime work created by the Architecture Lineage correction. The hierarchy and agentic-element mapping are now built in the public candidate. The current live candidate still represents the earlier runtime.
 
 ## 1. System Review records
 
@@ -65,7 +65,7 @@ Extend the Node Implementation Map schema. Each major Node records:
 - `implemented_by`;
 - `lineage_class`: original backbone, supporting infrastructure, or separately approved later capability.
 
-Supporting components such as Fatigue, Curiosity, Greed, Hooks, Registry, and Capability Check record whether their output enters Project Review, System Review evidence, Cause Research, or Improvement Options.
+The Three Values—Fatigue, Curiosity, and Greed—and Mechanisms such as Hooks, Registry, and Capability Check record whether their output enters Project Review, System Review evidence, Cause Research, or Improvement Options.
 
 ## 4. Human Control
 
@@ -105,4 +105,4 @@ The new candidate needs tests proving at least:
 
 ## 7. Candidate and authority boundary
 
-After Carson approves this implementation scope, the work creates a new reversible candidate, runs the full test and live-verification gates, and returns to Carson for review. Project Completion and persistent System Version activation remain Carson decisions.
+The remaining runtime work belongs in a new reversible candidate with full test and live-verification evidence. That candidate returns to Carson for review. Project Completion and persistent System Version activation remain Carson decisions.

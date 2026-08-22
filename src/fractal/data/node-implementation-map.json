@@ -1,9 +1,10 @@
 {
   "record_type": "node-implementation-map",
   "record_version": 2,
-  "system_version": "0.1.0-alpha.1",
+  "system_version": "0.1.0-alpha.2",
   "status": "initial-build-mapping",
-  "architecture_alignment_status": "correction-recorded-awaiting-build-approval",
+  "architecture_alignment_status": "hierarchy-and-agentic-element-mapping-recorded",
+  "agentic_element_map": "agentic-element-map.json",
   "change_policy": {
     "evidence_required": true,
     "allowed_proposals": ["add", "remove", "replace", "merge", "split"],
@@ -47,7 +48,7 @@
         "step": 4,
         "name": "choose-system-response",
         "original_question": "Can the current system solve this through deletion, simplification, reconfiguration, or modification?",
-        "implemented_by": ["improvement-options", "subtraction-first", "supporting-method-evidence", "experiments", "capability-evidence"]
+        "implemented_by": ["improvement-options", "subtraction-first", "three-value-evidence", "experiments", "capability-evidence"]
       },
       {
         "step": 5,
@@ -314,7 +315,7 @@
       "preconditions": ["completed-project-snapshot", "completion-authority-verified"],
       "stop_condition": ["your-decision-recorded", "required-stage-evidence-missing"],
       "fallback": ["need-more-evidence", "no-change", "wait-for-primary-user-decision"],
-      "inputs": ["completed-project-whole-history", "project-review-history", "previous-analysis-and-intervention-history", "supporting-method-observations", "component-history", "feedback"],
+      "inputs": ["completed-project-whole-history", "project-review-history", "previous-analysis-and-intervention-history", "three-value-observations", "component-history", "feedback"],
       "outputs": ["positive-delta", "negative-delta", "quantity-over-quality-observations", "causal-local-patterns", "historical-patterns", "system-response-assessment", "effect-and-later-evaluation-record", "final-assessment", "biggest-remaining-concern", "change-proposal-or-experiment-or-need-more-evidence-or-no-change", "your-decision"],
       "authority": "The Main Agent synthesises the assessment; only the primary user records Your Decision and approves persistent activation.",
       "executor": ["main-agent", "independent-research-branches-when-needed", "python-stage-and-authority-check"],

@@ -1,33 +1,83 @@
 from __future__ import annotations
 
 from fractal.design_queue import activate_next, resolve_active
-from fractal.methods import load_method_registry
+from fractal.methods import load_agentic_element_map, load_method_registry
 
 
-def test_continuous_improvement_is_the_only_core_philosophy() -> None:
+def test_correct_improvement_hierarchy_is_canonical() -> None:
     registry = load_method_registry()
     assert [item["id"] for item in registry["core_philosophies"]] == [
         "continuous-improvement"
     ]
+    assert [item["id"] for item in registry["protagonist_mechanisms"]] == [
+        "system-review"
+    ]
+    assert [item["id"] for item in registry["secondary_mechanisms"]] == [
+        "project-review"
+    ]
 
 
-def test_partial_supporting_philosophies_have_real_landings_and_open_designs() -> None:
+def test_methodologies_are_exactly_five_steps_and_three_values() -> None:
     registry = load_method_registry()
-    supporting = {item["id"]: item for item in registry["supporting_philosophies"]}
-    for item_id in ["curiosity", "fatigue", "greed"]:
-        item = supporting[item_id]
-        assert item["decision_status"] == "intent-established-mechanism-partially-defined"
-        assert item["operational_mapping"]
-        assert item["open_questions"]
-        assert item["false_claim_guard"]
-    all_mappings = " ".join(
-        mapping
-        for item in supporting.values()
-        for mapping in item["operational_mapping"]
+    methodologies = registry["methodologies"]
+    steps = [item for item in methodologies if item["methodology_kind"] == "five-step"]
+    values = [item for item in methodologies if item["methodology_kind"] == "three-value"]
+    assert [item["id"] for item in steps] == [
+        "find-problems",
+        "find-local-patterns",
+        "compare-history",
+        "choose-system-response",
+        "reality-check",
+    ]
+    assert [item["sequence"] for item in steps] == [1, 2, 3, 4, 5]
+    assert [item["id"] for item in values] == ["fatigue", "curiosity", "greed"]
+    for value in values:
+        assert value["decision_status"] == "intent-established-methodology-partially-defined"
+        assert value["open_questions"]
+        assert value["evidence_requirement"]
+
+
+def test_named_operational_concepts_are_mechanisms() -> None:
+    registry = load_method_registry()
+    mechanism_ids = {item["id"] for item in registry["mechanisms"]}
+    assert {
+        "deterministic-over-probabilistic",
+        "quantity-over-quality",
+        "subtraction-first",
+        "global-outcome-over-local-optimisation",
+        "work-signature",
+        "naming-system",
+        "capability-check",
+        "hooks",
+    } <= mechanism_ids
+
+
+def test_every_hierarchy_node_has_one_valid_agentic_element_mapping() -> None:
+    mapping = load_agentic_element_map()
+    by_id = {item["node_id"]: item for item in mapping["mappings"]}
+    assert by_id["system-review"]["primary_element"] == "main-agent"
+    assert by_id["project-review"]["primary_element"] == "main-agent"
+    assert by_id["fatigue"]["primary_element"] == "deterministic-program"
+    assert by_id["curiosity"]["primary_element"] == "skill"
+    assert by_id["greed"]["primary_element"] == "skill"
+    assert by_id["deterministic-over-probabilistic"]["primary_element"] == (
+        "deterministic-program"
     )
-    assert "repetition-monitor" not in all_mappings
-    assert "fatigue-monitor" not in all_mappings
-    assert "curiosity-explorer" not in all_mappings
+
+
+def test_live_claims_are_separate_from_source_and_projection() -> None:
+    mapping = load_agentic_element_map()
+    by_id = {item["node_id"]: item for item in mapping["mappings"]}
+    assert by_id["work-signature"]["status"] == {
+        "source": "implemented",
+        "projection": "active",
+        "execution": "verified-live",
+    }
+    assert by_id["system-review"]["status"] == {
+        "source": "partially-implemented",
+        "projection": "staged",
+        "execution": "verified-synthetic",
+    }
 
 
 def test_open_design_queue_handles_one_question_at_a_time() -> None:

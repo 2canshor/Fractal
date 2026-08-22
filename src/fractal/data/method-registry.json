@@ -1,118 +1,202 @@
 {
   "record_type": "method-registry",
-  "record_version": 1,
-  "system_version": "0.1.0-alpha.1",
+  "record_version": 2,
+  "system_version": "0.1.0-alpha.2",
   "core_philosophies": [
     {
       "id": "continuous-improvement",
       "human_name": "Continuous Improvement",
       "decision_status": "architecture-baseline",
-      "intent": "Protect an active Project through Project Review, then learn from the completed Project through System Review.",
-      "provenance": "revision-8-architecture-baseline",
-      "operational_mapping": [
-        "project-evidence",
-        "project-review",
-        "system-review",
-        "change-proposal",
-        "human-decision",
-        "system-version-history"
-      ]
+      "intent": "Use completed work and real outcomes to make Fractal better at future Projects.",
+      "operational_mapping": ["system-review", "project-review", "system-version-history"]
+    }
+  ],
+  "protagonist_mechanisms": [
+    {
+      "id": "system-review",
+      "human_name": "System Review",
+      "decision_status": "architecture-baseline",
+      "intent": "Run the original five-step reasoning process after the primary user completes a Project.",
+      "operational_mapping": ["find-problems", "find-local-patterns", "compare-history", "choose-system-response", "reality-check"]
     }
   ],
   "methodologies": [
     {
-      "id": "deterministic-over-probabilistic",
+      "id": "find-problems",
+      "human_name": "Step 1: Find Problems",
+      "methodology_kind": "five-step",
+      "sequence": 1,
       "decision_status": "architecture-baseline",
-      "operational_mapping": ["deterministic-preprocessing", "schema-validation", "authority-check", "deterministic-execution"]
+      "intent": "Review the whole Project history and collect positive and negative observations with high recall.",
+      "operational_mapping": ["project-assessment", "positive-delta", "negative-delta", "issue-scan", "quantity-over-quality"]
     },
     {
-      "id": "subtraction-first",
+      "id": "find-local-patterns",
+      "human_name": "Step 2: Find Local Patterns",
+      "methodology_kind": "five-step",
+      "sequence": 2,
       "decision_status": "architecture-baseline",
-      "operational_mapping": ["improvement-option-order"]
+      "intent": "Separate symptoms from plausible causes and form meaningful local patterns.",
+      "operational_mapping": ["project-patterns", "causal-interpretation", "observation-cause-separation"]
     },
     {
-      "id": "resolve-before-asking",
+      "id": "compare-history",
+      "human_name": "Step 3: Compare History",
+      "methodology_kind": "five-step",
+      "sequence": 3,
       "decision_status": "architecture-baseline",
-      "operational_mapping": ["clarification-router"]
+      "intent": "Compare current findings with previous analyses, interventions, reversals, and outcomes.",
+      "operational_mapping": ["cross-project-patterns", "reversal-check", "cause-research", "reconciliation"]
     },
     {
-      "id": "project-review",
+      "id": "choose-system-response",
+      "human_name": "Step 4: Choose the System Response",
+      "methodology_kind": "five-step",
+      "sequence": 4,
       "decision_status": "architecture-baseline",
-      "operational_mapping": ["review-point", "project-review", "project-plan-update"]
+      "intent": "Decide whether to delete, shorten, merge, simplify, reconfigure, modify, or add an agentic element.",
+      "operational_mapping": ["improvement-options", "subtraction-first", "capability-check", "experiment"]
     },
     {
-      "id": "progressive-disclosure",
+      "id": "reality-check",
+      "human_name": "Step 5: Reality Check",
+      "methodology_kind": "five-step",
+      "sequence": 5,
       "decision_status": "architecture-baseline",
-      "operational_mapping": ["context-catalogue", "context-index", "context-package"]
-    },
-    {
-      "id": "trial-before-adoption",
-      "decision_status": "approved-technical-decision",
-      "operational_mapping": ["safe-trial-boundary", "baseline-candidate-comparison", "human-adoption-decision"]
-    }
-  ],
-  "supporting_philosophies": [
-    {
-      "id": "global-outcome-over-local-optimisation",
-      "decision_status": "architecture-baseline",
-      "operational_mapping": ["project-review-evaluation", "system-review-evaluation"]
-    },
-    {
-      "id": "feedback-is-evidence-not-instruction",
-      "decision_status": "architecture-baseline",
-      "operational_mapping": ["instruction-authority", "feedback-review"]
-    },
-    {
-      "id": "human-final-authority",
-      "decision_status": "architecture-baseline",
-      "operational_mapping": ["authority-policy", "project-completion-gate", "system-version-gate"]
-    },
-    {
-      "id": "human-readability",
-      "decision_status": "architecture-baseline",
-      "operational_mapping": ["human-control-view"]
-    },
-    {
-      "id": "curiosity",
-      "decision_status": "intent-established-mechanism-partially-defined",
-      "intent": "Broaden bounded research for Fatigue and Greed without adopting findings automatically.",
-      "provenance": "revision-8-approved-mechanism-direction",
-      "operational_mapping": ["improve-current-method", "research-latest-findings", "explore-related-fields"],
-      "open_questions": ["effort-meter", "source-quality-threshold", "freshness-threshold", "cross-field-relevance-threshold", "exact-tool-budget"],
-      "false_claim_guard": "Do not describe Curiosity as active until routing, provenance, relevance, and no-auto-adoption evidence pass."
+      "intent": "Compare before and after evidence to decide whether Fractal genuinely improved.",
+      "operational_mapping": ["expected-effect", "local-effect", "global-effect", "two-sided-review", "later-outcome-evaluation"]
     },
     {
       "id": "fatigue",
-      "decision_status": "intent-established-mechanism-partially-defined",
-      "intent": "Notice repeated work and investigate a faster equivalent method without deleting necessary repetition.",
-      "provenance": "revision-8-approved-mechanism-direction",
-      "operational_mapping": ["completion-hook", "work-signature", "deterministic-repetition-match", "semantic-comparison-fallback", "improvement-investigation", "structural-repetition-classification"],
+      "human_name": "Fatigue",
+      "methodology_kind": "three-value",
+      "decision_status": "intent-established-methodology-partially-defined",
+      "intent": "Treat repeated effort and diminishing return as a reason to investigate a better method.",
+      "operational_mapping": ["work-signature", "repetition-awareness", "improvement-investigation"],
       "open_questions": ["similarity-weights", "semantic-threshold", "retention", "research-budget", "alternative-limit", "overlap-threshold"],
-      "false_claim_guard": "Do not create or claim a Repetition Monitor or Fatigue Monitor."
+      "evidence_requirement": "Active status requires a live work-completed event, one compact Work Signature, deterministic repetition evaluation, and a tested evidence route into Project Review or System Review."
+    },
+    {
+      "id": "curiosity",
+      "human_name": "Curiosity",
+      "methodology_kind": "three-value",
+      "decision_status": "intent-established-methodology-partially-defined",
+      "intent": "Explore current, adjacent, and structurally related ideas that may improve the work.",
+      "operational_mapping": ["research", "analogy-hypothesis", "bounded-experiment"],
+      "open_questions": ["effort-meter", "source-quality-threshold", "freshness-threshold", "cross-field-relevance-threshold", "exact-tool-budget"],
+      "evidence_requirement": "Execution evidence records routing, source provenance, relevance, and the Project Review or System Review that received the finding."
     },
     {
       "id": "greed",
-      "decision_status": "intent-established-mechanism-partially-defined",
-      "intent": "Challenge conservative success targets before work and once after original criteria are achieved.",
-      "provenance": "revision-8-approved-mechanism-direction",
-      "operational_mapping": ["performance-baseline", "success-criteria-challenge", "safe-trial-boundary", "outcome-ratchet"],
+      "human_name": "Greed",
+      "methodology_kind": "three-value",
+      "decision_status": "intent-established-methodology-partially-defined",
+      "intent": "After real success, look for a materially better result in quality, time, Tokens, or scope using evidence-backed comparisons.",
+      "operational_mapping": ["performance-baseline", "success-criteria-challenge", "outcome-ratchet"],
       "open_questions": ["comparison-dimensions", "benchmark-freshness", "research-budget", "materiality-threshold", "representative-trial-rule"],
-      "false_claim_guard": "Do not fabricate thresholds, move criteria during Project Work, or erase original achievement."
+      "evidence_requirement": "Execution evidence preserves the achieved baseline, comparison source, stronger target, representative trial, and original Success Criteria result."
+    }
+  ],
+  "secondary_mechanisms": [
+    {
+      "id": "project-review",
+      "human_name": "Project Review",
+      "decision_status": "architecture-baseline",
+      "intent": "During a Project, compare the whole Project with its Plan and correct its trajectory when a milestone or exception calls for review.",
+      "operational_mapping": ["review-point", "whole-project-snapshot", "project-plan-update"]
+    }
+  ],
+  "mechanisms": [
+    {
+      "id": "deterministic-over-probabilistic",
+      "human_name": "Deterministic Over Probabilistic",
+      "decision_status": "architecture-baseline",
+      "intent": "Use exact programs and rules for work that can be made repeatable, testable, and unambiguous.",
+      "operational_mapping": ["schema-validation", "state-transition", "hash-check", "authority-check", "routing-check"]
     },
     {
-      "id": "no-forced-mutation",
+      "id": "quantity-over-quality",
+      "human_name": "Quantity over Quality",
       "decision_status": "architecture-baseline",
-      "operational_mapping": ["no-change-result"]
+      "intent": "In Step 1, maximise recall before Step 2 filters, groups, or explains observations.",
+      "operational_mapping": ["whole-project-history", "positive-delta", "negative-delta", "high-recall-issue-scan"]
     },
     {
-      "id": "historical-restorability",
+      "id": "subtraction-first",
+      "human_name": "Subtraction First",
       "decision_status": "architecture-baseline",
-      "operational_mapping": ["system-version-manifest", "component-history", "restore-path"]
+      "intent": "In Step 4, consider delete, shorten, merge, simplify, reconfigure, and modify before adding complexity.",
+      "operational_mapping": ["improvement-option-order", "capability-value-history"]
     },
     {
-      "id": "evidence-before-capability-claims",
+      "id": "global-outcome-over-local-optimisation",
+      "human_name": "Global Outcome Over Local Optimisation",
       "decision_status": "architecture-baseline",
-      "operational_mapping": ["capability-status-dimensions"]
+      "intent": "Judge a change by the whole Project and system result as well as its direct local effect.",
+      "operational_mapping": ["local-effect", "global-effect", "later-outcome-evaluation"]
+    },
+    {
+      "id": "work-signature",
+      "human_name": "Work Signature",
+      "decision_status": "approved-technical-decision",
+      "intent": "Capture a compact, privacy-bounded record of completed work for repetition and outcome comparison.",
+      "operational_mapping": ["work-completed-hook", "deterministic-signature", "turn-event-enrichment"]
+    },
+    {
+      "id": "naming-system",
+      "human_name": "Naming System",
+      "decision_status": "architecture-baseline",
+      "intent": "Give every Fractal-controlled component a semantic name that passes deterministic checks before activation.",
+      "operational_mapping": ["naming-skill", "name-linter", "activation-gate"]
+    },
+    {
+      "id": "capability-check",
+      "human_name": "Capability Check",
+      "decision_status": "approved-technical-decision",
+      "intent": "Compare requested work with registered, permitted, non-overlapping, and evidenced capabilities.",
+      "operational_mapping": ["component-registry", "overlap-check", "permission-check", "live-reconciliation"]
+    },
+    {
+      "id": "hooks",
+      "human_name": "Hooks",
+      "decision_status": "approved-technical-decision",
+      "intent": "Run deterministic handling when a known platform event occurs.",
+      "operational_mapping": ["session-start", "pre-tool-use", "work-completed"]
+    },
+    {
+      "id": "component-governance",
+      "human_name": "Component Governance",
+      "decision_status": "approved-technical-decision",
+      "intent": "Register, project, verify, quarantine, restore, and remove every discoverable agentic component through Fractal.",
+      "operational_mapping": ["component-registry", "adapter-builder", "drift-detection", "restore-path"]
+    },
+    {
+      "id": "two-sided-review",
+      "human_name": "Two-Sided Review",
+      "decision_status": "architecture-baseline",
+      "intent": "For a consequential proposal, compare independently formed Case For and Case Against before the Main Agent decides what to recommend.",
+      "operational_mapping": ["case-for", "case-against", "independence-check", "final-assessment"]
+    },
+    {
+      "id": "cause-research",
+      "human_name": "Cause Research",
+      "decision_status": "architecture-baseline",
+      "intent": "Investigate why a problem exists when history or reversal evidence challenges the current causal model.",
+      "operational_mapping": ["external-research", "internal-review", "reconciliation"]
+    },
+    {
+      "id": "experiment",
+      "human_name": "Experiment",
+      "decision_status": "approved-technical-decision",
+      "intent": "Test a reversible hypothesis against a preserved baseline and measurable outcome.",
+      "operational_mapping": ["baseline", "candidate", "evaluation", "restore"]
+    },
+    {
+      "id": "human-control",
+      "human_name": "Human Control",
+      "decision_status": "architecture-baseline",
+      "intent": "Show current state, evidence, decisions, risks, and restore routes in ordinary language.",
+      "operational_mapping": ["human-control-view", "typed-decision", "recovery-instructions"]
     }
   ]
 }

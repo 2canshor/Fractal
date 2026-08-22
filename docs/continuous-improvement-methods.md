@@ -1,8 +1,12 @@
-# Continuous Improvement Methods
+# Continuous Improvement Methodologies and Mechanisms
 
-Continuous Improvement is Fractal's only Core Philosophy. Methods and Supporting Philosophies are operational components beneath it, not competing Core Philosophies.
+Continuous Improvement is Fractal's only Core Philosophy. System Review is its Protagonist Mechanism. The original five Steps and the three Values—Fatigue, Curiosity, and Greed—are its Methodologies. Project Review is its Secondary Mechanism. Deterministic Over Probabilistic and the operational Nodes described below are Mechanisms.
 
-## Fatigue
+## Deterministic Over Probabilistic
+
+Fractal uses deterministic programs for work with an exact answer: schema validation, state transitions, hashes, authority checks, routing, Work Signature capture, capability reconciliation, drift detection, and restore. Main Agent judgement begins where evidence needs interpretation, causal reasoning, trade-offs, or synthesis.
+
+## Fatigue — Value
 
 The live completion Hook captures one compact `Work Signature` per `thread_id + turn_id`. The Stop event creates the immediate lightweight record. When Codex App Server events are available, `turn/completed`, `thread/tokenUsage/updated`, and `item/completed` enrich that same record with completed, failed, or interrupted outcome, elapsed time, Token use, and compact Tool evidence. The enrichment cannot create a second record for the same turn or rewrite a final record. It does not copy prompts, conversations, Tool output, or raw work.
 
@@ -19,7 +23,7 @@ An Improvement Investigation is read-only supporting analysis. Its result goes t
 
 Structural repetition is classified before action as accidental duplication, platform projection, independent guardrail, deliberate high-risk reinforcement, drift, or distinct. Only accidental duplication and drift may become removal candidates, and they still need an isolated trial and normal approval.
 
-## Curiosity
+## Curiosity — Value
 
 Curiosity supplies three bounded research paths to Project Review through a Fatigue investigation, or to a pre-work/post-work Success Criteria Challenge:
 
@@ -29,7 +33,7 @@ Curiosity supplies three bounded research paths to Project Review through a Fati
 
 The percentages are initial effort shares, not a fabricated Token meter or a quota for findings. A latest finding needs a source and date. A related-field finding needs a concrete relationship. `No Finding` is valid, and research never adopts itself.
 
-## Greed
+## Greed — Value
 
 A `Performance Baseline` is derived only from completed, independently verified, representative Project outcomes. Missing dimensions remain unknown. The Success Criteria Challenge may propose a stronger threshold only when the baseline supports it; unsupported numerical targets are not created.
 

@@ -46,7 +46,7 @@ Status describes the architecture after this correction. **Build impact** states
 | Let long-term lack of demonstrated value support removal | Capability Check + Component History | Strengthened | Components can persist forever without evidence | Add history window and value evidence |
 | Preserve low-frequency, high-value safeguards | Capability evaluation | Strengthened | Trigger counts alone can remove safety value | Require purpose, severity, and counterfactual risk |
 | Feed Repetition, Fatigue, Curiosity, Greed, experiments, and capability evidence into Step 4 | Supporting capability routing | Strengthened | Supporting signals can form a competing loop | Add explicit destination lineage and route tests |
-| Curiosity explores adjacent or indirect ideas with structural similarity | Curiosity supporting method | Strengthened | It may collapse into ordinary bug search | Add analogy hypothesis and bounded experiment output |
+| Curiosity explores adjacent or indirect ideas with structural similarity | Curiosity Value / Methodology | Strengthened | It may collapse into ordinary bug search | Add analogy hypothesis and bounded experiment output |
 | Repetition Awareness creates investigation pressure | Fatigue / Work Signature evidence | Strengthened | Repetition may be treated as automatic waste | Preserve alternative explanations and review routing |
 | Step 5 steps back from the feeling of progress | Reality Check | Strengthened | Proposal review may be mistaken for outcome review | Add a distinct later outcome-evaluation state |
 | Ask whether Fractal improved or merely changed | Final Assessment + later evaluation | Strengthened | Passing a local test can close learning early | Require before/after and whole-system judgement |

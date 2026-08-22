@@ -1,11 +1,24 @@
 # Fractal Architecture Lineage
 
-Fractal is a self-improving agentic system with two connected time scales:
+Continuous Improvement is Fractal's sole **Core Philosophy**. It is carried by this hierarchy:
+
+```text
+Continuous Improvement
+└── System Review                         Protagonist Mechanism
+    ├── Five Steps                        Methodologies
+    ├── Fatigue, Curiosity, Greed         Methodologies: Three Values
+    ├── Project Review                    Secondary Mechanism
+    └── operational Nodes                 Mechanisms
+```
+
+The operational Mechanisms include **Deterministic Over Probabilistic**, Quantity over Quality, Subtraction First, Global Outcome Over Local Optimisation, Work Signature, Naming System, Capability Check, Hooks, component governance, Cause Research, Two-Sided Review, experiments, and Human Control.
+
+Fractal works at two connected time scales:
 
 - **Project Review** protects the trajectory of the Project that is happening now.
 - **System Review** learns from a completed Project and improves how future Projects are handled.
 
-The architecture has two layers. The **Original Fractal Backbone** preserves the reasoning sequence and the failure modes that caused Fractal to exist. **Later Mechanisms and Capabilities** implement, deepen, or support that backbone. A newer Node name does not replace the original reason.
+The **Original Fractal Backbone** preserves the reasoning sequence and the failure modes that caused Fractal to exist. Later Mechanisms implement, deepen, or support that backbone. A newer Node name does not replace the original reason.
 
 ## Project Review: protect the whole Project
 
@@ -128,7 +141,7 @@ Repetition Awareness, Fatigue, Curiosity, Greed, experiments, and Capability evi
 
 Curiosity explores useful adjacent ideas and structurally meaningful cross-domain analogies. Repetition Awareness asks whether repeated work suggests abstraction, batching, automation, an upstream repair, or avoidable duplication. Repetition creates investigation pressure rather than a predetermined conclusion.
 
-**Implemented by:** Improvement Options, Subtraction First, supporting-method evidence, experiments, and Capability evidence.
+**Implemented by:** Improvement Options, Subtraction First, evidence from the Three Values, experiments, and Capability evidence.
 
 ### 5. Reality Check
 

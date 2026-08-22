@@ -10,7 +10,20 @@ Brief -> Direction -> Research and Clarification -> Goal
 
 Fractal keeps the Project record, evidence, capabilities, and review history together so an agent can continue work without rebuilding the story from scattered files.
 
-The original reasoning and its mapping to modern Nodes are documented in [Architecture Lineage](docs/architecture-lineage.md). [Fractal in One Competition Project](docs/product-introduction.md) shows the complete behaviour through a concrete example. [Architecture Lineage Coverage](docs/architecture-lineage-coverage.md) separates preserved architecture from the runtime work that still needs a new candidate.
+Its improvement hierarchy is:
+
+```text
+Continuous Improvement                         Core Philosophy
+└── System Review                              Protagonist Mechanism
+    ├── Five Steps                             Methodologies
+    ├── Fatigue, Curiosity, Greed              Methodologies: Three Values
+    ├── Project Review                         Secondary Mechanism
+    └── Deterministic Over Probabilistic,
+        Work Signature, Naming System,
+        Capability Check, Hooks, and others    Mechanisms
+```
+
+The original reasoning and its mapping to modern Nodes are documented in [Architecture Lineage](docs/architecture-lineage.md). [Agentic Element Map](docs/agentic-element-map.md) shows which parts belong to the Main Agent, Skills, Hooks, Subagents, MCP, Plugins, and deterministic programs. [Fractal in One Competition Project](docs/product-introduction.md) shows the complete behaviour through a concrete example. [Architecture Lineage Coverage](docs/architecture-lineage-coverage.md) separates preserved architecture from the runtime work that still needs a new candidate.
 
 The public repository contains only reusable architecture, schemas, deterministic programs, tests, and documentation. Personal state, private policies, credentials, conversations, and runtime evidence belong outside this repository.
 
