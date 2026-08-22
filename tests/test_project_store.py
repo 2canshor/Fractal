@@ -143,6 +143,17 @@ def test_ordinary_write_cannot_approve_decision(
         )
 
 
+def test_ordinary_create_cannot_claim_completed_state(store: ProjectStore) -> None:
+    record = ProjectRecord(
+        project_id="completed-project",
+        title="Completed Project",
+        system_version="0.1.0-alpha.1",
+        status="completed",
+    )
+    with pytest.raises(AuthorityError, match="Completion"):
+        store.create(record, actor="agent-a", platform="platform-a")
+
+
 def test_tampered_record_fails_integrity_check(
     store: ProjectStore, project: ProjectRecord
 ) -> None:

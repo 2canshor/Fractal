@@ -111,9 +111,18 @@ class ProjectStore:
         self.project_root.mkdir(parents=True, exist_ok=True)
         self.runtime_root.mkdir(parents=True, exist_ok=True)
 
-    def create(self, record: ProjectRecord, *, actor: str, platform: str) -> ProjectRecord:
+    def create(
+        self,
+        record: ProjectRecord,
+        *,
+        actor: str,
+        platform: str,
+        authority_write: bool = False,
+    ) -> ProjectRecord:
         """Create a new stable Project identity and verify its read-back."""
         _validate_project_id(record.project_id)
+        if not authority_write:
+            self._guard_initial_authority(record)
         with self._project_lock(record.project_id):
             if self._record_path(record.project_id).exists():
                 raise ProjectAlreadyExistsError(record.project_id)
@@ -318,6 +327,15 @@ class ProjectStore:
                 raise AuthorityError(
                     "Decision approval or rejection requires an authority action"
                 )
+
+    @staticmethod
+    def _guard_initial_authority(record: ProjectRecord) -> None:
+        if record.status == "completed" or any(record.completion.values()):
+            raise AuthorityError("Project Completion requires an authority action")
+        if record.direction.get("status") == "confirmed":
+            raise AuthorityError("Project Direction confirmation requires an authority action")
+        if any(item.get("status") in {"approved", "rejected"} for item in record.decisions):
+            raise AuthorityError("Decision approval or rejection requires an authority action")
 
     @contextmanager
     def _project_lock(self, project_id: str) -> Iterator[None]:
