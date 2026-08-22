@@ -256,8 +256,14 @@ class AdapterBuilder:
             self._write_json(destination / "hooks.json", hooks)
             self._write_text(
                 destination / "agents" / "fractal-verifier.toml",
-                'name = "Fractal Verifier"\n'
-                'description = "Fresh-context read-only acceptance checker."\n',
+                'name = "fractal_verifier"\n'
+                'description = "Fresh-context read-only acceptance checker."\n'
+                'sandbox_mode = "read-only"\n'
+                'developer_instructions = """\n'
+                "Verify the stated acceptance criteria against fresh evidence.\n"
+                "Do not edit, repair, or reinterpret the deliverable.\n"
+                "Return a concise pass or fail result with the observed evidence.\n"
+                '"""\n',
             )
         elif platform == "claude":
             context = "~/.claude/fractal/context.json"

@@ -4,6 +4,7 @@ import io
 import json
 import shutil
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -123,6 +124,10 @@ def test_metadata_first_projection_and_platform_specific_outputs(tmp_path: Path)
     hooks = json.loads((codex / "hooks.json").read_text())
     command = hooks["hooks"]["SessionStart"][0]["hooks"][0]["command"]
     assert command.startswith("'/runtime with spaces/bin/python'")
+    agent = tomllib.loads((codex / "agents" / "fractal-verifier.toml").read_text())
+    assert agent["name"] == "fractal_verifier"
+    assert agent["sandbox_mode"] == "read-only"
+    assert "Do not edit" in agent["developer_instructions"]
     assert (tmp_path / "build" / "claude" / "settings.fragment.json").is_file()
     assert list((tmp_path / "build" / "cowork" / "skill-packages").glob("*.skill"))
     gemini_metadata = json.loads(
