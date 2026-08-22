@@ -128,7 +128,14 @@ def test_metadata_first_projection_and_platform_specific_outputs(tmp_path: Path)
     assert agent["name"] == "fractal_verifier"
     assert agent["sandbox_mode"] == "read-only"
     assert "Do not edit" in agent["developer_instructions"]
-    assert (tmp_path / "build" / "claude" / "settings.fragment.json").is_file()
+    claude = tmp_path / "build" / "claude"
+    assert (claude / "settings.fragment.json").is_file()
+    claude_agent = (claude / "agents" / "fractal-verifier.md").read_text()
+    assert claude_agent.startswith("---\nname: fractal-verifier\n")
+    assert "description: Fresh-context acceptance checker" in claude_agent
+    assert "tools: Read, Grep, Glob, Bash" in claude_agent
+    assert "permissionMode: plan" in claude_agent
+    assert "Do not edit" in claude_agent
     assert list((tmp_path / "build" / "cowork" / "skill-packages").glob("*.skill"))
     gemini_metadata = json.loads(
         (tmp_path / "build" / "gemini" / "fractal" / "capability-metadata.json").read_text()

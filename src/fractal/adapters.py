@@ -292,8 +292,16 @@ class AdapterBuilder:
             self._write_json(destination / "settings.fragment.json", fragment)
             self._write_text(
                 destination / "agents" / "fractal-verifier.md",
+                "---\n"
+                "name: fractal-verifier\n"
+                "description: Fresh-context acceptance checker for completed work.\n"
+                "tools: Read, Grep, Glob, Bash\n"
+                "permissionMode: plan\n"
+                "---\n\n"
                 "# Fractal Verifier\n\n"
-                "Read-only fresh-context acceptance checker. Never patch the deliverable.\n",
+                "Verify the stated acceptance criteria against fresh evidence.\n"
+                "Do not edit, repair, or reinterpret the deliverable.\n"
+                "Return a concise pass or fail result with the observed evidence.\n",
             )
 
     def _root_router(self, platform: str) -> str:
