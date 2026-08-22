@@ -741,7 +741,10 @@ def observe_platform_components(
         if kind == "skill" and target:
             path = Path(target).expanduser()
             if not path.is_absolute():
-                path = home / target
+                if platform == "gemini" and path.parts[0] == "skills":
+                    path = home / "config" / path
+                else:
+                    path = home / target
             if path.exists():
                 if (
                     platform == "claude"
@@ -759,7 +762,7 @@ def observe_platform_components(
                 )
                 add(component, digest)
 
-    skills_root = home / "skills"
+    skills_root = home / ("config/skills" if platform == "gemini" else "skills")
     if skills_root.is_dir():
         known_by_name = {
             Path(component["projection"]["target"]).name: component

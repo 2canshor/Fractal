@@ -256,3 +256,25 @@ def test_live_platform_surface_is_registered_and_extra_item_drifts(tmp_path: Pat
     )
     audit = audit_component_drift(registry, drifted["components"], platform="claude")
     assert audit["unmanaged"] == ["tool-claude-write"]
+
+
+def test_gemini_observes_generated_skills_in_config_directory(tmp_path: Path) -> None:
+    live = tmp_path / "gemini" / "config" / "skills" / "research"
+    live.mkdir(parents=True)
+    (live / "SKILL.md").write_text("governed research")
+    research = component("research")
+    research["platforms"] = ["gemini"]
+    research["projection"]["expected_sha256"] = tree_sha256(live)
+    registry = load_component_registry(
+        write_registry(tmp_path / "registry.json", [research])
+    )
+    tools = tmp_path / "tools.json"
+    tools.write_text(json.dumps({"platform_version": "test", "tools": []}))
+    observed = observe_platform_components(
+        registry,
+        platform="gemini",
+        platform_home=tmp_path / "gemini",
+        tool_snapshot_path=tools,
+        configured_mcp=[],
+    )
+    assert [item["component_id"] for item in observed["components"]] == ["research"]
