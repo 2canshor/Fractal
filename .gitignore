@@ -12,6 +12,7 @@ build/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+*.lock
 .env
 .env.*
 !.env.example

@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/2canshor/fractal/schemas/project-record.schema.json",
+  "title": "Fractal Project Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "project_id",
+    "title",
+    "status",
+    "system_version",
+    "revision",
+    "created_at",
+    "updated_at",
+    "direction",
+    "plan",
+    "decisions",
+    "evidence",
+    "progress",
+    "provenance",
+    "requests",
+    "completion"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "record_type": {"const": "project"},
+    "project_id": {"$ref": "#/$defs/id"},
+    "title": {"type": "string", "minLength": 1},
+    "status": {
+      "enum": ["planning", "in_progress", "awaiting_completion", "completed", "blocked"]
+    },
+    "system_version": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 0},
+    "created_at": {"$ref": "#/$defs/timestamp"},
+    "updated_at": {"$ref": "#/$defs/timestamp"},
+    "direction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "status", "confirmed_at"],
+      "properties": {
+        "summary": {"type": "string"},
+        "status": {"enum": ["provisional", "confirmed"]},
+        "confirmed_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]}
+      }
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["criteria_version", "current_phase", "items"],
+      "properties": {
+        "criteria_version": {"type": "integer", "minimum": 1},
+        "current_phase": {"type": ["integer", "null"], "minimum": 0},
+        "items": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/plan_item"}
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/decision"}
+    },
+    "evidence": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/evidence"}
+    },
+    "progress": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/progress"}
+    },
+    "provenance": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/provenance"}
+    },
+    "requests": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/request"}
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requested_at", "completed_at", "completed_by"],
+      "properties": {
+        "requested_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+        "completed_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+        "completed_by": {"type": ["string", "null"]}
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "plan_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "summary", "status", "evidence_ids"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "summary": {"type": "string", "minLength": 1},
+        "status": {"enum": ["pending", "in_progress", "completed", "blocked"]},
+        "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "subject", "status", "decision", "reason", "authority", "evidence_ids", "recorded_at"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "subject": {"type": "string", "minLength": 1},
+        "status": {"enum": ["proposed", "open", "approved", "rejected", "deferred"]},
+        "decision": {"type": ["string", "object", "array", "number", "boolean", "null"]},
+        "reason": {"type": "string"},
+        "authority": {"type": "string", "minLength": 1},
+        "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+        "recorded_at": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "claim", "source", "observed_at", "sha256"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"enum": ["command", "test", "file", "remote", "observation", "approval", "research"]},
+        "claim": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "observed_at": {"$ref": "#/$defs/timestamp"},
+        "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "summary", "status", "occurred_at", "evidence_ids"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "summary": {"type": "string", "minLength": 1},
+        "status": {"enum": ["started", "succeeded", "failed", "deviated", "blocked"]},
+        "occurred_at": {"$ref": "#/$defs/timestamp"},
+        "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "summary", "source", "source_sha256", "recorded_at"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"enum": ["pre_runtime_import", "runtime_native"]},
+        "summary": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "source_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "recorded_at": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "status", "path", "base_value", "current_value", "proposed_value", "created_at"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "request_decision"},
+        "status": {"enum": ["pending", "resolved", "cancelled"]},
+        "path": {"type": "string", "pattern": "^/"},
+        "base_value": {},
+        "current_value": {},
+        "proposed_value": {},
+        "created_at": {"$ref": "#/$defs/timestamp"}
+      }
+    }
+  }
+}
