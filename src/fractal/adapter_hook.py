@@ -17,7 +17,10 @@ def handle_hook(event: str, context: dict[str, Any], payload: dict[str, Any]) ->
         summary = (
             f"Fractal {context['system_version']}; active Project {project['project_id']} "
             f"is {project['status']} at revision {project['revision']} and Phase "
-            f"{project['current_phase']}. Use canonical state and the stated authority policy."
+            f"{project['current_phase']}. Legacy removal is "
+            f"{'enabled' if context['authority']['legacy_removal_enabled'] else 'disabled'} "
+            f"with {len(context['protected_legacy_roots'])} protected legacy roots. "
+            "Use canonical state and the stated authority policy."
         )
         return {
             "hookSpecificOutput": {

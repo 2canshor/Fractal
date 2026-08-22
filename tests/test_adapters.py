@@ -158,7 +158,9 @@ def test_session_hook_and_protected_legacy_guard() -> None:
         "authority": {"legacy_removal_enabled": False},
     }
     session = handle_hook("session-start", context, {"source": "startup"})
-    assert "project-a" in session["hookSpecificOutput"]["additionalContext"]
+    session_context = session["hookSpecificOutput"]["additionalContext"]
+    assert "project-a" in session_context
+    assert "Legacy removal is disabled with 1 protected legacy roots" in session_context
     blocked = handle_hook(
         "pre-tool-use",
         context,
@@ -182,6 +184,11 @@ def test_final_cutover_context_removes_the_legacy_guard(tmp_path: Path) -> None:
     )
     assert context["protected_legacy_roots"] == []
     assert context["authority"]["legacy_removal_enabled"] is True
+    session = handle_hook("session-start", context, {"source": "startup"})
+    assert (
+        "Legacy removal is enabled with 0 protected legacy roots"
+        in session["hookSpecificOutput"]["additionalContext"]
+    )
 
 
 def test_hook_cli_expands_home_context(
