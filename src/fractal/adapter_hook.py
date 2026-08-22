@@ -64,7 +64,8 @@ def handle_hook(event: str, context: dict[str, Any], payload: dict[str, Any]) ->
         root in serialized or _home_abbreviation(root) in serialized for root in managed_roots
     )
     supported_route = re.search(
-        r"(?:^|\s)(?:fractal|python(?:3)?\s+-m\s+fractal\.cli)\s+components\s+install-candidate(?:\s|$)",
+        r"(?:^|[\s\"'])(?:(?:[^\"']*/)?fractal|python(?:3)?\s+-m\s+fractal\.cli)"
+        r"[\"']?\s+components\s+install-candidate(?:\s|$)",
         serialized,
     )
     if write_like and targets_managed_root and not supported_route:

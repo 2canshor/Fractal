@@ -267,6 +267,20 @@ def test_session_hook_and_protected_legacy_guard() -> None:
         {"tool_input": {"command": "rg pattern /synthetic/legacy"}},
     )
     assert "permissionDecision" not in allowed["hookSpecificOutput"]
+    exact_candidate_path = handle_hook(
+        "pre-tool-use",
+        context,
+        {
+            "tool_input": {
+                "command": (
+                    "'/opt/Fractal Candidate/runtime/"
+                    "system/0.1.0-alpha.2/venv/bin/fractal' components "
+                    "install-candidate --home ~/.codex"
+                )
+            }
+        },
+    )
+    assert "permissionDecision" not in exact_candidate_path["hookSpecificOutput"]
 
 
 def test_direct_component_install_is_denied_outside_governed_route() -> None:
