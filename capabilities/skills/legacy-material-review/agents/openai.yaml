@@ -1,0 +1,4 @@
+interface:
+  display_name: "Legacy Material Review"
+  short_description: "Rebuild useful legacy meaning safely"
+  default_prompt: "Use $legacy-material-review to decide what to rebuild, merge, reject, or remove."

@@ -1,0 +1,176 @@
+{
+  "record_type": "capability-registry",
+  "record_version": 1,
+  "capabilities": [
+    {
+      "capability_id": "capability-development",
+      "human_name": "Capability Development",
+      "owner": "fractal",
+      "source": "capabilities/skills/capability-development",
+      "version": "0.1.0",
+      "classification": "canonical",
+      "supported_platforms": ["claude", "codex", "cowork", "gemini"],
+      "permissions": ["read", "write-candidate", "run-isolated-eval"],
+      "secret_requirements": [],
+      "overlap": [],
+      "status": {
+        "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
+        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-routing-eval"]}
+      }
+    },
+    {
+      "capability_id": "clarification",
+      "human_name": "Clarification",
+      "owner": "fractal",
+      "source": "capabilities/skills/clarification",
+      "version": "0.1.0",
+      "classification": "canonical",
+      "supported_platforms": ["claude", "codex", "cowork", "gemini"],
+      "permissions": ["read", "ask-primary-user"],
+      "secret_requirements": [],
+      "overlap": [],
+      "status": {
+        "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
+        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-routing-eval"]}
+      }
+    },
+    {
+      "capability_id": "delegation-workflow",
+      "human_name": "Delegation Workflow",
+      "owner": "fractal",
+      "source": "capabilities/skills/delegation-workflow",
+      "version": "0.1.0",
+      "classification": "adapter-only",
+      "supported_platforms": ["claude", "codex"],
+      "permissions": ["dispatch-within-approved-scope"],
+      "secret_requirements": [],
+      "overlap": [],
+      "status": {
+        "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
+        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-routing-eval"]}
+      }
+    },
+    {
+      "capability_id": "interface-design",
+      "human_name": "Interface Design",
+      "owner": "fractal",
+      "source": "capabilities/skills/interface-design",
+      "version": "0.1.0",
+      "classification": "canonical",
+      "supported_platforms": ["claude", "codex", "cowork", "gemini"],
+      "permissions": ["read", "write-in-scope-interface", "run-local-preview"],
+      "secret_requirements": [],
+      "overlap": ["platform-figma", "platform-sites"],
+      "status": {
+        "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
+        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-design-overlap-eval"]}
+      }
+    },
+    {
+      "capability_id": "legacy-material-review",
+      "human_name": "Legacy Material Review",
+      "owner": "fractal",
+      "source": "capabilities/skills/legacy-material-review",
+      "version": "0.1.0",
+      "classification": "canonical",
+      "supported_platforms": ["claude", "codex", "cowork", "gemini"],
+      "permissions": ["read-selected-legacy", "write-candidate-record"],
+      "secret_requirements": [],
+      "overlap": [],
+      "status": {
+        "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
+        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "execution": {"state": "verified-live", "evidence_ids": ["phase-8-legacy-review"]}
+      }
+    },
+    {
+      "capability_id": "naming-system",
+      "human_name": "Naming System",
+      "owner": "fractal",
+      "source": "capabilities/skills/naming-system",
+      "version": "0.1.0",
+      "classification": "canonical",
+      "supported_platforms": ["claude", "codex", "cowork", "gemini"],
+      "permissions": ["read", "propose-name", "run-name-check"],
+      "secret_requirements": [],
+      "overlap": [],
+      "status": {
+        "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
+        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-name-check"]}
+      }
+    },
+    {
+      "capability_id": "research",
+      "human_name": "Research",
+      "owner": "fractal",
+      "source": "capabilities/skills/research",
+      "version": "0.1.0",
+      "classification": "canonical",
+      "supported_platforms": ["claude", "codex", "cowork", "gemini"],
+      "permissions": ["read-local", "read-web"],
+      "secret_requirements": [],
+      "overlap": ["third-party-firecrawl", "platform-web-search"],
+      "status": {
+        "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
+        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-routing-eval"]}
+      }
+    },
+    {
+      "capability_id": "system-review",
+      "human_name": "System Review",
+      "owner": "fractal",
+      "source": "capabilities/skills/system-review",
+      "version": "0.1.0",
+      "classification": "canonical",
+      "supported_platforms": ["claude", "codex", "cowork", "gemini"],
+      "permissions": ["read-review-snapshot", "write-proposal"],
+      "secret_requirements": [],
+      "overlap": [],
+      "status": {
+        "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
+        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-7-system-review"]}
+      }
+    },
+    {
+      "capability_id": "web-operations",
+      "human_name": "Web Operations",
+      "owner": "fractal",
+      "source": "capabilities/skills/web-operations",
+      "version": "0.1.0",
+      "classification": "adapter-only",
+      "supported_platforms": ["claude", "codex", "cowork", "gemini"],
+      "permissions": ["read-web", "external-action-with-scope-matched-authority"],
+      "secret_requirements": ["provider-specific-secret-reference"],
+      "overlap": ["third-party-firecrawl", "platform-browser"],
+      "status": {
+        "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
+        "activation_authority": {"state": "blocked", "authority": "system-version-and-action-scope", "evidence_ids": ["credential-rotation-open"]},
+        "execution": {"state": "not-run", "evidence_ids": []}
+      }
+    },
+    {
+      "capability_id": "writing-authenticity",
+      "human_name": "Writing Authenticity",
+      "owner": "fractal",
+      "source": "capabilities/skills/writing-authenticity",
+      "version": "0.1.0",
+      "classification": "canonical",
+      "supported_platforms": ["claude", "codex", "cowork", "gemini"],
+      "permissions": ["read", "edit-in-scope-prose", "read-relevant-private-profile"],
+      "secret_requirements": [],
+      "overlap": [],
+      "status": {
+        "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
+        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-routing-eval"]}
+      }
+    }
+  ]
+}

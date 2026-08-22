@@ -1,0 +1,4 @@
+interface:
+  display_name: "Naming System"
+  short_description: "Choose semantic names and check syntax"
+  default_prompt: "Use $naming-system to classify and verify the names in this change."

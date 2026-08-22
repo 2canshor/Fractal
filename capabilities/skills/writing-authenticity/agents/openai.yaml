@@ -1,0 +1,4 @@
+interface:
+  display_name: "Writing Authenticity"
+  short_description: "Remove AI tells without changing authorship"
+  default_prompt: "Use $writing-authenticity to make this prose natural while preserving its author and meaning."

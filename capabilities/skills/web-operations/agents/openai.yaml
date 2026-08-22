@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web Operations"
+  short_description: "Run guarded interactive and monitored web work"
+  default_prompt: "Use $web-operations to plan this web interaction within the approved authority."

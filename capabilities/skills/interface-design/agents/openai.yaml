@@ -1,0 +1,4 @@
+interface:
+  display_name: "Interface Design"
+  short_description: "Direct, build, and review intentional interfaces"
+  default_prompt: "Use $interface-design to choose the right design mode and produce a verified interface."

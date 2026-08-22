@@ -1,0 +1,4 @@
+interface:
+  display_name: "Delegation Workflow"
+  short_description: "Hand off bounded work with independent verification"
+  default_prompt: "Use $delegation-workflow to hand off this approved bounded implementation task."

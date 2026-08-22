@@ -1,0 +1,4 @@
+interface:
+  display_name: "Capability Development"
+  short_description: "Build capabilities with observable evals"
+  default_prompt: "Use $capability-development to build or revise this capability with evidence."

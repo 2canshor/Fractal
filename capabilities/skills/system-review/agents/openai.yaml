@@ -1,0 +1,4 @@
+interface:
+  display_name: "System Review"
+  short_description: "Review completed Projects for system changes"
+  default_prompt: "Use $system-review to review this completed Project without forcing a change."

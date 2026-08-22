@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clarification"
+  short_description: "Resolve consequential unknowns with evidence"
+  default_prompt: "Use $clarification to resolve the material unknowns in this task."
