@@ -459,7 +459,8 @@ class AdapterBuilder:
                 'developer_instructions = """\n'
                 "Use only the compact Work Signatures and bounded evidence supplied.\n"
                 "Compare alternatives without changing Project or System state.\n"
-                "Return candidate findings to Project Review or System Review as directed.\n"
+                "Return candidate findings to Project Review; mark system observations "
+                "for later System Review.\n"
                 '"""\n',
             )
         elif platform == "claude":
@@ -551,7 +552,8 @@ class AdapterBuilder:
                 "# Improvement Researcher\n\n"
                 "Use only the compact Work Signatures and bounded evidence supplied.\n"
                 "Compare alternatives without changing Project or System state.\n"
-                "Return candidate findings to Project Review or System Review as directed.\n",
+                "Return candidate findings to Project Review; mark system observations "
+                "for later System Review.\n",
             )
 
     def _claude_model_route(self) -> dict[str, Any] | None:

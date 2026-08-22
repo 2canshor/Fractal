@@ -7,7 +7,7 @@
       "id": "continuous-improvement",
       "human_name": "Continuous Improvement",
       "decision_status": "architecture-baseline",
-      "intent": "Use observed Project outcomes to review and improve the system without forcing mutation.",
+      "intent": "Protect an active Project through Project Review, then learn from the completed Project through System Review.",
       "provenance": "revision-8-architecture-baseline",
       "operational_mapping": [
         "project-evidence",

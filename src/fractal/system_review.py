@@ -33,7 +33,9 @@ SYSTEM_REVIEW_STAGES = [
     "global-effect",
     "two-sided-review",
     "final-assessment",
+    "biggest-remaining-concern",
     "result",
+    "your-decision",
 ]
 
 
@@ -150,6 +152,8 @@ def record_system_review_stage(
     stage: str,
     result: dict[str, Any],
     evidence_ids: list[str],
+    actor: str | None = None,
+    human_action: bool = False,
 ) -> dict[str, Any]:
     """Record exactly one next stage in the required order."""
     updated = copy.deepcopy(review)
@@ -161,8 +165,9 @@ def record_system_review_stage(
         raise SystemReviewError(f"Expected stage {expected}, received {stage}")
     if not result:
         raise SystemReviewError("A System Review stage requires an observed result")
-    if stage == "final-assessment" and result.get("synthesised_by") != "main-agent":
-        raise SystemReviewError("Only the Main Agent can make the final System Review suggestion")
+    _validate_system_review_stage(stage, result)
+    if stage == "your-decision" and (actor != "primary-user" or not human_action):
+        raise AuthorityError("Your Decision requires the primary user")
     updated["stages"].append(
         {
             "stage": stage,
@@ -172,15 +177,85 @@ def record_system_review_stage(
         }
     )
     if stage == "result":
-        outcome = result.get("outcome")
-        if outcome not in {"no-change", "change-proposal"}:
-            raise SystemReviewError("System Review result must be No Change or Change Proposal")
-        if outcome == "change-proposal" and not result.get("proposal_id"):
-            raise SystemReviewError("Change Proposal result requires a proposal id")
-        updated["status"] = "completed"
+        updated["status"] = "awaiting-primary-user-decision"
         updated["result"] = copy.deepcopy(result)
+    if stage == "your-decision":
+        updated["status"] = "completed"
+        updated["decision"] = copy.deepcopy(result)
         updated["completed_at"] = utc_now()
     return updated
+
+
+def _validate_system_review_stage(stage: str, result: dict[str, Any]) -> None:
+    """Fail closed when a core review stage omits its defining evidence."""
+    if stage == "project-assessment":
+        for field in ("what_went_well", "what_could_be_better"):
+            value = result.get(field)
+            if not isinstance(value, list) or not value:
+                raise SystemReviewError(
+                    "Project Assessment requires what went well and what could be better"
+                )
+    elif stage == "issue-scan":
+        if result.get("scan_mode") != "high-recall" or not isinstance(
+            result.get("observations"), list
+        ):
+            raise SystemReviewError(
+                "Issue Scan requires a high-recall observation list before prioritisation"
+            )
+    elif stage == "cross-project-patterns":
+        if result.get("history_status") not in {"sufficient", "insufficient"}:
+            raise SystemReviewError(
+                "Cross-Project Patterns must state whether history is sufficient"
+            )
+    elif stage == "cause-research":
+        status = result.get("status")
+        if status not in {"completed", "not-needed"}:
+            raise SystemReviewError("Cause Research must be completed or explicitly not needed")
+        if status == "completed" and result.get("independent_branches_verified") is not True:
+            raise SystemReviewError(
+                "Cause Research requires independently verified external and internal branches"
+            )
+    elif stage == "two-sided-review":
+        if result.get("status") not in {"completed", "not-warranted"}:
+            raise SystemReviewError(
+                "Two-Sided Review must be completed or explicitly not warranted"
+            )
+        if (
+            result.get("status") == "completed"
+            and result.get("independent_cases_verified") is not True
+        ):
+            raise SystemReviewError("Case For and Case Against must be independently verified")
+    elif stage == "final-assessment":
+        if result.get("synthesised_by") != "main-agent":
+            raise SystemReviewError(
+                "Only the Main Agent can make the final System Review suggestion"
+            )
+        if not result.get("recommendation") or not result.get("confidence"):
+            raise SystemReviewError("Final Assessment requires a recommendation and confidence")
+    elif stage == "biggest-remaining-concern":
+        if not str(result.get("summary", "")).strip():
+            raise SystemReviewError("Biggest Remaining Concern requires a concrete summary")
+    elif stage == "result":
+        outcome = result.get("outcome")
+        allowed = {
+            "change-proposal",
+            "experiment",
+            "need-more-evidence",
+            "no-change",
+        }
+        if outcome not in allowed:
+            raise SystemReviewError(
+                "System Review result must be Change Proposal, Experiment, "
+                "Need More Evidence, or No Change"
+            )
+        if outcome == "change-proposal" and not result.get("proposal_id"):
+            raise SystemReviewError("Change Proposal result requires a proposal id")
+    elif stage == "your-decision" and result.get("decision") not in {
+        "accept-result",
+        "reject-result",
+        "give-feedback",
+    }:
+        raise SystemReviewError("Your Decision must accept the result, reject it, or give feedback")
 
 
 def order_improvement_options(options: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -294,16 +369,30 @@ def review_feedback(
     feedback: str,
     source: str,
     accepted_scope: str | None,
+    supporting_reasons: list[str],
+    challenging_reasons: list[str],
+    updated_final_assessment: str,
+    biggest_remaining_concern: str,
 ) -> dict[str, Any]:
-    """Keep feedback as evidence until its exact accepted scope is known."""
+    """Evaluate feedback from both sides and return it to Your Decision."""
+    if not feedback.strip() or not updated_final_assessment.strip():
+        raise SystemReviewError("Feedback Review requires feedback and an updated assessment")
+    if not supporting_reasons or not challenging_reasons:
+        raise SystemReviewError("Feedback Review requires supporting and challenging reasons")
+    if not biggest_remaining_concern.strip():
+        raise SystemReviewError("Feedback Review requires the biggest remaining concern")
     return {
         "record_type": "feedback-review",
         "feedback": feedback,
         "source": source,
         "instruction_authority": "accepted" if accepted_scope else "evidence-only",
         "accepted_scope": accepted_scope,
+        "supporting_reasons": list(supporting_reasons),
+        "challenging_reasons": list(challenging_reasons),
+        "updated_final_assessment": updated_final_assessment.strip(),
+        "biggest_remaining_concern": biggest_remaining_concern.strip(),
         "automatic_system_change": False,
-        "next_route": "apply-within-accepted-scope" if accepted_scope else "project-review",
+        "next_route": "your-decision",
     }
 
 

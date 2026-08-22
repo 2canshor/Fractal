@@ -14,7 +14,7 @@ The initial source lives under `capabilities/skills`. Each Skill uses concise di
 
 Legacy design selectors were merged into `Interface Design` because routing evals showed that direction, build, reference, and review are modes of the same user intent. Read-only web discovery and retrieval belong to `Research`; interactive or persistent external effects belong to separately authorised `Web Operations`.
 
-No plugin family is created in the initial version. The ten sources do not yet need to be installed, disabled, or versioned as one bundle, and the routing eval supplies no evidence that a family would improve selection.
+No plugin family is created in the initial version. The canonical Skills do not need to be installed, disabled, or versioned as one bundle, and the routing eval supplies no evidence that a family would improve selection.
 
 ## Authority
 

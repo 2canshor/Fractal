@@ -1,6 +1,14 @@
-# Project Lifecycle and Human Control
+# Project Lifecycle and Project Review
 
-Fractal treats a formal Project as a versioned state machine. Work evidence can move progress forward, but it cannot silently move the Goal, approve Success Criteria, or declare completion.
+Fractal turns an initial request into a formal Project through this visible path:
+
+```text
+Brief -> Project Direction -> Background Research <-> Clarification
+      -> Goal -> Success Criteria + Priorities -> Project Plan
+      -> Project Work <-> Project Review -> Project Completion
+```
+
+The Project record is versioned, so its current position and earlier Plans remain readable.
 
 ## Direction Confirmation
 
@@ -15,11 +23,28 @@ They remain `provisional` until a typed primary-user action confirms them. A lat
 
 ## Review
 
-A `Review Point` opens for a checkpoint, risk, material deviation, failure, or human request. A `Project Review` records the hash of the whole canonical Project, its conclusion, confidence, Plan delta, evidence, and Biggest Remaining Concern. It closes open Review Points only after that whole-Project record exists.
+A `Review Point` opens in either of two ways:
+
+- a **milestone**, such as completing background research or a prototype;
+- an **exception**, such as a material deviation, risk, failure, or human correction.
+
+The trigger identifies why the review starts. The review then checks the whole Project across nine dimensions:
+
+1. Project Direction;
+2. Goal;
+3. Success Criteria;
+4. priorities;
+5. Project Plan;
+6. progress and evidence;
+7. risks and deviations;
+8. resources and deadline;
+9. remaining work.
+
+The result records the Project snapshot, Review Points, conclusion, confidence, Plan delta, evidence, and Biggest Remaining Concern. Supporting signals from Fatigue, Curiosity, Greed, Work Signatures, research, or tests enter as evidence. Project Review makes the current-Project decision.
 
 ## Plan History
 
-Every Plan update records a reason, materiality, before and after hashes, and authority. Routine execution details may update inside approved scope. A material Goal, criteria, priority, scope, risk, or delivery change requires the primary user.
+Every Plan update records its reason, materiality, readable before and after snapshots, hashes, and authority. Routine work inside the approved outcome can update the Plan. A proposed Goal or Success Criteria change becomes a request for the primary user. Observations about Fractal itself stay attached as later System Review evidence.
 
 ## Completion
 

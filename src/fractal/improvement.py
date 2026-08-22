@@ -181,6 +181,7 @@ class RepetitionRecognition:
     confidence: str
     route: str
     evidence_work_ids: tuple[str, ...]
+    supporting_action: str | None = None
 
 
 def recognise_repetition(
@@ -213,8 +214,9 @@ def recognise_repetition(
             "investigation-required",
             count,
             "high",
-            "improvement-researcher",
+            "project-review",
             evidence,
+            "improvement-researcher",
         )
     if count == 2:
         return RepetitionRecognition(
@@ -362,7 +364,9 @@ def build_improvement_investigation(
         "research": combine_curiosity_findings("improvement-investigation", findings),
         "record_status": "candidate-analysis",
         "automatic_change": False,
-        "next_route": "system-review" if persistent_scope else "project-review",
+        "persistent_system_observation": persistent_scope,
+        "later_system_review_evidence": persistent_scope,
+        "next_route": "project-review",
     }
 
 
@@ -396,10 +400,7 @@ def classify_structural_repetition(
     elif same_source and first.platform != second.platform:
         classification = "platform-projection"
     elif (
-        same_responsibility
-        and first.guardrail
-        and second.guardrail
-        and first.layer != second.layer
+        same_responsibility and first.guardrail and second.guardrail and first.layer != second.layer
     ):
         classification = "independent-guardrail"
     elif (
@@ -556,9 +557,7 @@ def build_performance_baseline(
         chooser = min if direction == "minimize" else max
         best_value = chooser(value["value"] for _, value in observations)
         provenance = [
-            project_id
-            for project_id, value in observations
-            if value["value"] == best_value
+            project_id for project_id, value in observations if value["value"] == best_value
         ]
         sample = observations[0][1]
         metrics[dimension] = {

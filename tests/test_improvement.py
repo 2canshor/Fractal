@@ -87,6 +87,8 @@ def test_repetition_trigger_and_necessary_repetition_rules() -> None:
     result = recognise_repetition([first, second], third)
     assert result.status == "investigation-required"
     assert result.occurrence_count == 3
+    assert result.route == "project-review"
+    assert result.supporting_action == "improvement-researcher"
     assert recognise_repetition([first], second, high_avoidable_cost=True).status == (
         "investigation-required"
     )
@@ -185,7 +187,8 @@ def test_investigation_is_candidate_analysis_and_routes_by_scope() -> None:
         persistent_scope=True,
         findings=[],
     )
-    assert persistent["next_route"] == "system-review"
+    assert persistent["next_route"] == "project-review"
+    assert persistent["later_system_review_evidence"] is True
 
 
 def shape(

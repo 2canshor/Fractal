@@ -269,6 +269,7 @@ def capture_work_completion(
             "confidence": recognition.confidence,
             "route": recognition.route,
             "evidence_work_ids": list(recognition.evidence_work_ids),
+            "supporting_action": recognition.supporting_action,
         },
         "evaluated_at": utc_now(),
     }

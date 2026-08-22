@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Review"
+  short_description: "Review an active Project as a whole"
+  default_prompt: "Use $project-review to review this active Project after the current milestone."

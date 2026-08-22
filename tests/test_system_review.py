@@ -59,21 +59,49 @@ def safe_boundary(**overrides: bool) -> TrialBoundary:
     return TrialBoundary(**values)
 
 
+def stage_result(stage: str) -> dict:
+    values = {
+        "project-assessment": {
+            "what_went_well": ["The approved outcome was achieved"],
+            "what_could_be_better": ["One verification step was repeated"],
+        },
+        "issue-scan": {
+            "scan_mode": "high-recall",
+            "observations": ["Repeated verification", "Late restore proof"],
+        },
+        "cross-project-patterns": {
+            "history_status": "insufficient",
+            "summary": "Only one comparable Project exists",
+        },
+        "cause-research": {"status": "not-needed", "reason": "Cause is directly observed"},
+        "two-sided-review": {
+            "status": "not-warranted",
+            "reason": "No consequential proposal",
+        },
+        "final-assessment": {
+            "recommendation": "no-change",
+            "confidence": "high",
+            "synthesised_by": "main-agent",
+        },
+        "biggest-remaining-concern": {
+            "summary": "There is only one completed Project in the comparison set"
+        },
+        "result": {"outcome": "no-change", "reason": "Mutation lacks evidence"},
+        "your-decision": {"decision": "accept-result"},
+    }
+    return values.get(stage, {"summary": f"Observed {stage}"})
+
+
 def test_full_system_review_accepts_no_change_as_a_real_result() -> None:
     review = start_system_review(completed_project())
     for stage in SYSTEM_REVIEW_STAGES:
-        result = {"summary": f"Observed {stage}"}
-        if stage == "two-sided-review":
-            result = {"status": "not-warranted", "reason": "No consequential proposal"}
-        if stage == "final-assessment":
-            result = {"suggestion": "no-change", "synthesised_by": "main-agent"}
-        if stage == "result":
-            result = {"outcome": "no-change", "reason": "No evidence supports mutation"}
         review = record_system_review_stage(
             review,
             stage=stage,
-            result=result,
+            result=stage_result(stage),
             evidence_ids=["evidence-a"],
+            actor="primary-user" if stage == "your-decision" else None,
+            human_action=stage == "your-decision",
         )
     assert review["status"] == "completed"
     assert review["result"]["outcome"] == "no-change"
@@ -105,20 +133,34 @@ def test_final_suggestion_and_change_result_fail_closed() -> None:
         review = record_system_review_stage(
             review,
             stage=stage,
-            result={"summary": f"Observed {stage}"},
+            result=stage_result(stage),
             evidence_ids=["evidence-a"],
         )
     with pytest.raises(SystemReviewError, match="Main Agent"):
         record_system_review_stage(
             review,
             stage="final-assessment",
-            result={"suggestion": "change", "synthesised_by": "review-subagent"},
+            result={
+                "recommendation": "change",
+                "confidence": "medium",
+                "synthesised_by": "review-subagent",
+            },
             evidence_ids=["evidence-a"],
         )
     review = record_system_review_stage(
         review,
         stage="final-assessment",
-        result={"suggestion": "change", "synthesised_by": "main-agent"},
+        result={
+            "recommendation": "change",
+            "confidence": "medium",
+            "synthesised_by": "main-agent",
+        },
+        evidence_ids=["evidence-a"],
+    )
+    review = record_system_review_stage(
+        review,
+        stage="biggest-remaining-concern",
+        result={"summary": "The global effect is not yet proven live"},
         evidence_ids=["evidence-a"],
     )
     with pytest.raises(SystemReviewError, match="proposal id"):
@@ -195,16 +237,19 @@ def test_lightest_agent_and_independent_research_and_debate_branches() -> None:
         debate,
         required_roles={"case-for", "case-against"},
     )["independent"]
-    contaminated = [branches[0], IndependentBranch(
-        "branch-internal",
-        "internal-review",
-        "b" * 64,
-        ("external-output",),
-        "internal-output",
-        ("record-a",),
-        "small",
-        "Contaminated",
-    )]
+    contaminated = [
+        branches[0],
+        IndependentBranch(
+            "branch-internal",
+            "internal-review",
+            "b" * 64,
+            ("external-output",),
+            "internal-output",
+            ("record-a",),
+            "small",
+            "Contaminated",
+        ),
+    ]
     with pytest.raises(SystemReviewError, match="another branch output"):
         verify_branch_independence(
             contaminated,
@@ -309,6 +354,10 @@ def test_feedback_is_evaluated_without_becoming_automatic_instruction() -> None:
         feedback="Make the system shorter",
         source="user-feedback",
         accepted_scope=None,
+        supporting_reasons=["The current route repeats one stage"],
+        challenging_reasons=["Removing it may hide evidence"],
+        updated_final_assessment="Shorten the wording and retain the evidence contract",
+        biggest_remaining_concern="The shorter wording still needs a newcomer test",
     )
     assert evidence["instruction_authority"] == "evidence-only"
     assert evidence["automatic_system_change"] is False
@@ -316,6 +365,31 @@ def test_feedback_is_evaluated_without_becoming_automatic_instruction() -> None:
         feedback="Use Cantonese for this status update",
         source="typed-user-action",
         accepted_scope="current-status-update",
+        supporting_reasons=["It matches the user's stated language"],
+        challenging_reasons=["Technical identifiers must remain exact"],
+        updated_final_assessment="Use Cantonese prose and preserve technical identifiers",
+        biggest_remaining_concern="No material concern remains for this update",
     )
     assert accepted["instruction_authority"] == "accepted"
     assert accepted["accepted_scope"] == "current-status-update"
+    assert accepted["next_route"] == "your-decision"
+
+
+def test_result_waits_for_primary_user_your_decision() -> None:
+    review = start_system_review(completed_project())
+    for stage in SYSTEM_REVIEW_STAGES[:-1]:
+        review = record_system_review_stage(
+            review,
+            stage=stage,
+            result=stage_result(stage),
+            evidence_ids=["evidence-a"],
+        )
+    assert review["status"] == "awaiting-primary-user-decision"
+    with pytest.raises(AuthorityError, match="primary user"):
+        record_system_review_stage(
+            review,
+            stage="your-decision",
+            result={"decision": "accept-result"},
+            evidence_ids=["evidence-a"],
+            actor="main-agent",
+        )

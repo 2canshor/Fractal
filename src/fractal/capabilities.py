@@ -178,6 +178,15 @@ def select_capability(request: str) -> str | None:
     routes = [
         ("web-operations", {"submit", "fill form", "click through", "monitor", "track page"}),
         ("system-review", {"system review", "completed project"}),
+        (
+            "project-review",
+            {
+                "project review",
+                "review active project",
+                "milestone review",
+                "exception review",
+            },
+        ),
         ("legacy-material-review", {"legacy", "replacement", "old skill"}),
         ("capability-development", {"create a skill", "build a capability", "skill eval"}),
         ("delegation-workflow", {"delegate", "hand off", "subagent"}),
@@ -188,8 +197,6 @@ def select_capability(request: str) -> str | None:
         ("research", {"research", "search web", "find sources", "extract page"}),
     ]
     matches = [
-        capability
-        for capability, signals in routes
-        if any(item in normalised for item in signals)
+        capability for capability, signals in routes if any(item in normalised for item in signals)
     ]
     return matches[0] if matches else None

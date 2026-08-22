@@ -231,6 +231,8 @@
         "material": {"type": "boolean"},
         "before_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "after_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "before_plan": {"type": "object"},
+        "after_plan": {"type": "object"},
         "recorded_at": {"$ref": "#/$defs/timestamp"},
         "authority": {"type": "string", "minLength": 1}
       }
@@ -242,6 +244,7 @@
       "properties": {
         "id": {"$ref": "#/$defs/id"},
         "trigger": {"enum": ["checkpoint", "risk", "deviation", "failure", "human_request"]},
+        "review_kind": {"enum": ["milestone", "exception"]},
         "reason": {"type": "string", "minLength": 1},
         "status": {"enum": ["open", "reviewed", "dismissed"]},
         "recorded_at": {"$ref": "#/$defs/timestamp"},
@@ -268,6 +271,42 @@
       "properties": {
         "id": {"$ref": "#/$defs/id"},
         "project_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "review_point_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/id"},
+          "uniqueItems": true
+        },
+        "review_kinds": {
+          "type": "array",
+          "items": {"enum": ["milestone", "exception"]},
+          "uniqueItems": true
+        },
+        "whole_project_assessment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "direction",
+            "goal",
+            "success_criteria",
+            "priorities",
+            "plan",
+            "progress_and_evidence",
+            "risks_and_deviations",
+            "resources_and_deadline",
+            "remaining_work"
+          ],
+          "properties": {
+            "direction": {"type": "string", "minLength": 1},
+            "goal": {"type": "string", "minLength": 1},
+            "success_criteria": {"type": "string", "minLength": 1},
+            "priorities": {"type": "string", "minLength": 1},
+            "plan": {"type": "string", "minLength": 1},
+            "progress_and_evidence": {"type": "string", "minLength": 1},
+            "risks_and_deviations": {"type": "string", "minLength": 1},
+            "resources_and_deadline": {"type": "string", "minLength": 1},
+            "remaining_work": {"type": "string", "minLength": 1}
+          }
+        },
         "conclusion": {"type": "string", "minLength": 1},
         "confidence": {"enum": ["low", "medium", "high"]},
         "plan_delta": {"type": "string"},

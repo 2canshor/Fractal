@@ -1,6 +1,21 @@
 # Fractal Architecture
 
-Fractal separates reusable system behaviour from the state of any person or organisation.
+Fractal helps a person complete one Project well and lets the system learn from that completed Project for the next one. These are two different review loops:
+
+1. **Project Review** runs while work is active. A milestone or exception opens the review, and the review checks the whole Project before adjusting its Plan.
+2. **System Review** starts after the primary user declares Project Completion. It studies the completed Project, considers how Fractal itself could improve, and returns a result for the primary user's decision.
+
+The human-facing Project path is:
+
+```text
+Brief -> Project Direction -> Background Research <-> Clarification
+      -> Goal -> Success Criteria + Priorities -> Project Plan
+      -> Project Work <-> Project Review -> Project Completion -> System Review
+```
+
+Fatigue, Curiosity, Greed, Work Signatures, registries, Hooks, Skills, MCP servers, Plugins, Tools, agent roles, and adapters support that path. They supply evidence or perform bounded work under it.
+
+Fractal also separates reusable system behaviour from the state of any person or organisation.
 
 ## Layers
 
@@ -14,7 +29,7 @@ Human-readable Markdown is a view of canonical state, not a second source of tru
 
 ## Core Philosophy
 
-Continuous Improvement is the only Core Philosophy. Methods and Supporting Philosophies must have observable behaviour, tests, and evidence. Their mapping to system nodes is versioned and may be proposed for change when evidence supports it.
+Continuous Improvement is the only Core Philosophy. During a Project it protects the Project trajectory through Project Review. After Project Completion it improves future Projects through System Review. Methods and Supporting Philosophies must have observable behaviour, tests, and evidence.
 
 ## State Change Path
 

@@ -13,7 +13,8 @@ def test_implemented_nodes_have_full_operational_contracts() -> None:
         "merge",
         "split",
     ]
-    assert len(mapping["nodes"]) == 8
+    assert len(mapping["nodes"]) == 9
+    assert "system-review" not in mapping["planned_nodes"]
     for node in mapping["nodes"]:
         assert REQUIRED_CONTRACT_FIELDS.issubset(node)
         assert node["implementation_status"] == "implemented"

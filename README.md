@@ -1,6 +1,14 @@
 # Fractal
 
-Fractal is an experimental local-first system for continuous improvement. It keeps canonical state explicit, records evidence separately from claims, and requires verification before a proposed change becomes active.
+Fractal is an experimental local-first environment for doing Projects and learning from them. While a Project is active, Project Review checks the whole Project at milestones and exceptions so the Plan stays connected to the Goal. After the primary user declares Project Completion, System Review studies the completed Project and prepares any improvement for the user's decision.
+
+```text
+Brief -> Direction -> Research and Clarification -> Goal
+      -> Success Criteria and Priorities -> Plan
+      -> Work and Project Review -> Project Completion -> System Review
+```
+
+Fractal keeps the Project record, evidence, capabilities, and review history together so an agent can continue work without rebuilding the story from scattered files.
 
 The public repository contains only reusable architecture, schemas, deterministic programs, tests, and documentation. Personal state, private policies, credentials, conversations, and runtime evidence belong outside this repository.
 

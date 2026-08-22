@@ -15,13 +15,13 @@ Deterministic comparison handles clear matches first:
 - testing, verification, and safety repetition is retained instead of labelled waste;
 - ambiguous shape uses a bounded semantic comparison payload containing only compact fields.
 
-An Improvement Investigation is read-only candidate analysis. Project-local results route to Project Review; persistent system candidates route to System Review. Neither route adopts a change automatically.
+An Improvement Investigation is read-only supporting analysis. Its result goes to Project Review, which decides what the active Project should do. If the finding concerns Fractal itself, it is also preserved for System Review after Project Completion.
 
 Structural repetition is classified before action as accidental duplication, platform projection, independent guardrail, deliberate high-risk reinforcement, drift, or distinct. Only accidental duplication and drift may become removal candidates, and they still need an isolated trial and normal approval.
 
 ## Curiosity
 
-Curiosity supplies three bounded research paths to a Fatigue investigation or a pre-work/post-work Success Criteria Challenge:
+Curiosity supplies three bounded research paths to Project Review through a Fatigue investigation, or to a pre-work/post-work Success Criteria Challenge:
 
 - 60% Improve Current Method;
 - 20% Research Latest Findings;
@@ -39,7 +39,7 @@ Pre-work and post-work are triggers of one Challenge, not two Methods. It cannot
 
 An autonomous trial requires every safety fact: small, reversible, isolated, restore-tested, no real-data change, no external action, no new recipient, no cost, no Goal change, no scope expansion, no persistent change, and the same representative work. Missing any fact routes to a primary-user decision.
 
-Quality and outcome equivalence are checked before time or Token savings. A positive trial remains a candidate for review; permanent adoption still needs the applicable authority and System Version history.
+Quality and outcome equivalence are checked before time or Token savings. A positive Project trial returns evidence to Project Review. A persistent system candidate is considered after Project Completion in System Review and keeps its System Version history.
 
 ## Honest Status
 

@@ -67,9 +67,21 @@ def pre_work_challenge() -> dict:
     }
 
 
-def approve_project(
-    controller: LifecycleController, store: ProjectStore, project_id: str
-) -> None:
+def whole_project_assessment() -> dict[str, str]:
+    return {
+        "direction": "Direction remains confirmed and unchanged",
+        "goal": "Goal remains approved and achievable",
+        "success_criteria": "Criteria remain observable and unchanged",
+        "priorities": "Quality and safety remain in the approved order",
+        "plan": "The Plan needs one bounded restore-test update",
+        "progress_and_evidence": "Current progress is supported by test evidence",
+        "risks_and_deviations": "The delivery risk is contained but still monitored",
+        "resources_and_deadline": "The update fits current resources and deadline",
+        "remaining_work": "Run the restore test and record its evidence",
+    }
+
+
+def approve_project(controller: LifecycleController, store: ProjectStore, project_id: str) -> None:
     record = store.read(project_id)
     controller.confirm_direction(
         project_id,
@@ -95,7 +107,7 @@ def approve_project(
 
 
 def test_happy_path_requires_human_completion(
-    lifecycle_project: tuple[LifecycleController, ProjectStore, str]
+    lifecycle_project: tuple[LifecycleController, ProjectStore, str],
 ) -> None:
     controller, store, project_id = lifecycle_project
     approve_project(controller, store, project_id)
@@ -149,7 +161,7 @@ def test_happy_path_requires_human_completion(
 
 
 def test_primary_user_can_reopen_awaiting_completion_after_correction(
-    lifecycle_project: tuple[LifecycleController, ProjectStore, str]
+    lifecycle_project: tuple[LifecycleController, ProjectStore, str],
 ) -> None:
     controller, store, project_id = lifecycle_project
     approve_project(controller, store, project_id)
@@ -227,7 +239,7 @@ def test_primary_user_can_reopen_awaiting_completion_after_correction(
 
 
 def test_post_work_challenge_runs_once_per_criteria_version(
-    lifecycle_project: tuple[LifecycleController, ProjectStore, str]
+    lifecycle_project: tuple[LifecycleController, ProjectStore, str],
 ) -> None:
     controller, store, project_id = lifecycle_project
     approve_project(controller, store, project_id)
@@ -264,7 +276,7 @@ def test_post_work_challenge_runs_once_per_criteria_version(
 
 
 def test_direction_is_provisional_then_requires_material_reconfirmation(
-    lifecycle_project: tuple[LifecycleController, ProjectStore, str]
+    lifecycle_project: tuple[LifecycleController, ProjectStore, str],
 ) -> None:
     controller, store, project_id = lifecycle_project
     assert store.read(project_id).lifecycle["direction"]["status"] == "provisional"
@@ -310,7 +322,7 @@ def test_direction_is_provisional_then_requires_material_reconfirmation(
 
 
 def test_deviation_review_failure_and_goal_change_paths(
-    lifecycle_project: tuple[LifecycleController, ProjectStore, str]
+    lifecycle_project: tuple[LifecycleController, ProjectStore, str],
 ) -> None:
     controller, store, project_id = lifecycle_project
     controller.record_deviation(
@@ -335,6 +347,7 @@ def test_deviation_review_failure_and_goal_change_paths(
     )
     record = store.read(project_id)
     assert len(record.lifecycle["review_points"]) == 1
+    assert record.lifecycle["review_points"][0]["review_kind"] == "exception"
     controller.record_project_review(
         project_id,
         expected_revision=record.revision,
@@ -342,6 +355,7 @@ def test_deviation_review_failure_and_goal_change_paths(
         confidence="high",
         plan_delta="Add a restore test",
         concern="The restore path still needs user-level proof",
+        whole_project_assessment=whole_project_assessment(),
         evidence_ids=["evidence-done"],
         actor="main-agent",
         platform="test-adapter",
@@ -364,6 +378,7 @@ def test_deviation_review_failure_and_goal_change_paths(
         confidence="medium",
         plan_delta="No Goal change",
         concern="A repeated failure would require escalation",
+        whole_project_assessment=whole_project_assessment(),
         evidence_ids=[],
         actor="main-agent",
         platform="test-adapter",
@@ -378,13 +393,17 @@ def test_deviation_review_failure_and_goal_change_paths(
     )
     final = store.read(project_id)
     assert len(final.lifecycle["reviews"]) == 2
+    assert final.lifecycle["reviews"][0]["review_kinds"] == ["exception"]
+    assert set(final.lifecycle["reviews"][0]["whole_project_assessment"]) == set(
+        whole_project_assessment()
+    )
     assert all(point["status"] == "reviewed" for point in final.lifecycle["review_points"])
     assert final.requests[-1]["path"] == "/lifecycle/goal"
     assert final.lifecycle["goal"]["status"] == "provisional"
 
 
 def test_plan_history_and_material_authority(
-    lifecycle_project: tuple[LifecycleController, ProjectStore, str]
+    lifecycle_project: tuple[LifecycleController, ProjectStore, str],
 ) -> None:
     controller, store, project_id = lifecycle_project
     record = store.read(project_id)
@@ -423,4 +442,38 @@ def test_plan_history_and_material_authority(
     final = store.read(project_id)
     assert len(final.lifecycle["plan_history"]) == 2
     assert final.lifecycle["plan_history"][0]["material"] is False
+    assert final.lifecycle["plan_history"][0]["before_plan"]["current_phase"] is None
+    assert final.lifecycle["plan_history"][0]["after_plan"]["current_phase"] == 2
     assert final.lifecycle["plan_history"][1]["authority"] == "primary-user"
+
+
+def test_milestone_review_requires_the_whole_project(
+    lifecycle_project: tuple[LifecycleController, ProjectStore, str],
+) -> None:
+    controller, store, project_id = lifecycle_project
+    controller.record_review_point(
+        project_id,
+        expected_revision=1,
+        trigger="checkpoint",
+        reason="Research milestone reached",
+        evidence_ids=["evidence-done"],
+        actor="main-agent",
+        platform="test-adapter",
+    )
+    record = store.read(project_id)
+    assert record.lifecycle["review_points"][0]["review_kind"] == "milestone"
+    incomplete = whole_project_assessment()
+    incomplete.pop("remaining_work")
+    with pytest.raises(LifecycleError, match="every whole-Project dimension"):
+        controller.record_project_review(
+            project_id,
+            expected_revision=record.revision,
+            conclusion="Continue",
+            confidence="high",
+            plan_delta="No change",
+            concern="None beyond planned verification",
+            whole_project_assessment=incomplete,
+            evidence_ids=["evidence-done"],
+            actor="main-agent",
+            platform="test-adapter",
+        )

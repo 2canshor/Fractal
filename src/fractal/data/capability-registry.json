@@ -105,6 +105,37 @@
       }
     },
     {
+      "capability_id": "project-review",
+      "human_name": "Project Review",
+      "owner": "fractal",
+      "source": "capabilities/skills/project-review",
+      "version": "0.1.0",
+      "classification": "canonical",
+      "supported_platforms": ["claude", "codex", "cowork", "gemini"],
+      "permissions": [
+        "read-project-snapshot",
+        "write-project-review",
+        "write-project-plan-within-authority"
+      ],
+      "secret_requirements": [],
+      "overlap": ["system-review"],
+      "status": {
+        "availability": {
+          "state": "source-verified",
+          "evidence_ids": ["project-review-source-validation"]
+        },
+        "activation_authority": {
+          "state": "active",
+          "authority": "adapter-projection",
+          "evidence_ids": ["candidate-adapter-projection"]
+        },
+        "execution": {
+          "state": "verified-synthetic",
+          "evidence_ids": ["project-review-whole-project-eval"]
+        }
+      }
+    },
+    {
       "capability_id": "research",
       "human_name": "Research",
       "owner": "fractal",

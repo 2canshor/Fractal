@@ -22,7 +22,7 @@ SKILLS = ROOT / "capabilities" / "skills"
 
 def test_registry_separates_availability_activation_and_execution() -> None:
     registry = load_capability_registry()
-    assert len(registry["capabilities"]) == 10
+    assert len(registry["capabilities"]) == 11
     for capability in registry["capabilities"]:
         assert set(capability["status"]) == {
             "availability",
@@ -47,6 +47,7 @@ def test_registry_separates_availability_activation_and_execution() -> None:
         ("delegate this bounded implementation", "delegation-workflow"),
         ("rename this class name", "naming-system"),
         ("run a system review for the completed project", "system-review"),
+        ("run a milestone review for this active project", "project-review"),
         ("review this legacy old skill replacement", "legacy-material-review"),
         ("resolve this material unknown", "clarification"),
         ("create a Skill eval", "capability-development"),

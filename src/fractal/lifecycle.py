@@ -15,6 +15,19 @@ class LifecycleError(RuntimeError):
     """Raised when a lifecycle precondition is not satisfied."""
 
 
+PROJECT_REVIEW_DIMENSIONS = (
+    "direction",
+    "goal",
+    "success_criteria",
+    "priorities",
+    "plan",
+    "progress_and_evidence",
+    "risks_and_deviations",
+    "resources_and_deadline",
+    "remaining_work",
+)
+
+
 @dataclass(frozen=True, slots=True)
 class DirectionSummary:
     """The four short summaries used for formal Project confirmation."""
@@ -180,15 +193,22 @@ class LifecycleController:
         *,
         expected_revision: int,
         trigger: str,
+        review_kind: str | None = None,
         reason: str,
         evidence_ids: list[str],
         actor: str,
         platform: str,
     ) -> WriteResult:
         """Record a checkpoint that requires a whole-Project review."""
+        if trigger not in {"checkpoint", "risk", "deviation", "failure", "human_request"}:
+            raise LifecycleError(f"Unsupported Project Review trigger: {trigger}")
+        inferred_kind = "milestone" if trigger == "checkpoint" else "exception"
+        if review_kind is not None and review_kind != inferred_kind:
+            raise LifecycleError(f"Trigger {trigger} requires a {inferred_kind} Project Review")
         point = {
             "id": f"review-point-{uuid.uuid4()}",
             "trigger": trigger,
+            "review_kind": inferred_kind,
             "reason": reason,
             "status": "open",
             "recorded_at": utc_now(),
@@ -263,6 +283,7 @@ class LifecycleController:
                     {
                         "id": f"review-point-{uuid.uuid4()}",
                         "trigger": "deviation",
+                        "review_kind": "exception",
                         "reason": summary,
                         "status": "open",
                         "recorded_at": now,
@@ -321,6 +342,7 @@ class LifecycleController:
         confidence: str,
         plan_delta: str,
         concern: str,
+        whole_project_assessment: dict[str, str],
         evidence_ids: list[str],
         actor: str,
         platform: str,
@@ -328,13 +350,41 @@ class LifecycleController:
         """Review the whole Project snapshot and close its open Review Points."""
         record = self.store.read(project_id)
         lifecycle = record.lifecycle
+        missing = [
+            dimension
+            for dimension in PROJECT_REVIEW_DIMENSIONS
+            if not whole_project_assessment.get(dimension, "").strip()
+        ]
+        extra = sorted(set(whole_project_assessment).difference(PROJECT_REVIEW_DIMENSIONS))
+        if missing or extra:
+            raise LifecycleError(
+                "Project Review must assess every whole-Project dimension; "
+                f"missing={missing}, extra={extra}"
+            )
         points = copy.deepcopy(lifecycle["review_points"])
+        open_points = [point for point in points if point["status"] == "open"]
+        if not open_points:
+            raise LifecycleError("Project Review requires an open Review Point")
         for point in points:
             if point["status"] == "open":
                 point["status"] = "reviewed"
         review = {
             "id": f"review-{uuid.uuid4()}",
             "project_sha256": value_sha256(record.to_dict()),
+            "review_point_ids": [point["id"] for point in open_points],
+            "review_kinds": sorted(
+                {
+                    point.get(
+                        "review_kind",
+                        "milestone" if point["trigger"] == "checkpoint" else "exception",
+                    )
+                    for point in open_points
+                }
+            ),
+            "whole_project_assessment": {
+                dimension: whole_project_assessment[dimension].strip()
+                for dimension in PROJECT_REVIEW_DIMENSIONS
+            },
             "conclusion": conclusion,
             "confidence": confidence,
             "plan_delta": plan_delta,
@@ -372,7 +422,7 @@ class LifecycleController:
         platform: str,
         human_action: bool = False,
     ) -> WriteResult:
-        """Version a Project Plan update and preserve before/after digests."""
+        """Version a Project Plan update and preserve before/after snapshots."""
         if material:
             self._require_primary_user(actor=actor, human_action=human_action)
         record = self.store.read(project_id)
@@ -384,6 +434,8 @@ class LifecycleController:
             "material": material,
             "before_sha256": value_sha256(record.plan),
             "after_sha256": value_sha256(plan),
+            "before_plan": copy.deepcopy(record.plan),
+            "after_plan": copy.deepcopy(plan),
             "recorded_at": utc_now(),
             "authority": "primary-user" if material else "delegated-project-work",
         }
@@ -501,8 +553,7 @@ class LifecycleController:
         if not all(item["achieved"] for item in criteria["items"]):
             raise LifecycleError("Awaiting Completion requires achieved Success Criteria")
         if not any(
-            item["criteria_version"] == version
-            for item in criteria["post_work_challenges"]
+            item["criteria_version"] == version for item in criteria["post_work_challenges"]
         ):
             raise LifecycleError("Awaiting Completion requires the post-work challenge")
         requested_at = utc_now()
@@ -599,6 +650,7 @@ class LifecycleController:
         review_point = {
             "id": f"review-point-{uuid.uuid4()}",
             "trigger": "human_request",
+            "review_kind": "exception",
             "reason": reason.strip(),
             "status": "open",
             "recorded_at": utc_now(),
