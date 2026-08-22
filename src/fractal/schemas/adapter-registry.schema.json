@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fractal.local/schemas/adapter-registry.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_type", "record_version", "adapters"],
+  "properties": {
+    "record_type": {"const": "adapter-registry"},
+    "record_version": {"type": "integer", "const": 1},
+    "adapters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "platform",
+          "root_file",
+          "supported_surfaces",
+          "generated_surfaces",
+          "limitations"
+        ],
+        "properties": {
+          "platform": {"enum": ["claude", "codex", "cowork", "gemini"]},
+          "root_file": {"type": "string", "minLength": 1},
+          "supported_surfaces": {"type": "object"},
+          "generated_surfaces": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["surface", "status", "fallback"],
+              "properties": {
+                "surface": {"type": "string", "minLength": 1},
+                "status": {"enum": ["unavailable", "unknown", "partial"]},
+                "fallback": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

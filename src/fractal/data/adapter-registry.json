@@ -1,0 +1,77 @@
+{
+  "record_type": "adapter-registry",
+  "record_version": 1,
+  "adapters": [
+    {
+      "platform": "claude",
+      "root_file": "CLAUDE.md",
+      "supported_surfaces": {
+        "root_instructions": "verified-local",
+        "skills": "verified-local",
+        "hooks": "verified-local",
+        "subagents": "verified-local",
+        "mcp": "configured-state-not-copied",
+        "plugins": "partially-observed"
+      },
+      "generated_surfaces": ["root-router", "skills", "session-hook-fragment", "verifier", "context", "capability-metadata"],
+      "limitations": [
+        {"surface": "plugin-and-connector-activation", "status": "unknown", "fallback": "Show filesystem evidence separately from user-visible plugin state."},
+        {"surface": "fractal-mcp", "status": "unavailable", "fallback": "Use the deterministic Fractal Python runtime and canonical files."}
+      ]
+    },
+    {
+      "platform": "codex",
+      "root_file": "AGENTS.md",
+      "supported_surfaces": {
+        "root_instructions": "verified-local-and-official-manual",
+        "skills": "verified-local-and-official-manual",
+        "hooks": "verified-local-and-official-manual",
+        "subagents": "verified-local",
+        "mcp": "verified-local-and-official-manual",
+        "plugins": "verified-local"
+      },
+      "generated_surfaces": ["root-router", "skills", "session-and-legacy-guard-hooks", "verifier", "context", "capability-metadata"],
+      "limitations": [
+        {"surface": "hook-trust", "status": "partial", "fallback": "A new or changed command hook remains inactive until its exact hash is trusted in Codex."},
+        {"surface": "fractal-mcp", "status": "unavailable", "fallback": "Use the deterministic Fractal Python runtime and canonical files."},
+        {"surface": "server-side-auth", "status": "unknown", "fallback": "Use live MCP status and a real operation before claiming execution."}
+      ]
+    },
+    {
+      "platform": "cowork",
+      "root_file": "PROJECT_INSTRUCTIONS.md",
+      "supported_surfaces": {
+        "root_instructions": "staging-format-only",
+        "skills": "package-format-observed",
+        "hooks": "unknown",
+        "subagents": "unknown",
+        "mcp": "server-side-unknown",
+        "plugins": "server-side-unknown"
+      },
+      "generated_surfaces": ["root-router", "skill-packages", "context", "capability-metadata"],
+      "limitations": [
+        {"surface": "server-side-settings", "status": "unknown", "fallback": "Require a user-visible Settings or real-behaviour check."},
+        {"surface": "hooks", "status": "unknown", "fallback": "Use the deterministic wrapper when no native lifecycle hook is verified."},
+        {"surface": "fractal-mcp", "status": "unavailable", "fallback": "Use canonical files until a connector is implemented and verified."}
+      ]
+    },
+    {
+      "platform": "gemini",
+      "root_file": "GEMINI.md",
+      "supported_surfaces": {
+        "root_instructions": "verified-local",
+        "skills": "unknown",
+        "hooks": "unknown",
+        "subagents": "unknown",
+        "mcp": "empty-local-config-observed",
+        "plugins": "unknown"
+      },
+      "generated_surfaces": ["root-router", "skills-as-unverified-projection", "context", "capability-metadata"],
+      "limitations": [
+        {"surface": "skill-discovery", "status": "unknown", "fallback": "Root router points to capability metadata and requires a real platform smoke before activation is claimed."},
+        {"surface": "hooks", "status": "unknown", "fallback": "Use the deterministic wrapper outside the platform."},
+        {"surface": "mcp", "status": "unknown", "fallback": "Keep the empty observed config and do not claim a Fractal connection."}
+      ]
+    }
+  ]
+}
