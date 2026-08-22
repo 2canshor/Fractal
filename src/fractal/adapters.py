@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shlex
 import shutil
 import uuid
 from importlib.resources import files
@@ -68,6 +69,7 @@ class AdapterBuilder:
         private_commit: str,
         system_version: str,
         legacy_root: Path,
+        runtime_python: Path | None = None,
     ) -> None:
         self.public_root = Path(public_root)
         self.private_root = Path(private_root)
@@ -76,6 +78,7 @@ class AdapterBuilder:
         self.private_commit = private_commit
         self.system_version = system_version
         self.legacy_root = Path(legacy_root)
+        self.runtime_python = str(runtime_python) if runtime_python is not None else "python"
         if any(len(item) != 40 for item in (public_commit, private_commit)):
             raise AdapterError("Adapter source commits must be full Git object ids")
 
@@ -210,11 +213,13 @@ class AdapterBuilder:
         if platform == "codex":
             context = "~/.codex/fractal/context.json"
             session_command = (
-                "python -m fractal.adapter_hook --event session-start "
+                f"{shlex.quote(self.runtime_python)} -m fractal.adapter_hook "
+                "--event session-start "
                 f"--context {context}"
             )
             guard_command = (
-                "python -m fractal.adapter_hook --event pre-tool-use "
+                f"{shlex.quote(self.runtime_python)} -m fractal.adapter_hook "
+                "--event pre-tool-use "
                 f"--context {context}"
             )
             hooks = {
@@ -257,7 +262,8 @@ class AdapterBuilder:
         elif platform == "claude":
             context = "~/.claude/fractal/context.json"
             session_command = (
-                "python -m fractal.adapter_hook --event session-start "
+                f"{shlex.quote(self.runtime_python)} -m fractal.adapter_hook "
+                "--event session-start "
                 f"--context {context}"
             )
             fragment = {

@@ -66,6 +66,7 @@ def builder(tmp_path: Path, output: str) -> AdapterBuilder:
         private_commit="b" * 40,
         system_version="0.1.0-alpha.1",
         legacy_root=Path("/synthetic/legacy"),
+        runtime_python=Path("/runtime with spaces/bin/python"),
     )
 
 
@@ -116,6 +117,9 @@ def test_metadata_first_projection_and_platform_specific_outputs(tmp_path: Path)
     assert metadata[0]["description"]
     assert (codex / "AGENTS.md").is_file()
     assert (codex / "hooks.json").is_file()
+    hooks = json.loads((codex / "hooks.json").read_text())
+    command = hooks["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+    assert command.startswith("'/runtime with spaces/bin/python'")
     assert (tmp_path / "build" / "claude" / "settings.fragment.json").is_file()
     assert list((tmp_path / "build" / "cowork" / "skill-packages").glob("*.skill"))
     gemini_metadata = json.loads(
