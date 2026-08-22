@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import io
 import json
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
 
 from fractal.adapter_hook import handle_hook
+from fractal.adapter_hook import main as hook_main
 from fractal.adapters import (
     AdapterBuilder,
     AdapterError,
@@ -154,6 +157,46 @@ def test_session_hook_and_protected_legacy_guard() -> None:
         {"tool_input": {"command": "rg pattern /synthetic/legacy"}},
     )
     assert "permissionDecision" not in allowed["hookSpecificOutput"]
+
+
+def test_hook_cli_expands_home_context(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    home = tmp_path / "home"
+    context_path = home / ".codex" / "fractal" / "context.json"
+    context_path.parent.mkdir(parents=True)
+    context_path.write_text(
+        json.dumps(
+            {
+                "system_version": "0.1.0-alpha.1",
+                "active_project": {
+                    "project_id": "project-a",
+                    "status": "in_progress",
+                    "revision": 7,
+                    "current_phase": 10,
+                },
+                "protected_legacy_roots": ["/synthetic/legacy"],
+                "authority": {"legacy_removal_enabled": False},
+            }
+        )
+    )
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"source": "startup"})))
+    assert (
+        hook_main(
+            [
+                "--event",
+                "session-start",
+                "--context",
+                "~/.codex/fractal/context.json",
+            ]
+        )
+        == 0
+    )
+    result = json.loads(capsys.readouterr().out)
+    assert "project-a" in result["hookSpecificOutput"]["additionalContext"]
 
 
 def test_typed_multi_block_results_preserve_partial_failure() -> None:

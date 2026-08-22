@@ -53,7 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--event", choices=["session-start", "pre-tool-use"], required=True)
     parser.add_argument("--context", type=Path, required=True)
     arguments = parser.parse_args(argv)
-    context = json.loads(arguments.context.read_text(encoding="utf-8"))
+    context = json.loads(arguments.context.expanduser().read_text(encoding="utf-8"))
     payload = json.load(sys.stdin)
     print(json.dumps(handle_hook(arguments.event, context, payload), ensure_ascii=False))
     return 0
