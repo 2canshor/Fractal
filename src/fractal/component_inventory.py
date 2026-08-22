@@ -243,6 +243,185 @@ def _tool_dependencies(tool: dict[str, Any]) -> list[str]:
     return []
 
 
+def _surface_hash(platform_version: str, category: str, identifier: str) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            {
+                "platform_version": platform_version,
+                "category": category,
+                "identifier": identifier,
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+        ).encode()
+    ).hexdigest()
+
+
+def _projected_names(
+    components: list[dict[str, Any]], *, kind: str, platform: str
+) -> set[str]:
+    names: set[str] = set()
+    for component in components:
+        if component["kind"] != kind or platform not in component["platforms"]:
+            continue
+        if not component["status"]["active"]:
+            continue
+        target = component["projection"]["target"]
+        if target and not target.startswith("platform:"):
+            path = Path(target)
+            names.add(path.stem if kind == "agent-role" else path.name)
+        external = component.get("external_identifier")
+        if external:
+            names.add(external)
+        names.add(component["component_id"])
+    return names
+
+
+def _surface_component_id(platform: str, category: str, identifier: str) -> str:
+    prefixes = {
+        "tools": f"tool-{platform}",
+        "skills": f"skill-{platform}-platform",
+        "agents": f"role-{platform}-platform",
+        "slash_commands": f"tool-{platform}-command",
+        "capabilities": f"platform-{platform}-capability",
+        "mcp_servers": f"mcp-{platform}-platform",
+        "plugins": f"plugin-{platform}-platform",
+    }
+    return technical_id(prefixes[category], identifier)
+
+
+def _platform_surface_records(
+    definition: dict[str, Any], components: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    platform = definition["platform"]
+    snapshot = json.loads(Path(definition["snapshot"]).expanduser().read_text(encoding="utf-8"))
+    version = snapshot.get("claude_code_version") or definition["platform_version"]
+    owner_id = definition["owner_id"]
+    skill_names = set(snapshot.get("skills", []))
+    projected_skills = _projected_names(components, kind="skill", platform=platform)
+    projected_roles = _projected_names(components, kind="agent-role", platform=platform)
+    known_external = {
+        (item["kind"], item.get("external_identifier"))
+        for item in components
+        if platform in item["platforms"] and item.get("external_identifier")
+    }
+    result: list[dict[str, Any]] = []
+    categories = (
+        ("tools", "tool"),
+        ("skills", "skill"),
+        ("agents", "agent-role"),
+        ("slash_commands", "tool"),
+        ("capabilities", "platform-capability"),
+        ("mcp_servers", "mcp"),
+        ("plugins", "plugin"),
+    )
+    for category, kind in categories:
+        for identifier in sorted(set(snapshot.get(category, []))):
+            if category == "skills" and identifier in projected_skills:
+                continue
+            if category == "agents" and identifier in projected_roles:
+                continue
+            if category == "slash_commands" and identifier in skill_names:
+                continue
+            if category in {"mcp_servers", "plugins"} and (kind, identifier) in known_external:
+                continue
+            digest = _surface_hash(version, category, identifier)
+            permission_profile = {
+                "tool": "platform-tool-boundary",
+                "skill": "platform-skill-boundary",
+                "agent-role": "bounded-platform-agent",
+                "platform-capability": "platform-protocol",
+                "mcp": "platform-mcp-boundary",
+                "plugin": "plugin-declared-boundary",
+            }[kind]
+            operations = {
+                "tool": list(_tool_permissions(identifier)[1]),
+                "skill": ["select", "read-instructions", "run-in-scope"],
+                "agent-role": ["run bounded delegated work"],
+                "platform-capability": ["support registered platform messaging"],
+                "mcp": ["expose registered platform Tools"],
+                "plugin": ["provide registered platform components"],
+            }[kind]
+            overlap_with: list[str] = []
+            overlap_decision = (
+                "Platform item retained only for its exact external selector; Fractal "
+                "capability routing and task authority still apply."
+            )
+            if category == "skills" and identifier == "deep-research":
+                overlap_with = ["research", "skill-firecrawl-deep-research"]
+                overlap_decision = (
+                    "Claude's built-in deep-research workflow remains an explicit selector; "
+                    "Fractal research owns ordinary evidence retrieval and Firecrawl deep "
+                    "research owns the registered Firecrawl workflow."
+                )
+            elif category == "skills" and identifier == "verify":
+                overlap_with = ["fable-judge", "fractal-verifier"]
+                overlap_decision = (
+                    "Claude's built-in verify selector may assist a bounded check; the "
+                    "Fractal delivery gate and read-only verifier retain acceptance authority."
+                )
+            elif category == "skills" and identifier == "design-sync":
+                overlap_with = ["interface-design"]
+                overlap_decision = (
+                    "Claude design-sync handles its platform workflow; interface-design owns "
+                    "Fractal's general interface direction and evaluation."
+                )
+            result.append(
+                _record(
+                    component_id=_surface_component_id(platform, category, identifier),
+                    human_name=(
+                        f"/{identifier}"
+                        if category == "slash_commands"
+                        else identifier.replace("-", " ").title()
+                    ),
+                    kind=kind,
+                    disposition="platform-managed-adapter",
+                    external_identifier=(
+                        f"/{identifier}" if category == "slash_commands" else identifier
+                    ),
+                    owner_id=owner_id,
+                    source_controlled_by_owner=False,
+                    source_kind="platform",
+                    source_locator=f"{platform}-live-surface#{category}.{identifier}",
+                    version=version,
+                    content_sha256=digest,
+                    naming_control="external",
+                    permission_profile=permission_profile,
+                    operations=operations,
+                    secret_boundary=(
+                        "Platform owns credentials and runtime state; Fractal stores only "
+                        "registration metadata."
+                    ),
+                    trigger_mode="platform" if category == "capabilities" else "explicit",
+                    trigger_description=(
+                        f"Use {identifier} only through its exact registered {platform} "
+                        "surface and within task authority."
+                    ),
+                    discoverable=True,
+                    active=True,
+                    execution=(
+                        "verified-live" if category == "capabilities" else "available-unverified"
+                    ),
+                    evidence_ids=[f"{platform}-live-init-surface"],
+                    platforms=[platform],
+                    projection_mode="platform-reference",
+                    projection_target=f"platform:{platform}:{category}:{identifier}",
+                    projection_sha256=digest,
+                    overlap_decision=overlap_decision,
+                    overlap_with=overlap_with,
+                    removal=(
+                        "Disable through the platform adapter or platform settings; retain "
+                        "uncertain platform material."
+                    ),
+                    restore=(
+                        "Restore the exact platform version and verify the live init surface."
+                    ),
+                    dependencies=[],
+                )
+            )
+    return result
+
+
 def build_component_registry(policy_path: Path, output_path: Path) -> dict[str, Any]:
     """Build a complete registry from explicit roots, decisions, and live Tool snapshot."""
     policy = json.loads(Path(policy_path).read_text(encoding="utf-8"))
@@ -360,6 +539,9 @@ def build_component_registry(policy_path: Path, output_path: Path) -> dict[str, 
     for static in policy.get("static_components", []):
         components.append(_record(**static))
 
+    for surface in policy.get("platform_surfaces", []):
+        components.extend(_platform_surface_records(surface, components))
+
     tool_snapshot = json.loads(Path(policy["tool_snapshot"]).read_text(encoding="utf-8"))
     for tool in tool_snapshot["tools"]:
         identifier = tool["name"]
@@ -441,6 +623,7 @@ def observe_platform_components(
     platform_home: Path,
     tool_snapshot_path: Path,
     configured_mcp: list[str],
+    platform_surface_path: Path | None = None,
 ) -> dict[str, Any]:
     """Observe the registered live surface without reading secret values."""
     home = Path(platform_home).expanduser()
@@ -449,6 +632,26 @@ def observe_platform_components(
     observed: list[dict[str, Any]] = []
     registered = registry["components"]
     active = active_components(registry, platform)
+    surface = (
+        json.loads(Path(platform_surface_path).read_text(encoding="utf-8"))
+        if platform_surface_path is not None
+        else None
+    )
+    surface_version = (
+        surface.get("claude_code_version") or registry["system_version"] if surface else None
+    )
+    surface_values = {
+        category: set(surface.get(category, [])) if surface else set()
+        for category in (
+            "tools",
+            "skills",
+            "agents",
+            "slash_commands",
+            "capabilities",
+            "mcp_servers",
+            "plugins",
+        )
+    }
 
     def add(component: dict[str, Any], content_sha256: str | None) -> None:
         observed.append(
@@ -464,6 +667,18 @@ def observe_platform_components(
         kind = component["kind"]
         target = component["projection"]["target"]
         expected_hash = component["projection"]["expected_sha256"]
+        source_locator = component["source"]["locator"]
+        if source_locator.startswith(f"{platform}-live-surface#"):
+            surface_key = source_locator.split("#", 1)[1]
+            category, identifier = surface_key.split(".", 1)
+            external = component["external_identifier"]
+            observed_identifier = external.removeprefix("/") if external else identifier
+            if observed_identifier in surface_values.get(category, set()):
+                add(
+                    component,
+                    _surface_hash(str(surface_version), category, observed_identifier),
+                )
+            continue
         if kind == "tool":
             external = component["external_identifier"]
             if external in tools_by_name:
@@ -576,6 +791,30 @@ def observe_platform_components(
                         "content_sha256": None,
                     }
                 )
+    if surface is not None:
+        projected_skills = _projected_names(registered, kind="skill", platform=platform)
+        projected_roles = _projected_names(registered, kind="agent-role", platform=platform)
+        skill_names = surface_values["skills"]
+        for category in surface_values:
+            for identifier in sorted(surface_values[category]):
+                if category == "skills" and identifier in projected_skills:
+                    continue
+                if category == "agents" and identifier in projected_roles:
+                    continue
+                if category == "slash_commands" and identifier in skill_names:
+                    continue
+                component_id = _surface_component_id(platform, category, identifier)
+                if component_id not in {item["component_id"] for item in observed}:
+                    observed.append(
+                        {
+                            "component_id": component_id,
+                            "discoverable": True,
+                            "active": True,
+                            "content_sha256": _surface_hash(
+                                str(surface_version), category, identifier
+                            ),
+                        }
+                    )
     return {
         "record_type": "observed-component-set",
         "record_version": 1,

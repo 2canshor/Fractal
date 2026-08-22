@@ -111,6 +111,7 @@ def build_parser() -> argparse.ArgumentParser:
     component_snapshot.add_argument("--home", required=True, type=Path)
     component_snapshot.add_argument("--tools", required=True, type=Path)
     component_snapshot.add_argument("--configured-mcp", action="append", default=[])
+    component_snapshot.add_argument("--platform-surface", type=Path)
     component_snapshot.add_argument("--output", required=True, type=Path)
     component_install = component_actions.add_parser(
         "install-candidate", help="Install a verified platform candidate recoverably."
@@ -218,6 +219,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 platform_home=args.home.expanduser(),
                 tool_snapshot_path=args.tools.expanduser(),
                 configured_mcp=args.configured_mcp,
+                platform_surface_path=(
+                    args.platform_surface.expanduser() if args.platform_surface else None
+                ),
             )
             args.output.expanduser().write_text(
                 json.dumps(observed, ensure_ascii=False, indent=2, sort_keys=True) + "\n",

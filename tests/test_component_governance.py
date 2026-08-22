@@ -13,7 +13,7 @@ from fractal.component_governance import (
     render_component_status,
     tree_sha256,
 )
-from fractal.component_inventory import observe_platform_components
+from fractal.component_inventory import build_component_registry, observe_platform_components
 
 
 def component(component_id: str, *, disposition: str = "fractal-owned-canonical") -> dict:
@@ -195,3 +195,64 @@ def test_platform_runtime_observes_live_projection_not_source_artifact(tmp_path:
             "content_sha256": tree_sha256(live),
         }
     ]
+
+
+def test_live_platform_surface_is_registered_and_extra_item_drifts(tmp_path: Path) -> None:
+    tools = tmp_path / "tools.json"
+    tools.write_text(json.dumps({"platform_version": "test", "tools": []}))
+    surface = tmp_path / "claude-surface.json"
+    live_surface = {
+        "claude_code_version": "2.1.237",
+        "tools": ["Read"],
+        "skills": ["research", "verify"],
+        "agents": ["Explore", "fractal-verifier"],
+        "slash_commands": ["research", "verify", "config"],
+        "capabilities": ["msg_lifecycle_v1"],
+        "mcp_servers": [],
+        "plugins": [],
+    }
+    surface.write_text(json.dumps(live_surface))
+    policy = tmp_path / "policy.json"
+    policy.write_text(
+        json.dumps(
+            {
+                "system_version": "0.1.0-alpha.2",
+                "candidate_status": "candidate",
+                "tool_snapshot": str(tools),
+                "platform_surfaces": [
+                    {
+                        "platform": "claude",
+                        "snapshot": str(surface),
+                        "owner_id": "Anthropic Claude Code",
+                        "platform_version": "2.1.237",
+                    }
+                ],
+            }
+        )
+    )
+    registry = build_component_registry(policy, tmp_path / "registry.json")
+    assert len(registry["components"]) == 7
+    observed = observe_platform_components(
+        registry,
+        platform="claude",
+        platform_home=tmp_path / "home",
+        tool_snapshot_path=tools,
+        configured_mcp=[],
+        platform_surface_path=surface,
+    )
+    assert audit_component_drift(registry, observed["components"], platform="claude")[
+        "clean"
+    ] is True
+
+    live_surface["tools"].append("Write")
+    surface.write_text(json.dumps(live_surface))
+    drifted = observe_platform_components(
+        registry,
+        platform="claude",
+        platform_home=tmp_path / "home",
+        tool_snapshot_path=tools,
+        configured_mcp=[],
+        platform_surface_path=surface,
+    )
+    audit = audit_component_drift(registry, drifted["components"], platform="claude")
+    assert audit["unmanaged"] == ["tool-claude-write"]
