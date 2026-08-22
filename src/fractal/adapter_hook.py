@@ -1,13 +1,18 @@
-"""Portable SessionStart and protected-legacy guard hook."""
+"""Portable Fractal context, component guard, and work-completed hooks."""
 
 from __future__ import annotations
 
 import argparse
+import fcntl
+import hashlib
 import json
 import re
 import sys
 from pathlib import Path
 from typing import Any
+
+from fractal.improvement import WorkSignature, WorkSignatureStore, recognise_repetition
+from fractal.models import utc_now
 
 
 def handle_hook(event: str, context: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
@@ -48,17 +53,195 @@ def handle_hook(event: str, context: dict[str, Any], payload: dict[str, Any]) ->
                 ),
             }
         }
+    governance = context.get("component_governance", {})
+    managed_roots = [str(Path(root).expanduser()) for root in governance.get("managed_roots", [])]
+    write_like = payload.get("tool_name") in {"apply_patch", "Edit", "Write"} or re.search(
+        r"\b(?:cp|install|ln|mkdir|mv|rm|rmdir|touch|unlink|trash|delete|edit|write|overwrite)\b",
+        serialized,
+        flags=re.IGNORECASE,
+    )
+    targets_managed_root = any(
+        root in serialized or _home_abbreviation(root) in serialized for root in managed_roots
+    )
+    supported_route = re.search(
+        r"(?:^|\s)(?:fractal|python(?:3)?\s+-m\s+fractal\.cli)\s+components\s+install-candidate(?:\s|$)",
+        serialized,
+    )
+    if write_like and targets_managed_root and not supported_route:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": (
+                    "This is a Fractal-managed component surface. Use the governed route: "
+                    "request, source and overlap check, Naming System, permissions and evaluation, "
+                    "registration, candidate build, adapter projection, then verified install."
+                ),
+            }
+        }
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse"}}
+
+
+def _home_abbreviation(path: str) -> str:
+    home = str(Path.home())
+    return "~" + path[len(home) :] if path.startswith(home) else path
+
+
+def _transcript_tools(path: str | None) -> tuple[str, ...]:
+    """Extract only Tool identifiers from a bounded local transcript."""
+    if not path:
+        return ()
+    transcript = Path(path).expanduser()
+    if not transcript.is_file() or transcript.stat().st_size > 5_000_000:
+        return ()
+    found: set[str] = set()
+
+    def visit(value: Any) -> None:
+        if isinstance(value, dict):
+            value_type = value.get("type")
+            name = value.get("name") or value.get("tool_name")
+            if value_type in {
+                "function_call",
+                "tool_call",
+                "custom_tool_call",
+            } and isinstance(name, str):
+                found.add(name)
+            for child in value.values():
+                visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+
+    for line in transcript.read_text(encoding="utf-8", errors="replace").splitlines():
+        try:
+            visit(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return tuple(sorted(found))
+
+
+def _signature_from_dict(value: dict[str, Any]) -> WorkSignature:
+    return WorkSignature(
+        work_id=value["work_id"],
+        project_id=value["project_id"],
+        work_type=value["work_type"],
+        input_shape=value["input_shape"],
+        steps=tuple(value["steps"]),
+        tools=tuple(value["tools"]),
+        outcome_category=value["outcome_category"],
+        purpose_class=value["purpose_class"],
+        elapsed_seconds=value["elapsed_seconds"],
+        token_usage=value["token_usage"],
+        completed_at=value["completed_at"],
+    )
+
+
+def capture_work_completion(
+    context: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    journal_path: Path,
+    evaluations_path: Path,
+) -> dict[str, Any]:
+    """Capture one compact Work Signature from a real platform Stop event."""
+    project = context["active_project"]
+    platform = context.get("platform", "unknown")
+    session_id = str(payload.get("session_id") or "unknown-session")
+    assistant_digest = hashlib.sha256(
+        str(payload.get("last_assistant_message") or "").encode("utf-8")
+    ).hexdigest()[:16]
+    work_id = f"{platform}-stop-{session_id}-{assistant_digest}"
+    store = WorkSignatureStore(journal_path)
+    history_values = store.read_all()
+    existing = next((item for item in history_values if item["work_id"] == work_id), None)
+    if existing is not None:
+        signature = _signature_from_dict(existing)
+        captured = False
+    else:
+        signature = WorkSignature(
+            work_id=work_id,
+            project_id=project["project_id"],
+            work_type="agent-session",
+            input_shape=f"{platform}-stop-event",
+            steps=("agent-session", "assistant-response"),
+            tools=_transcript_tools(payload.get("transcript_path")),
+            outcome_category="completed-response",
+            purpose_class="ordinary",
+            elapsed_seconds=None,
+            token_usage=None,
+            completed_at=utc_now(),
+        )
+        captured = store.capture_completion(signature)
+    history = [
+        _signature_from_dict(item) for item in history_values if item["work_id"] != work_id
+    ]
+    recognition = recognise_repetition(history, signature)
+    evaluation = {
+        "record_type": "work-signature-evaluation",
+        "work_id": work_id,
+        "project_id": signature.project_id,
+        "platform": platform,
+        "captured": captured,
+        "recognition": {
+            "status": recognition.status,
+            "occurrence_count": recognition.occurrence_count,
+            "confidence": recognition.confidence,
+            "route": recognition.route,
+            "evidence_work_ids": list(recognition.evidence_work_ids),
+        },
+        "evaluated_at": utc_now(),
+    }
+    evaluations_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = evaluations_path.with_suffix(evaluations_path.suffix + ".lock")
+    with lock_path.open("a", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            prior = []
+            if evaluations_path.exists():
+                prior = [
+                    json.loads(line)
+                    for line in evaluations_path.read_text(encoding="utf-8").splitlines()
+                    if line.strip()
+                ]
+            if not any(item["work_id"] == work_id for item in prior):
+                with evaluations_path.open("a", encoding="utf-8") as stream:
+                    stream.write(json.dumps(evaluation, ensure_ascii=False, sort_keys=True) + "\n")
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "Stop",
+            "additionalContext": (
+                f"Fractal captured Work Signature {work_id}; repetition result "
+                f"{recognition.status} ({recognition.occurrence_count})."
+            ),
+        }
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--event", choices=["session-start", "pre-tool-use"], required=True)
+    parser.add_argument(
+        "--event", choices=["session-start", "pre-tool-use", "work-completed"], required=True
+    )
     parser.add_argument("--context", type=Path, required=True)
+    parser.add_argument("--journal", type=Path)
+    parser.add_argument("--evaluations", type=Path)
     arguments = parser.parse_args(argv)
     context = json.loads(arguments.context.expanduser().read_text(encoding="utf-8"))
     payload = json.load(sys.stdin)
-    print(json.dumps(handle_hook(arguments.event, context, payload), ensure_ascii=False))
+    if arguments.event == "work-completed":
+        if arguments.journal is None or arguments.evaluations is None:
+            parser.error("work-completed requires --journal and --evaluations")
+        result = capture_work_completion(
+            context,
+            payload,
+            journal_path=arguments.journal.expanduser(),
+            evaluations_path=arguments.evaluations.expanduser(),
+        )
+    else:
+        result = handle_hook(arguments.event, context, payload)
+    print(json.dumps(result, ensure_ascii=False))
     return 0
 
 

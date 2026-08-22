@@ -552,6 +552,84 @@ class LifecycleController:
             action="declare-project-completion",
         )
 
+    def reopen_after_correction(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        reopen_phase: int,
+        criterion_ids: list[str],
+        reason: str,
+        actor: str,
+        platform: str,
+        human_action: bool,
+    ) -> WriteResult:
+        """Reopen Awaiting Completion after a primary-user architecture correction."""
+        self._require_primary_user(actor=actor, human_action=human_action)
+        record = self.store.read(project_id)
+        if record.status != "awaiting_completion":
+            raise LifecycleError("Only an Awaiting Completion Project can be reopened")
+        if reopen_phase < 0 or not reason.strip():
+            raise LifecycleError("A reopen phase and correction reason are required")
+        plan = copy.deepcopy(record.plan)
+        matching_phase = False
+        for item in plan["items"]:
+            phase = int(item["id"].removeprefix("phase-"))
+            if phase == reopen_phase:
+                item["status"] = "in_progress"
+                matching_phase = True
+            elif phase > reopen_phase:
+                item["status"] = "pending"
+        if not matching_phase:
+            raise LifecycleError(f"Unknown reopen phase: {reopen_phase}")
+        plan["current_phase"] = reopen_phase
+        plan["criteria_version"] += 1
+
+        criteria = copy.deepcopy(record.lifecycle["success_criteria"])
+        known_criteria = {item["id"] for item in criteria["items"]}
+        unknown = sorted(set(criterion_ids).difference(known_criteria))
+        if unknown:
+            raise LifecycleError(f"Unknown Success Criteria: {', '.join(unknown)}")
+        criteria["version"] += 1
+        for item in criteria["items"]:
+            if item["id"] in criterion_ids:
+                item["achieved"] = False
+                item["evidence_ids"] = []
+
+        review_point = {
+            "id": f"review-point-{uuid.uuid4()}",
+            "trigger": "human_request",
+            "reason": reason.strip(),
+            "status": "open",
+            "recorded_at": utc_now(),
+            "evidence_ids": [],
+        }
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[
+                Change("set", "/status", "in_progress", record.status),
+                Change(
+                    "set",
+                    "/completion/requested_at",
+                    None,
+                    record.completion["requested_at"],
+                ),
+                Change("set", "/plan", plan, record.plan),
+                Change(
+                    "set",
+                    "/lifecycle/success_criteria",
+                    criteria,
+                    record.lifecycle["success_criteria"],
+                ),
+                Change("append", "/lifecycle/review_points", review_point),
+            ],
+            actor=actor,
+            platform=platform,
+            authority_write=True,
+            action="reopen-after-primary-user-correction",
+        )
+
     @staticmethod
     def _require_primary_user(*, actor: str, human_action: bool) -> None:
         if not human_action or actor != "primary-user":

@@ -148,6 +148,84 @@ def test_happy_path_requires_human_completion(
     assert challenge["original_achievement_preserved"] is True
 
 
+def test_primary_user_can_reopen_awaiting_completion_after_correction(
+    lifecycle_project: tuple[LifecycleController, ProjectStore, str]
+) -> None:
+    controller, store, project_id = lifecycle_project
+    approve_project(controller, store, project_id)
+    record = store.read(project_id)
+    controller.record_criterion_achievement(
+        project_id,
+        expected_revision=record.revision,
+        criterion_id="criterion-a",
+        evidence_ids=["evidence-done"],
+        actor="main-agent",
+        platform="test-adapter",
+    )
+    record = store.read(project_id)
+    controller.record_post_work_challenge(
+        project_id,
+        expected_revision=record.revision,
+        higher_target_summary="No higher safe target",
+        higher_target_status="no_finding",
+        evidence_ids=["evidence-done"],
+        actor="main-agent",
+        platform="test-adapter",
+    )
+    record = store.read(project_id)
+    record.plan["items"] = [
+        {"id": "phase-8", "summary": "Phase 8", "status": "completed", "evidence_ids": []},
+        {"id": "phase-9", "summary": "Phase 9", "status": "completed", "evidence_ids": []},
+    ]
+    record.plan["current_phase"] = 9
+    store.apply_changes(
+        project_id,
+        expected_revision=record.revision,
+        changes=[Change("set", "/plan", record.plan, store.read(project_id).plan)],
+        actor="main-agent",
+        platform="test-adapter",
+    )
+    record = store.read(project_id)
+    controller.mark_awaiting_completion(
+        project_id,
+        expected_revision=record.revision,
+        actor="main-agent",
+        platform="test-adapter",
+    )
+    awaiting = store.read(project_id)
+    with pytest.raises(AuthorityError, match="primary user"):
+        controller.reopen_after_correction(
+            project_id,
+            expected_revision=awaiting.revision,
+            reopen_phase=8,
+            criterion_ids=["criterion-a"],
+            reason="Architecture correction",
+            actor="main-agent",
+            platform="test-adapter",
+            human_action=False,
+        )
+    controller.reopen_after_correction(
+        project_id,
+        expected_revision=awaiting.revision,
+        reopen_phase=8,
+        criterion_ids=["criterion-a"],
+        reason="Architecture correction",
+        actor="primary-user",
+        platform="test-adapter",
+        human_action=True,
+    )
+    reopened = store.read(project_id)
+    assert reopened.status == "in_progress"
+    assert reopened.completion["requested_at"] is None
+    assert reopened.plan["current_phase"] == 8
+    assert [item["status"] for item in reopened.plan["items"]] == [
+        "in_progress",
+        "pending",
+    ]
+    assert reopened.lifecycle["success_criteria"]["version"] == 2
+    assert reopened.lifecycle["success_criteria"]["items"][0]["achieved"] is False
+
+
 def test_post_work_challenge_runs_once_per_criteria_version(
     lifecycle_project: tuple[LifecycleController, ProjectStore, str]
 ) -> None:

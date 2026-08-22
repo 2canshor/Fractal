@@ -11,6 +11,15 @@ The format follows Keep a Changelog, and system versions follow Semantic Version
 - Initial public package structure.
 - Public/private repository boundary.
 - Technical decision record for the first development release.
+- Universal component registry for Skills, Hooks, roles, MCPs, Plugins, Tools, and adapters.
+- Generated active-set metadata and a `fractal components show` Human Control route.
+- Managed Codex and Claude installation, quarantine, restore, dependency checks, and component drift checks.
+- Codex and Claude work-completed Hook projections for Fatigue Work Signature capture.
+
+### Changed
+
+- Adapter capability metadata now describes the active-on-install projection instead of calling live-discoverable Skills inactive.
+- The candidate development version is `0.1.0-alpha.2`; persistent activation remains under primary-user authority.
 
 ## [0.1.0-alpha.1] - 2026-08-22
 

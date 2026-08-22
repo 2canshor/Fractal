@@ -45,3 +45,22 @@ def test_cli_create_show_and_verify_real_project(tmp_path: Path, capsys) -> None
     verification = json.loads(capsys.readouterr().out)
     assert verification["event_chain_valid"] is True
     assert verification["event_count"] == 1
+
+
+def test_cli_component_status_route(tmp_path: Path, capsys) -> None:
+    registry = tmp_path / "registry.json"
+    registry.write_text(
+        json.dumps(
+            {
+                "record_type": "component-registry",
+                "record_version": 2,
+                "system_version": "0.1.0-alpha.2",
+                "candidate_status": "candidate",
+                "components": [],
+            }
+        )
+    )
+    assert main(["components", "show", "--registry", str(registry)]) == 0
+    output = capsys.readouterr().out
+    assert "# Fractal Component Status" in output
+    assert "Version State: `candidate`" in output

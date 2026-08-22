@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from fractal.adapter_hook import handle_hook
+from fractal.adapter_hook import capture_work_completion, handle_hook
 from fractal.adapter_hook import main as hook_main
 from fractal.adapters import (
     AdapterBuilder,
@@ -22,6 +22,12 @@ from fractal.adapters import (
     smoke_adapter,
     tree_manifest,
 )
+from fractal.component_governance import tree_sha256 as component_tree_sha256
+from fractal.component_installation import (
+    ClaudeComponentInstaller,
+    CodexComponentInstaller,
+)
+from fractal.storage import value_sha256
 
 ROOT = Path(__file__).parents[1]
 
@@ -71,6 +77,87 @@ def builder(tmp_path: Path, output: str) -> AdapterBuilder:
         system_version="0.1.0-alpha.1",
         legacy_root=Path("/synthetic/legacy"),
         runtime_python=Path("/runtime with spaces/bin/python"),
+    )
+
+
+def governed_builder(tmp_path: Path, output: str) -> AdapterBuilder:
+    private = private_workspace(tmp_path / f"private-{output}")
+    registry_path = private / "system" / "components" / "registry.json"
+    registry_path.parent.mkdir(parents=True)
+    research = ROOT / "capabilities" / "skills" / "research"
+    projection_hash = value_sha256(tree_manifest(research))
+    registry_path.write_text(
+        json.dumps(
+            {
+                "record_type": "component-registry",
+                "record_version": 2,
+                "system_version": "0.1.0-alpha.2",
+                "candidate_status": "candidate",
+                "components": [
+                    {
+                        "component_id": "research",
+                        "human_name": "Research",
+                        "kind": "skill",
+                        "disposition": "fractal-owned-canonical",
+                        "external_identifier": None,
+                        "dependencies": [],
+                        "owner": {
+                            "owner_id": "2canshor/fractal",
+                            "source_controlled_by_owner": True,
+                        },
+                        "source": {
+                            "kind": "fractal-public",
+                            "locator": "capabilities/skills/research",
+                            "version": "0.1.0",
+                            "content_sha256": component_tree_sha256(research),
+                        },
+                        "naming": {
+                            "registry_key_status": "passed",
+                            "external_identifier_status": "not-applicable",
+                            "exemption_reason": None,
+                        },
+                        "permissions": {
+                            "profile": "read-only",
+                            "operations": ["read"],
+                            "secret_boundary": "no-secrets",
+                        },
+                        "trigger": {
+                            "mode": "explicit",
+                            "description": "Use for bounded research.",
+                        },
+                        "status": {
+                            "discoverable": True,
+                            "active": True,
+                            "execution": "verified-staged",
+                            "evidence_ids": ["test-evidence"],
+                        },
+                        "platforms": ["claude", "codex"],
+                        "projection": {
+                            "mode": "generated-copy",
+                            "target": "skills/research",
+                            "expected_sha256": projection_hash,
+                        },
+                        "verification_evidence": ["test-evidence"],
+                        "overlap": {"decision": "distinct", "with": []},
+                        "recovery": {
+                            "removal": "remove projection",
+                            "restore": "rebuild projection",
+                        },
+                    }
+                ],
+            }
+        )
+    )
+    return AdapterBuilder(
+        public_root=ROOT,
+        private_root=private,
+        output_root=tmp_path / output,
+        public_commit="a" * 40,
+        private_commit="b" * 40,
+        system_version="0.1.0-alpha.2",
+        legacy_root=None,
+        runtime_python=Path("/runtime/bin/python"),
+        runtime_root=tmp_path / "runtime",
     )
 
 
@@ -128,6 +215,9 @@ def test_metadata_first_projection_and_platform_specific_outputs(tmp_path: Path)
     assert agent["name"] == "fractal_verifier"
     assert agent["sandbox_mode"] == "read-only"
     assert "Do not edit" in agent["developer_instructions"]
+    researcher = tomllib.loads((codex / "agents" / "improvement-researcher.toml").read_text())
+    assert researcher["name"] == "improvement_researcher"
+    assert researcher["sandbox_mode"] == "read-only"
     claude = tmp_path / "build" / "claude"
     assert (claude / "settings.fragment.json").is_file()
     claude_agent = (claude / "agents" / "fractal-verifier.md").read_text()
@@ -136,13 +226,16 @@ def test_metadata_first_projection_and_platform_specific_outputs(tmp_path: Path)
     assert "tools: Read, Grep, Glob, Bash" in claude_agent
     assert "permissionMode: plan" in claude_agent
     assert "Do not edit" in claude_agent
+    assert (claude / "agents" / "improvement-researcher.md").is_file()
     assert list((tmp_path / "build" / "cowork" / "skill-packages").glob("*.skill"))
     gemini = tmp_path / "build" / "gemini"
     assert not (gemini / "skills").exists()
     assert list((gemini / "config" / "skills").glob("*/SKILL.md"))
     assert "~/.gemini/fractal/context.json" in (gemini / "GEMINI.md").read_text()
     gemini_metadata = json.loads((gemini / "fractal" / "capability-metadata.json").read_text())
-    assert {item["activation"] for item in gemini_metadata} == {"unknown"}
+    assert {item["activation"] for item in gemini_metadata} == {"active-when-adapter-is-installed"}
+    assert "Stop" in hooks["hooks"]
+    assert "--event work-completed" in hooks["hooks"]["Stop"][0]["hooks"][0]["command"]
 
 
 def test_session_hook_and_protected_legacy_guard() -> None:
@@ -156,6 +249,7 @@ def test_session_hook_and_protected_legacy_guard() -> None:
         },
         "protected_legacy_roots": ["/synthetic/legacy"],
         "authority": {"legacy_removal_enabled": False},
+        "component_governance": {"managed_roots": ["~/.codex/skills"]},
     }
     session = handle_hook("session-start", context, {"source": "startup"})
     session_context = session["hookSpecificOutput"]["additionalContext"]
@@ -173,6 +267,79 @@ def test_session_hook_and_protected_legacy_guard() -> None:
         {"tool_input": {"command": "rg pattern /synthetic/legacy"}},
     )
     assert "permissionDecision" not in allowed["hookSpecificOutput"]
+
+
+def test_direct_component_install_is_denied_outside_governed_route() -> None:
+    context = {
+        "system_version": "0.1.0-alpha.2",
+        "active_project": {
+            "project_id": "project-a",
+            "status": "in_progress",
+            "revision": 8,
+            "current_phase": 9,
+        },
+        "protected_legacy_roots": [],
+        "authority": {"legacy_removal_enabled": True},
+        "component_governance": {"managed_roots": ["~/.codex/skills"]},
+    }
+    denied = handle_hook(
+        "pre-tool-use",
+        context,
+        {"tool_input": {"command": "cp -R candidate ~/.codex/skills/new-skill"}},
+    )
+    assert denied["hookSpecificOutput"]["permissionDecision"] == "deny"
+    allowed = handle_hook(
+        "pre-tool-use",
+        context,
+        {
+            "tool_input": {
+                "command": "fractal components install-candidate --manifest candidate.json"
+            }
+        },
+    )
+    assert "permissionDecision" not in allowed["hookSpecificOutput"]
+
+
+def test_real_stop_payload_captures_and_evaluates_work_signature(tmp_path: Path) -> None:
+    transcript = tmp_path / "transcript.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "response_item",
+                "payload": {"type": "function_call", "name": "exec_command"},
+            }
+        )
+        + "\n"
+    )
+    context = {
+        "platform": "codex",
+        "active_project": {"project_id": "project-a"},
+    }
+    payload = {
+        "session_id": "session-a",
+        "transcript_path": str(transcript),
+        "last_assistant_message": "Finished the bounded probe.",
+    }
+    journal = tmp_path / "work-signatures.jsonl"
+    evaluations = tmp_path / "work-signature-evaluations.jsonl"
+    first = capture_work_completion(
+        context,
+        payload,
+        journal_path=journal,
+        evaluations_path=evaluations,
+    )
+    assert "first-occurrence" in first["hookSpecificOutput"]["additionalContext"]
+    signature = json.loads(journal.read_text().strip())
+    assert signature["tools"] == ["exec_command"]
+    assert signature["project_id"] == "project-a"
+    second = capture_work_completion(
+        context,
+        {**payload, "session_id": "session-b"},
+        journal_path=journal,
+        evaluations_path=evaluations,
+    )
+    assert "possible-repetition" in second["hookSpecificOutput"]["additionalContext"]
+    assert len(journal.read_text().splitlines()) == 2
 
 
 def test_final_cutover_context_removes_the_legacy_guard(tmp_path: Path) -> None:
@@ -281,3 +448,49 @@ def test_staging_install_audit_and_restore_preserve_previous_files(tmp_path: Pat
     assert "AGENTS.md" in restored["restored"]
     assert (home / "AGENTS.md").read_text() == "legacy entrypoint"
     assert not (home / "fractal" / "context.json").exists()
+
+
+def test_governed_component_install_quarantines_and_restores_extras(
+    tmp_path: Path,
+) -> None:
+    governed_builder(tmp_path, "governed").build_all()
+    built = tmp_path / "governed" / "codex"
+    home = tmp_path / "home"
+    (home / "skills" / "fable-loop").mkdir(parents=True)
+    (home / "skills" / "fable-loop" / "SKILL.md").write_text("legacy extra")
+    (home / "AGENTS.md").write_text("previous entrypoint")
+    installer = CodexComponentInstaller(tmp_path / "component-installs", tmp_path / "quarantine")
+    record = installer.install(built, home)
+    assert (home / "AGENTS.md").is_symlink()
+    assert (home / "skills" / "research").is_symlink()
+    assert not (home / "skills" / "fable-loop").exists()
+    assert record["persistent_system_version_activated"] is False
+    restored = installer.restore(record["install_id"])
+    assert (home / "AGENTS.md").read_text() == "previous entrypoint"
+    assert (home / "skills" / "fable-loop" / "SKILL.md").read_text() == "legacy extra"
+    assert "skills/fable-loop" in restored["restored_quarantine"]
+
+
+def test_claude_component_install_merges_settings_and_restores_extras(
+    tmp_path: Path,
+) -> None:
+    governed_builder(tmp_path, "governed-claude").build_all()
+    built = tmp_path / "governed-claude" / "claude"
+    home = tmp_path / "claude-home"
+    (home / "skills" / "legacy-extra").mkdir(parents=True)
+    (home / "skills" / "legacy-extra" / "SKILL.md").write_text("legacy extra")
+    (home / "CLAUDE.md").write_text("previous entrypoint")
+    (home / "settings.json").write_text(json.dumps({"theme": "dark", "enabledPlugins": {}}))
+    installer = ClaudeComponentInstaller(tmp_path / "component-installs", tmp_path / "quarantine")
+    record = installer.install(built, home)
+    installed_settings = json.loads((home / "settings.json").read_text())
+    assert (home / "CLAUDE.md").is_symlink()
+    assert (home / "skills" / "research").is_symlink()
+    assert not (home / "skills" / "legacy-extra").exists()
+    assert installed_settings["theme"] == "dark"
+    assert set(installed_settings["hooks"]) == {"PreToolUse", "SessionStart", "Stop"}
+    assert record["persistent_system_version_activated"] is False
+    restored = installer.restore(record["install_id"])
+    assert (home / "CLAUDE.md").read_text() == "previous entrypoint"
+    assert (home / "skills" / "legacy-extra" / "SKILL.md").read_text() == "legacy extra"
+    assert "skills/legacy-extra" in restored["restored_quarantine"]

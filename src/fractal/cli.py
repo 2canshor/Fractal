@@ -8,6 +8,19 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from fractal import SYSTEM_VERSION
+from fractal.component_governance import (
+    audit_component_drift,
+    load_component_registry,
+    render_component_status,
+)
+from fractal.component_installation import (
+    ClaudeComponentInstaller,
+    CodexComponentInstaller,
+)
+from fractal.component_inventory import (
+    build_component_registry,
+    observe_platform_components,
+)
 from fractal.context import RetrievalRequest, assemble_context_package, rebuild_context_index
 from fractal.models import ProjectRecord
 from fractal.storage import ProjectStore
@@ -65,6 +78,54 @@ def build_parser() -> argparse.ArgumentParser:
     search_parser.add_argument("--max-items", type=int, default=5)
     search_parser.add_argument("--allow-personalisation", action="store_true")
     search_parser.add_argument("--manifest", type=Path)
+
+    components_parser = subparsers.add_parser(
+        "components", help="Inspect the Fractal-managed component set."
+    )
+    component_actions = components_parser.add_subparsers(dest="component_action", required=True)
+    component_show = component_actions.add_parser(
+        "show", help="Show the Human Control component view."
+    )
+    component_show.add_argument(
+        "--registry",
+        type=Path,
+        default=Path("~/.codex/fractal/component-registry.json"),
+    )
+    component_show.add_argument("--platform")
+    component_audit = component_actions.add_parser(
+        "audit", help="Compare observed components with the registered active set."
+    )
+    component_audit.add_argument("--registry", required=True, type=Path)
+    component_audit.add_argument("--observed", required=True, type=Path)
+    component_audit.add_argument("--platform", required=True)
+    component_rebuild = component_actions.add_parser(
+        "rebuild", help="Rebuild the registry from an explicit discovery policy."
+    )
+    component_rebuild.add_argument("--policy", required=True, type=Path)
+    component_rebuild.add_argument("--output", required=True, type=Path)
+    component_snapshot = component_actions.add_parser(
+        "snapshot", help="Observe the registered live component surface."
+    )
+    component_snapshot.add_argument("--registry", required=True, type=Path)
+    component_snapshot.add_argument("--platform", required=True)
+    component_snapshot.add_argument("--home", required=True, type=Path)
+    component_snapshot.add_argument("--tools", required=True, type=Path)
+    component_snapshot.add_argument("--configured-mcp", action="append", default=[])
+    component_snapshot.add_argument("--output", required=True, type=Path)
+    component_install = component_actions.add_parser(
+        "install-candidate", help="Install a verified platform candidate recoverably."
+    )
+    component_install.add_argument("--platform", choices=("claude", "codex"), default="codex")
+    component_install.add_argument("--built", required=True, type=Path)
+    component_install.add_argument("--home", required=True, type=Path)
+    component_install.add_argument("--state-root", required=True, type=Path)
+    component_install.add_argument("--quarantine-root", required=True, type=Path)
+    component_restore = component_actions.add_parser(
+        "restore", help="Restore a previous platform component projection."
+    )
+    component_restore.add_argument("--install-id", required=True)
+    component_restore.add_argument("--state-root", required=True, type=Path)
+    component_restore.add_argument("--quarantine-root", required=True, type=Path)
     return parser
 
 
@@ -135,4 +196,68 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             print(json.dumps(package, ensure_ascii=False, sort_keys=True))
             return 0
+    if args.action == "components":
+        if args.component_action == "rebuild":
+            registry = build_component_registry(args.policy.expanduser(), args.output.expanduser())
+            print(
+                json.dumps(
+                    {
+                        "record_type": "component-registry-build",
+                        "component_count": len(registry["components"]),
+                        "output": str(args.output.expanduser()),
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 0
+        if args.component_action == "snapshot":
+            registry = load_component_registry(args.registry.expanduser())
+            observed = observe_platform_components(
+                registry,
+                platform=args.platform,
+                platform_home=args.home.expanduser(),
+                tool_snapshot_path=args.tools.expanduser(),
+                configured_mcp=args.configured_mcp,
+            )
+            args.output.expanduser().write_text(
+                json.dumps(observed, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            print(
+                json.dumps(
+                    {
+                        "record_type": "component-snapshot-build",
+                        "component_count": len(observed["components"]),
+                        "output": str(args.output.expanduser()),
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 0
+        if args.component_action == "install-candidate":
+            installer_class = (
+                ClaudeComponentInstaller if args.platform == "claude" else CodexComponentInstaller
+            )
+            record = installer_class(
+                args.state_root.expanduser(), args.quarantine_root.expanduser()
+            ).install(args.built.expanduser(), args.home.expanduser())
+            print(json.dumps(record, ensure_ascii=False, sort_keys=True))
+            return 0
+        if args.component_action == "restore":
+            result = CodexComponentInstaller(
+                args.state_root.expanduser(), args.quarantine_root.expanduser()
+            ).restore(args.install_id)
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            return 0
+        registry = load_component_registry(args.registry.expanduser())
+        if args.component_action == "show":
+            print(render_component_status(registry, platform=args.platform), end="")
+            return 0
+        if args.component_action == "audit":
+            observed = json.loads(args.observed.expanduser().read_text(encoding="utf-8"))
+            if isinstance(observed, dict):
+                observed = observed["components"]
+            audit = audit_component_drift(registry, observed, platform=args.platform)
+            print(json.dumps(audit, ensure_ascii=False, sort_keys=True))
+            return 0 if audit["clean"] else 2
     raise AssertionError(f"Unhandled action: {args.action}")

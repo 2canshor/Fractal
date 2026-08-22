@@ -6,7 +6,9 @@ The public repository contains only reusable architecture, schemas, deterministi
 
 ## Current Status
 
-Version `0.1.0-alpha.1` is an initial development release. The repository does not yet make a stability or compatibility promise.
+Version `0.1.0-alpha.2` is a candidate development build. It adds universal component governance, but it is not a persistently activated System Version and does not represent Project Completion. The repository does not yet make a stability or compatibility promise.
+
+Fractal registers every active or discoverable Skill, Hook, agent role, MCP, Plugin, Tool, and adapter individually. Use `fractal components show` for the human-readable active-set view. A component being installed or present in a cache is not proof that it is active or working.
 
 ## Development
 

@@ -2,13 +2,19 @@
 
 Fractal generates Codex, Claude, Cowork, and Gemini projections in one direction from a pinned Public commit and selected Private state. An installed projection never overwrites canonical source in reverse.
 
-Each adapter contains a minimal root router, a bounded Project and authority context, capability metadata, the applicable Skill folders or packages, a limitation record, and a hash-pinned manifest. Codex and Claude also receive their locally observed hook or agent formats. The root router is deliberately small and is not a replacement mega-rulebook.
+Each adapter contains a minimal root router, a bounded Project and authority context, the universal component registry, the approved platform active set, selector-facing capability metadata, a Human Control status view, applicable generated Skill folders or packages, limitations, and a hash-pinned manifest. Codex and Claude also receive their locally observed Hook and agent-role formats. The root router is deliberately small and is not a replacement mega-rulebook.
 
 ## Current Platform Evidence
 
-Codex locally exposes global `AGENTS.md`, Skills, command Hooks, agents, plugins, and MCP configuration. The adapter uses `SessionStart` plus a protected-legacy `PreToolUse` guard; changed command Hooks still require Codex trust before they run. Claude has locally observed root instructions, Skills, a verifier agent, and `SessionStart` settings. Cowork package format is observable on disk, but server-side Settings, connector activation, and execution remain Unknown until a user-visible or real-behaviour check. Gemini has an observed root file, while Skill discovery, Hooks, and the empty MCP configuration remain Unknown.
+Codex locally exposes global `AGENTS.md`, Skills, command Hooks, agent roles, Plugins, MCP configuration, and Tools. The adapter uses `SessionStart`, a `PreToolUse` managed-surface guard, and a `Stop` work-completed Hook. `Stop` writes one compact Work Signature and deterministically evaluates the Fatigue repetition trigger. Changed command Hooks still require trust for their exact command hash before they run.
 
-No Fractal MCP server is claimed in the initial adapter. The deterministic Python runtime and canonical files are the fallback until an MCP interface is implemented, reviewed, connected, and exercised.
+Claude receives the corresponding generated root, Skills, verifier and Improvement Researcher roles, and a settings fragment with `SessionStart`, the same managed-surface `PreToolUse` guard, and `Stop`. Registered local external Skills remain explicit platform references; enabled Plugins and their Skills are recorded individually. Cowork package format is observable on disk, but server-side Settings, connector activation, and execution remain Unknown until a user-visible or real-behaviour check. Gemini has an observed root file, while Skill execution, Hooks, and MCP behaviour remain Unknown unless live evidence says otherwise.
+
+Existing platform MCP servers are registered individually with their permission and secret boundaries. No separate Fractal MCP server is claimed. The deterministic Python runtime and canonical files remain the Fractal control path.
+
+## Human Status Route
+
+Use `fractal components show --registry ~/.codex/fractal/component-registry.json --platform codex`, or ask the agent to show Fractal component status. This is intentionally separate from the slash-command menu. A menu showing “No commands” does not mean the root `AGENTS.md` router failed, and Fractal does not add decorative slash commands.
 
 ## Tool Results
 
@@ -16,4 +22,4 @@ Typed result handling preserves every text, image, audio, resource, structured, 
 
 ## Drift and Restore
 
-The audit compares every managed file digest and reports missing, changed, and unexpected paths. Installation backs up only files owned by the adapter manifest. Restore reinstates those exact files and removes only newly installed managed files; unrelated home contents remain untouched.
+The component audit detects unregistered live items, registered items missing from an adapter, inactive items that remain discoverable, and changed source or projection hashes. The Codex and Claude candidate installers preserve previous generated paths, move unmanaged or rejected extras into a recoverable quarantine, switch only the registered active set, and record a restore manifest. The Claude installer merges generated Hooks into the existing settings and disables only enabled Plugins absent from the approved registry; its backup preserves the prior settings exactly. Restore reinstates those exact paths, settings, and quarantined extras; unrelated home contents remain untouched.

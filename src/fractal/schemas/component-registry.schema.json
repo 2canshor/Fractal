@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fractal.local/schemas/component-registry.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_type", "record_version", "system_version", "candidate_status", "components"],
+  "properties": {
+    "record_type": {"const": "component-registry"},
+    "record_version": {"const": 2},
+    "system_version": {"type": "string", "minLength": 1},
+    "candidate_status": {"enum": ["candidate", "active", "inactive"]},
+    "components": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/component"}
+    }
+  },
+  "$defs": {
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_id", "human_name", "kind", "disposition", "owner", "source", "dependencies",
+        "naming", "permissions", "trigger", "status", "platforms", "projection",
+        "verification_evidence", "overlap", "recovery"
+      ],
+      "properties": {
+        "component_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "human_name": {"type": "string", "minLength": 1},
+        "kind": {
+          "enum": ["adapter", "agent-role", "hook", "mcp", "platform-capability", "plugin", "skill", "tool"]
+        },
+        "disposition": {
+          "enum": [
+            "fractal-owned-canonical", "approved-external-managed", "platform-managed-adapter",
+            "inactive-quarantined", "rejected"
+          ]
+        },
+        "external_identifier": {"type": ["string", "null"]},
+        "dependencies": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+          "uniqueItems": true
+        },
+        "owner": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["owner_id", "source_controlled_by_owner"],
+          "properties": {
+            "owner_id": {"type": "string", "minLength": 1},
+            "source_controlled_by_owner": {"type": "boolean"}
+          }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "locator", "version", "content_sha256"],
+          "properties": {
+            "kind": {"enum": ["fractal-public", "fractal-private", "local-snapshot", "platform", "plugin-cache", "protocol"]},
+            "locator": {"type": "string", "minLength": 1},
+            "version": {"type": ["string", "null"]},
+            "content_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+          },
+          "anyOf": [
+            {"properties": {"version": {"type": "string", "minLength": 1}}},
+            {"properties": {"content_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}}
+          ]
+        },
+        "naming": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["registry_key_status", "external_identifier_status", "exemption_reason"],
+          "properties": {
+            "registry_key_status": {"const": "passed"},
+            "external_identifier_status": {"enum": ["not-applicable", "exempt-external"]},
+            "exemption_reason": {"type": ["string", "null"]}
+          }
+        },
+        "permissions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["profile", "operations", "secret_boundary"],
+          "properties": {
+            "profile": {"type": "string", "minLength": 1},
+            "operations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+            "secret_boundary": {"type": "string", "minLength": 1}
+          }
+        },
+        "trigger": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "description"],
+          "properties": {
+            "mode": {"enum": ["automatic", "event", "explicit", "platform", "unavailable"]},
+            "description": {"type": "string", "minLength": 1}
+          }
+        },
+        "status": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["discoverable", "active", "execution", "evidence_ids"],
+          "properties": {
+            "discoverable": {"type": "boolean"},
+            "active": {"type": "boolean"},
+            "execution": {"enum": ["verified-live", "verified-staged", "available-unverified", "unknown", "unavailable"]},
+            "evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          }
+        },
+        "platforms": {
+          "type": "array",
+          "items": {"enum": ["claude", "codex", "cowork", "gemini", "shared"]},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "projection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "target", "expected_sha256"],
+          "properties": {
+            "mode": {"enum": ["generated-copy", "generated-entrypoint", "generated-metadata", "platform-reference", "quarantine", "none"]},
+            "target": {"type": ["string", "null"]},
+            "expected_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+          }
+        },
+        "verification_evidence": {
+          "type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true
+        },
+        "overlap": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["decision", "with"],
+          "properties": {
+            "decision": {"type": "string", "minLength": 1},
+            "with": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          }
+        },
+        "recovery": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["removal", "restore"],
+          "properties": {
+            "removal": {"type": "string", "minLength": 1},
+            "restore": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    }
+  }
+}

@@ -15,7 +15,7 @@
       "overlap": [],
       "status": {
         "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
-        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "activation_authority": {"state": "active", "authority": "adapter-projection", "evidence_ids": ["phase-10-live-discovery"]},
         "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-routing-eval"]}
       }
     },
@@ -32,7 +32,7 @@
       "overlap": [],
       "status": {
         "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
-        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "activation_authority": {"state": "active", "authority": "adapter-projection", "evidence_ids": ["phase-10-live-discovery"]},
         "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-routing-eval"]}
       }
     },
@@ -49,7 +49,7 @@
       "overlap": [],
       "status": {
         "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
-        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "activation_authority": {"state": "active", "authority": "adapter-projection", "evidence_ids": ["phase-10-live-discovery"]},
         "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-routing-eval"]}
       }
     },
@@ -66,7 +66,7 @@
       "overlap": ["platform-figma", "platform-sites"],
       "status": {
         "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
-        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "activation_authority": {"state": "active", "authority": "adapter-projection", "evidence_ids": ["phase-10-live-discovery"]},
         "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-design-overlap-eval"]}
       }
     },
@@ -83,7 +83,7 @@
       "overlap": [],
       "status": {
         "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
-        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "activation_authority": {"state": "active", "authority": "adapter-projection", "evidence_ids": ["phase-10-live-discovery"]},
         "execution": {"state": "verified-live", "evidence_ids": ["phase-8-legacy-review"]}
       }
     },
@@ -100,7 +100,7 @@
       "overlap": [],
       "status": {
         "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
-        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "activation_authority": {"state": "active", "authority": "adapter-projection", "evidence_ids": ["phase-10-live-discovery"]},
         "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-name-check"]}
       }
     },
@@ -117,7 +117,7 @@
       "overlap": ["third-party-firecrawl", "platform-web-search"],
       "status": {
         "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
-        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "activation_authority": {"state": "active", "authority": "adapter-projection", "evidence_ids": ["phase-10-live-discovery"]},
         "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-routing-eval"]}
       }
     },
@@ -134,7 +134,7 @@
       "overlap": [],
       "status": {
         "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
-        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "activation_authority": {"state": "active", "authority": "adapter-projection", "evidence_ids": ["phase-10-live-discovery"]},
         "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-7-system-review"]}
       }
     },
@@ -151,7 +151,7 @@
       "overlap": ["third-party-firecrawl", "platform-browser"],
       "status": {
         "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
-        "activation_authority": {"state": "blocked", "authority": "system-version-and-action-scope", "evidence_ids": ["credential-rotation-open"]},
+        "activation_authority": {"state": "active", "authority": "adapter-projection-and-action-scope", "evidence_ids": ["phase-10-live-discovery"]},
         "execution": {"state": "not-run", "evidence_ids": []}
       }
     },
@@ -168,7 +168,7 @@
       "overlap": [],
       "status": {
         "availability": {"state": "source-verified", "evidence_ids": ["phase-8-source-validation"]},
-        "activation_authority": {"state": "inactive", "authority": "system-version", "evidence_ids": []},
+        "activation_authority": {"state": "active", "authority": "adapter-projection", "evidence_ids": ["phase-10-live-discovery"]},
         "execution": {"state": "verified-synthetic", "evidence_ids": ["phase-8-routing-eval"]}
       }
     }
