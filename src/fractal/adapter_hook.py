@@ -88,13 +88,56 @@ def _home_abbreviation(path: str) -> str:
     return "~" + path[len(home) :] if path.startswith(home) else path
 
 
-def _transcript_tools(path: str | None) -> tuple[str, ...]:
-    """Extract only Tool identifiers from a bounded local transcript."""
+def _is_primary_user_record(value: Any) -> bool:
+    """Return whether a transcript record represents a real user turn."""
+    if not isinstance(value, dict):
+        return False
+    if value.get("isSidechain") is True or value.get("isMeta") is True:
+        return False
+    if value.get("isCompactSummary") is True or "toolUseResult" in value:
+        return False
+    if value.get("type") == "user":
+        return True
+    message = value.get("message")
+    if isinstance(message, dict) and message.get("role") == "user":
+        return True
+    payload = value.get("payload")
+    return isinstance(payload, dict) and payload.get("role") == "user"
+
+
+def _record_identifier(value: dict[str, Any]) -> str:
+    for key in ("uuid", "turn_id", "turnId", "promptId", "id"):
+        identifier = value.get(key)
+        if isinstance(identifier, str) and identifier:
+            return identifier
+    digest = hashlib.sha256(
+        json.dumps(value, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    return digest[:24]
+
+
+def _transcript_work_context(path: str | None) -> tuple[str | None, tuple[str, ...]]:
+    """Extract the latest user-turn key and its Tool identifiers."""
     if not path:
-        return ()
+        return None, ()
     transcript = Path(path).expanduser()
-    if not transcript.is_file() or transcript.stat().st_size > 5_000_000:
-        return ()
+    try:
+        usable = transcript.is_file() and transcript.stat().st_size <= 5_000_000
+    except OSError:
+        usable = False
+    if not usable:
+        return None, ()
+    records: list[Any] = []
+    for line in transcript.read_text(encoding="utf-8", errors="replace").splitlines():
+        try:
+            records.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    user_indexes = [index for index, value in enumerate(records) if _is_primary_user_record(value)]
+    start = user_indexes[-1] if user_indexes else 0
+    turn_key = None
+    if user_indexes:
+        turn_key = _record_identifier(records[start])
     found: set[str] = set()
 
     def visit(value: Any) -> None:
@@ -113,12 +156,9 @@ def _transcript_tools(path: str | None) -> tuple[str, ...]:
             for child in value:
                 visit(child)
 
-    for line in transcript.read_text(encoding="utf-8", errors="replace").splitlines():
-        try:
-            visit(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    return tuple(sorted(found))
+    for record in records[start:]:
+        visit(record)
+    return turn_key, tuple(sorted(found))
 
 
 def _signature_from_dict(value: dict[str, Any]) -> WorkSignature:
@@ -148,10 +188,12 @@ def capture_work_completion(
     project = context["active_project"]
     platform = context.get("platform", "unknown")
     session_id = str(payload.get("session_id") or "unknown-session")
-    assistant_digest = hashlib.sha256(
-        str(payload.get("last_assistant_message") or "").encode("utf-8")
-    ).hexdigest()[:16]
-    work_id = f"{platform}-stop-{session_id}-{assistant_digest}"
+    turn_key, tools = _transcript_work_context(payload.get("transcript_path"))
+    if turn_key is None:
+        turn_key = hashlib.sha256(
+            str(payload.get("last_assistant_message") or "").encode("utf-8")
+        ).hexdigest()[:16]
+    work_id = f"{platform}-stop-{session_id}-{turn_key}"
     store = WorkSignatureStore(journal_path)
     history_values = store.read_all()
     existing = next((item for item in history_values if item["work_id"] == work_id), None)
@@ -165,14 +207,28 @@ def capture_work_completion(
             work_type="agent-session",
             input_shape=f"{platform}-stop-event",
             steps=("agent-session", "assistant-response"),
-            tools=_transcript_tools(payload.get("transcript_path")),
+            tools=tools,
             outcome_category="completed-response",
             purpose_class="ordinary",
             elapsed_seconds=None,
             token_usage=None,
             completed_at=utc_now(),
         )
-        captured = store.capture_completion(signature)
+        try:
+            captured = store.capture_completion(signature)
+        except ValueError:
+            # Two Hook processes can observe the same turn before either writes.
+            # Treat the completed write as the stable record instead of failing
+            # because their capture timestamps differ.
+            refreshed = next(
+                (item for item in store.read_all() if item["work_id"] == work_id),
+                None,
+            )
+            if refreshed is None:
+                raise
+            signature = _signature_from_dict(refreshed)
+            captured = False
+    history_values = store.read_all()
     history = [
         _signature_from_dict(item) for item in history_values if item["work_id"] != work_id
     ]
@@ -209,15 +265,9 @@ def capture_work_completion(
                     stream.write(json.dumps(evaluation, ensure_ascii=False, sort_keys=True) + "\n")
         finally:
             fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "Stop",
-            "additionalContext": (
-                f"Fractal captured Work Signature {work_id}; repetition result "
-                f"{recognition.status} ({recognition.occurrence_count})."
-            ),
-        }
-    }
+    # Stop hooks have no additional-context output. Keep the capture silent so
+    # recording completion cannot itself trigger another assistant response.
+    return {"suppressOutput": True}
 
 
 def main(argv: list[str] | None = None) -> int:

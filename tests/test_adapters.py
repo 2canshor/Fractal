@@ -351,8 +351,25 @@ def test_real_stop_payload_captures_and_evaluates_work_signature(tmp_path: Path)
     transcript.write_text(
         json.dumps(
             {
+                "type": "user",
+                "uuid": "turn-a",
+                "message": {"role": "user", "content": "Run the bounded probe."},
+            }
+        )
+        + "\n"
+        + json.dumps(
+            {
                 "type": "response_item",
                 "payload": {"type": "function_call", "name": "exec_command"},
+            }
+        )
+        + "\n"
+        + json.dumps(
+            {
+                "type": "user",
+                "uuid": "tool-result-a",
+                "toolUseResult": {"status": "ok"},
+                "message": {"role": "user", "content": [{"type": "tool_result"}]},
             }
         )
         + "\n"
@@ -374,18 +391,48 @@ def test_real_stop_payload_captures_and_evaluates_work_signature(tmp_path: Path)
         journal_path=journal,
         evaluations_path=evaluations,
     )
-    assert "first-occurrence" in first["hookSpecificOutput"]["additionalContext"]
+    assert first == {"suppressOutput": True}
     signature = json.loads(journal.read_text().strip())
     assert signature["tools"] == ["exec_command"]
     assert signature["project_id"] == "project-a"
+    assert signature["work_id"] == "codex-stop-session-a-turn-a"
     second = capture_work_completion(
         context,
-        {**payload, "session_id": "session-b"},
+        {**payload, "last_assistant_message": "A second assistant fragment."},
         journal_path=journal,
         evaluations_path=evaluations,
     )
-    assert "possible-repetition" in second["hookSpecificOutput"]["additionalContext"]
+    assert second == {"suppressOutput": True}
+    assert len(journal.read_text().splitlines()) == 1
+    assert len(evaluations.read_text().splitlines()) == 1
+
+    with transcript.open("a") as stream:
+        stream.write(
+            json.dumps(
+                {
+                    "type": "user",
+                    "uuid": "turn-b",
+                    "message": {"role": "user", "content": "Run it again."},
+                }
+            )
+            + "\n"
+            + json.dumps(
+                {
+                    "type": "response_item",
+                    "payload": {"type": "function_call", "name": "exec_command"},
+                }
+            )
+            + "\n"
+        )
+    capture_work_completion(
+        context,
+        payload,
+        journal_path=journal,
+        evaluations_path=evaluations,
+    )
     assert len(journal.read_text().splitlines()) == 2
+    evaluation = json.loads(evaluations.read_text().splitlines()[-1])
+    assert evaluation["recognition"]["status"] == "possible-repetition"
 
 
 def test_final_cutover_context_removes_the_legacy_guard(tmp_path: Path) -> None:
