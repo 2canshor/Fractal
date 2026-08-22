@@ -1,0 +1,118 @@
+{
+  "record_type": "method-registry",
+  "record_version": 1,
+  "system_version": "0.1.0-alpha.1",
+  "core_philosophies": [
+    {
+      "id": "continuous-improvement",
+      "human_name": "Continuous Improvement",
+      "decision_status": "architecture-baseline",
+      "intent": "Use observed Project outcomes to review and improve the system without forcing mutation.",
+      "provenance": "revision-8-architecture-baseline",
+      "operational_mapping": [
+        "project-evidence",
+        "project-review",
+        "system-review",
+        "change-proposal",
+        "human-decision",
+        "system-version-history"
+      ]
+    }
+  ],
+  "methodologies": [
+    {
+      "id": "deterministic-over-probabilistic",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["deterministic-preprocessing", "schema-validation", "authority-check", "deterministic-execution"]
+    },
+    {
+      "id": "subtraction-first",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["improvement-option-order"]
+    },
+    {
+      "id": "resolve-before-asking",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["clarification-router"]
+    },
+    {
+      "id": "project-review",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["review-point", "project-review", "project-plan-update"]
+    },
+    {
+      "id": "progressive-disclosure",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["context-catalogue", "context-index", "context-package"]
+    },
+    {
+      "id": "trial-before-adoption",
+      "decision_status": "approved-technical-decision",
+      "operational_mapping": ["safe-trial-boundary", "baseline-candidate-comparison", "human-adoption-decision"]
+    }
+  ],
+  "supporting_philosophies": [
+    {
+      "id": "global-outcome-over-local-optimisation",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["project-review-evaluation", "system-review-evaluation"]
+    },
+    {
+      "id": "feedback-is-evidence-not-instruction",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["instruction-authority", "feedback-review"]
+    },
+    {
+      "id": "human-final-authority",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["authority-policy", "project-completion-gate", "system-version-gate"]
+    },
+    {
+      "id": "human-readability",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["human-control-view"]
+    },
+    {
+      "id": "curiosity",
+      "decision_status": "intent-established-mechanism-partially-defined",
+      "intent": "Broaden bounded research for Fatigue and Greed without adopting findings automatically.",
+      "provenance": "revision-8-approved-mechanism-direction",
+      "operational_mapping": ["improve-current-method", "research-latest-findings", "explore-related-fields"],
+      "open_questions": ["effort-meter", "source-quality-threshold", "freshness-threshold", "cross-field-relevance-threshold", "exact-tool-budget"],
+      "false_claim_guard": "Do not describe Curiosity as active until routing, provenance, relevance, and no-auto-adoption evidence pass."
+    },
+    {
+      "id": "fatigue",
+      "decision_status": "intent-established-mechanism-partially-defined",
+      "intent": "Notice repeated work and investigate a faster equivalent method without deleting necessary repetition.",
+      "provenance": "revision-8-approved-mechanism-direction",
+      "operational_mapping": ["completion-hook", "work-signature", "deterministic-repetition-match", "semantic-comparison-fallback", "improvement-investigation", "structural-repetition-classification"],
+      "open_questions": ["similarity-weights", "semantic-threshold", "retention", "research-budget", "alternative-limit", "overlap-threshold"],
+      "false_claim_guard": "Do not create or claim a Repetition Monitor or Fatigue Monitor."
+    },
+    {
+      "id": "greed",
+      "decision_status": "intent-established-mechanism-partially-defined",
+      "intent": "Challenge conservative success targets before work and once after original criteria are achieved.",
+      "provenance": "revision-8-approved-mechanism-direction",
+      "operational_mapping": ["performance-baseline", "success-criteria-challenge", "safe-trial-boundary", "outcome-ratchet"],
+      "open_questions": ["comparison-dimensions", "benchmark-freshness", "research-budget", "materiality-threshold", "representative-trial-rule"],
+      "false_claim_guard": "Do not fabricate thresholds, move criteria during Project Work, or erase original achievement."
+    },
+    {
+      "id": "no-forced-mutation",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["no-change-result"]
+    },
+    {
+      "id": "historical-restorability",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["system-version-manifest", "component-history", "restore-path"]
+    },
+    {
+      "id": "evidence-before-capability-claims",
+      "decision_status": "architecture-baseline",
+      "operational_mapping": ["capability-status-dimensions"]
+    }
+  ]
+}
