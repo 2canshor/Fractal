@@ -109,6 +109,7 @@ def builder(tmp_path: Path, output: str) -> AdapterBuilder:
         system_version="0.1.0-alpha.1",
         legacy_root=Path("/synthetic/legacy"),
         runtime_python=Path("/runtime with spaces/bin/python"),
+        verify_source_commits=False,
     )
 
 
@@ -190,7 +191,21 @@ def governed_builder(tmp_path: Path, output: str) -> AdapterBuilder:
         legacy_root=None,
         runtime_python=Path("/runtime/bin/python"),
         runtime_root=tmp_path / "runtime",
+        verify_source_commits=False,
     )
+
+
+def test_builder_rejects_a_false_source_commit(tmp_path: Path) -> None:
+    with pytest.raises(AdapterError, match="Public adapter source commit does not match"):
+        AdapterBuilder(
+            public_root=ROOT,
+            private_root=private_workspace(tmp_path / "private-false-commit"),
+            output_root=tmp_path / "false-commit",
+            public_commit="0" * 40,
+            private_commit="1" * 40,
+            system_version="0.1.0-alpha.2",
+            legacy_root=None,
+        )
 
 
 def test_registry_keeps_platform_limitations_honest() -> None:

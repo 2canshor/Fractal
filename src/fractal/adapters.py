@@ -6,6 +6,7 @@ import hashlib
 import json
 import shlex
 import shutil
+import subprocess
 import uuid
 from importlib.resources import files
 from pathlib import Path
@@ -77,6 +78,7 @@ class AdapterBuilder:
         legacy_root: Path | None,
         runtime_python: Path | None = None,
         runtime_root: Path | None = None,
+        verify_source_commits: bool = True,
     ) -> None:
         self.public_root = Path(public_root)
         self.private_root = Path(private_root)
@@ -101,6 +103,26 @@ class AdapterBuilder:
             self._verify_component_sources()
         if any(len(item) != 40 for item in (public_commit, private_commit)):
             raise AdapterError("Adapter source commits must be full Git object ids")
+        if verify_source_commits:
+            self._verify_source_commit(self.public_root, public_commit, "Public")
+            self._verify_source_commit(self.private_root, private_commit, "Private")
+
+    @staticmethod
+    def _verify_source_commit(root: Path, expected: str, label: str) -> None:
+        """Reject a candidate whose recorded source commit is not the live checkout."""
+        result = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        actual = result.stdout.strip()
+        if result.returncode != 0 or len(actual) != 40:
+            raise AdapterError(f"{label} adapter source is not a readable Git checkout")
+        if actual != expected:
+            raise AdapterError(
+                f"{label} adapter source commit does not match: expected {expected}, got {actual}"
+            )
 
     def build_all(self) -> dict[str, Any]:
         """Generate each supported adapter exactly once into an empty staging root."""
