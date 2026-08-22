@@ -24,6 +24,11 @@ ACTIVE_DISPOSITIONS = {
 }
 
 
+def is_transient_component_path(path: Path) -> bool:
+    """Return whether a path is generated local clutter rather than component source."""
+    return "__pycache__" in path.parts or path.name == ".DS_Store" or path.suffix == ".pyc"
+
+
 def tree_sha256(root: Path) -> str:
     """Hash one component tree deterministically without following symlinks."""
     root = Path(root)
@@ -34,6 +39,8 @@ def tree_sha256(root: Path) -> str:
         digest.update(root.read_bytes())
         return digest.hexdigest()
     for path in sorted(root.rglob("*")):
+        if is_transient_component_path(path.relative_to(root)):
+            continue
         if path.is_symlink():
             raise ComponentGovernanceError(f"Component source contains a symlink: {path}")
         if path.is_file():

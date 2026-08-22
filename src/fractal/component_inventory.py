@@ -8,7 +8,12 @@ import re
 from pathlib import Path
 from typing import Any
 
-from fractal.component_governance import active_components, load_component_registry, tree_sha256
+from fractal.component_governance import (
+    active_components,
+    is_transient_component_path,
+    load_component_registry,
+    tree_sha256,
+)
 from fractal.storage import value_sha256
 
 
@@ -24,6 +29,8 @@ def projection_tree_sha256(root: Path) -> str:
     """Match the generated adapter's canonical tree-manifest digest."""
     manifest = {}
     for path in sorted(Path(root).rglob("*")):
+        if is_transient_component_path(path.relative_to(root)):
+            continue
         if path.is_symlink():
             raise ValueError(f"Projection source contains a symlink: {path}")
         if path.is_file():

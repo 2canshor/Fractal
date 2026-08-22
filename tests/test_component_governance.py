@@ -11,6 +11,7 @@ from fractal.component_governance import (
     audit_component_drift,
     load_component_registry,
     render_component_status,
+    tree_sha256,
 )
 
 
@@ -143,3 +144,17 @@ def test_active_dependency_must_be_registered_and_active(tmp_path: Path) -> None
         write_registry(tmp_path / "valid.json", [dependent, dependency])
     )
     assert registry["components"][0]["dependencies"] == ["missing-tool"]
+
+
+def test_component_hash_ignores_transient_python_and_finder_clutter(tmp_path: Path) -> None:
+    source = tmp_path / "skill"
+    source.mkdir()
+    (source / "SKILL.md").write_text("stable source")
+    original = tree_sha256(source)
+    cache = source / "__pycache__"
+    cache.mkdir()
+    (cache / "module.cpython-312.pyc").write_bytes(b"temporary")
+    (source / ".DS_Store").write_bytes(b"finder")
+    assert tree_sha256(source) == original
+    (source / "SKILL.md").write_text("changed source")
+    assert tree_sha256(source) != original

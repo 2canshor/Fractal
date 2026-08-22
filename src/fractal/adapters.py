@@ -284,7 +284,11 @@ class AdapterBuilder:
                         else destination / "skills"
                     )
                     target = skills_root / projected_name
-                    shutil.copytree(source, target)
+                    shutil.copytree(
+                        source,
+                        target,
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store"),
+                    )
                     projected_value = {
                         "kind": "skill-folder",
                         "sha256": value_sha256(tree_manifest(target)),
