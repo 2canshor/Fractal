@@ -204,6 +204,8 @@ def capture_work_completion(
     platform = context.get("platform", "unknown")
     thread_id = payload.get("thread_id") or payload.get("threadId")
     turn_id = payload.get("turn_id") or payload.get("turnId")
+    if thread_id is None and platform == "codex":
+        thread_id = payload.get("session_id")
     session_id = str(thread_id or payload.get("session_id") or "unknown-session")
     turn_key, tools = _transcript_work_context(payload.get("transcript_path"))
     if isinstance(turn_id, str) and turn_id:

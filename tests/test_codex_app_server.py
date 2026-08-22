@@ -378,6 +378,20 @@ def test_turn_events_finalize_one_signature_and_run_fatigue(tmp_path: Path) -> N
     )
     journal = tmp_path / "signatures.jsonl"
     evaluations = tmp_path / "evaluations.jsonl"
+    evaluations.write_text(
+        json.dumps(
+            {
+                "record_type": "work-signature-evaluation",
+                "work_id": f"codex-turn-{thread_id}-{turn_id}",
+                "project_id": "project-a",
+                "platform": "codex",
+                "captured": True,
+                "recognition": {"status": "first-occurrence"},
+                "evaluated_at": "2026-08-22T00:00:00Z",
+            }
+        )
+        + "\n"
+    )
 
     def simulate_live_stop_hook(message: dict[str, Any]) -> None:
         if message["method"] != "turn/completed":
@@ -417,9 +431,12 @@ def test_turn_events_finalize_one_signature_and_run_fatigue(tmp_path: Path) -> N
     assert report["work_signature"]["token_usage"] == 30
     assert report["work_signature"]["evidence_state"] == "turn-completed"
     assert len(journal.read_text().splitlines()) == 1
-    assert json.loads(evaluations.read_text())["recognition"]["status"] == (
+    assert len(evaluations.read_text().splitlines()) == 1
+    final_evaluation = json.loads(evaluations.read_text())
+    assert final_evaluation["recognition"]["status"] == (
         "first-occurrence"
     )
+    assert final_evaluation["event_evidence"][0] == "turn/completed"
 
 
 def test_config_mismatch_uses_returned_version_to_restore(tmp_path: Path) -> None:

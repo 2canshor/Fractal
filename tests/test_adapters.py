@@ -436,6 +436,7 @@ def test_real_stop_payload_captures_and_evaluates_work_signature(tmp_path: Path)
     assert signature["work_id"] == "codex-turn-session-a-turn-a"
     assert signature["work_type"] == "agent-turn"
     assert signature["input_shape"] == "codex-completed-turn"
+    assert signature["thread_id"] == "session-a"
     second = capture_work_completion(
         context,
         {**payload, "last_assistant_message": "A second assistant fragment."},

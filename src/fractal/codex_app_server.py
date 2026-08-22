@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
@@ -952,6 +953,44 @@ def _tool_evidence(item: dict[str, Any]) -> str | None:
     return None
 
 
+def _finalize_work_signature_evaluation(
+    evaluations_path: Path,
+    evaluation: dict[str, Any],
+) -> None:
+    """Keep one evaluation per work item while adding final event evidence."""
+    evaluations_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = evaluations_path.with_suffix(evaluations_path.suffix + ".lock")
+    with lock_path.open("a", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            records = []
+            if evaluations_path.exists():
+                records = [
+                    json.loads(line)
+                    for line in evaluations_path.read_text(encoding="utf-8").splitlines()
+                    if line.strip()
+                ]
+            retained = [
+                item
+                for item in records
+                if item.get("work_id") != evaluation["work_id"]
+            ]
+            retained.append(evaluation)
+            temporary = evaluations_path.with_name(
+                f".{evaluations_path.name}.{uuid.uuid4().hex}.tmp"
+            )
+            temporary.write_text(
+                "".join(
+                    json.dumps(item, ensure_ascii=False, sort_keys=True) + "\n"
+                    for item in retained
+                ),
+                encoding="utf-8",
+            )
+            temporary.replace(evaluations_path)
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
 def verify_live_turn_completion(
     client: CodexAppServerClient,
     *,
@@ -1106,9 +1145,7 @@ def verify_live_turn_completion(
         },
         "evaluated_at": utc_now(),
     }
-    evaluations_path.parent.mkdir(parents=True, exist_ok=True)
-    with evaluations_path.open("a", encoding="utf-8") as stream:
-        stream.write(json.dumps(evaluation, ensure_ascii=False, sort_keys=True) + "\n")
+    _finalize_work_signature_evaluation(evaluations_path, evaluation)
     return {
         "record_type": "codex-live-turn-verification",
         "thread_id": thread_id,
