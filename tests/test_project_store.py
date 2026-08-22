@@ -185,6 +185,22 @@ def test_missing_event_is_detected(store: ProjectStore, project: ProjectRecord) 
         store.verify(project.project_id)
 
 
+def test_event_captures_storage_observed_value(
+    store: ProjectStore, project: ProjectRecord
+) -> None:
+    store.apply_changes(
+        project.project_id,
+        expected_revision=0,
+        changes=[Change("set", "/plan/current_phase", 4, base_value=99)],
+        actor="agent-a",
+        platform="platform-a",
+    )
+    event_path = store.runtime_root / "events" / f"{project.project_id}.jsonl"
+    event = json.loads(event_path.read_text().splitlines()[-1])
+    assert event["changes"][0]["base_value"] == 99
+    assert event["changes"][0]["observed_value"] is None
+
+
 def test_derived_index_can_be_deleted_and_rebuilt(
     store: ProjectStore, project: ProjectRecord, tmp_path: Path
 ) -> None:

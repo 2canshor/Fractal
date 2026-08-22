@@ -180,8 +180,14 @@ class ProjectStore:
             stale = current["revision"] != expected_revision
             candidate = copy.deepcopy(current)
             changed = False
+            event_changes: list[dict[str, Any]] = []
             for change in changes:
+                event_change = change.to_dict()
                 if change.operation == "append":
+                    target = _get_value(current, change.path)
+                    event_change["observed_item_ids"] = [
+                        item.get("id") for item in target if isinstance(item, dict)
+                    ]
                     try:
                         changed = _append_value(candidate, change.path, change.value) or changed
                     except ValueError:
@@ -191,8 +197,12 @@ class ProjectStore:
                             actor=actor,
                             platform=platform,
                         )
+                    event_changes.append(event_change)
                     continue
                 current_value = _get_value(candidate, change.path)
+                event_change["observed_value"] = copy.deepcopy(
+                    _get_value(current, change.path)
+                )
                 if stale and current_value not in (change.base_value, change.value):
                     return self._record_conflict(
                         current,
@@ -203,6 +213,7 @@ class ProjectStore:
                 if current_value != change.value:
                     _set_value(candidate, change.path, change.value)
                     changed = True
+                event_changes.append(event_change)
 
             if not changed:
                 return WriteResult(
@@ -224,7 +235,7 @@ class ProjectStore:
                     "actor": actor,
                     "platform": platform,
                     "action": "apply-changes",
-                    "changes": [change.to_dict() for change in changes],
+                    "changes": event_changes,
                     "occurred_at": utc_now(),
                 },
             )
