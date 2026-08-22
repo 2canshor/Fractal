@@ -46,6 +46,48 @@ EXECUTION_STATUSES = {
 }
 
 
+def choose_execution_element(
+    *,
+    task_id: str,
+    repeatable_rule_available: bool,
+    exact_output_contract: bool,
+    requires_interpretation: bool = False,
+    requires_causal_reasoning: bool = False,
+    requires_tradeoff: bool = False,
+    requires_synthesis: bool = False,
+) -> dict[str, Any]:
+    """Apply Deterministic Over Probabilistic to one bounded unit of work."""
+    if not task_id.strip():
+        raise ValueError("Execution selection requires a task id")
+    judgement_reasons = [
+        name
+        for name, required in (
+            ("interpretation", requires_interpretation),
+            ("causal-reasoning", requires_causal_reasoning),
+            ("tradeoff", requires_tradeoff),
+            ("synthesis", requires_synthesis),
+        )
+        if required
+    ]
+    deterministic_ready = repeatable_rule_available and exact_output_contract
+    if deterministic_ready and not judgement_reasons:
+        route = "deterministic-program"
+    elif deterministic_ready:
+        route = "deterministic-first-then-main-agent"
+    elif judgement_reasons:
+        route = "main-agent"
+    else:
+        raise ValueError("Execution selection lacks an exact rule or a judgement need")
+    return {
+        "record_type": "execution-element-selection",
+        "task_id": task_id,
+        "mechanism": "deterministic-over-probabilistic",
+        "route": route,
+        "deterministic_ready": deterministic_ready,
+        "judgement_reasons": judgement_reasons,
+    }
+
+
 def load_method_registry() -> dict[str, Any]:
     """Load the hierarchy and reject misplaced or incomplete Nodes."""
     path = files("fractal.data").joinpath("method-registry.json")

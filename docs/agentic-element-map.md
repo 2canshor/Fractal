@@ -21,19 +21,19 @@ The architecture keeps dependent reasoning in the Main Agent. It creates a Subag
 | Node | Layer | Primary element | Supporting elements | Current evidence |
 |---|---|---|---|---|
 | Continuous Improvement | Core Philosophy | Main Agent | Skill, Hook, deterministic program | Partially implemented; complete behaviour has synthetic evidence |
-| System Review | Protagonist Mechanism | Main Agent | Skill, Subagent, MCP, deterministic program | Partially implemented; staged Skill and synthetic review tests |
-| Step 1: Find Problems | Methodology | Main Agent | Skill, deterministic program | Partially implemented; synthetic tests |
-| Step 2: Find Local Patterns | Methodology | Main Agent | Skill, deterministic program | Partially implemented; synthetic tests |
-| Step 3: Compare History | Methodology | Main Agent | Skill, Subagent, MCP, deterministic program | Partially implemented; synthetic tests |
-| Step 4: Choose the System Response | Methodology | Main Agent | Skill, deterministic program | Partially implemented; synthetic tests |
-| Step 5: Reality Check | Methodology | Main Agent | Skill, Subagent, deterministic program | Partially implemented; synthetic tests |
+| System Review | Protagonist Mechanism | Main Agent | Skill, Subagent, MCP, deterministic program | Candidate runtime and stage contracts implemented; verified with synthetic records |
+| Step 1: Find Problems | Methodology | Main Agent | Skill, deterministic program | Candidate runtime enforces full-history coverage, Positive/Negative Delta, and Quantity over Quality |
+| Step 2: Find Local Patterns | Methodology | Main Agent | Skill, deterministic program | Candidate runtime enforces causal distinctions, evidence, uncertainty, and counterexamples |
+| Step 3: Compare History | Methodology | Main Agent | Skill, Subagent, MCP, deterministic program | Candidate runtime enforces complete history manifests, reversal checks, and Cause Research routing |
+| Step 4: Choose the System Response | Methodology | Main Agent | Skill, deterministic program | Candidate runtime enforces existing-system assessment, Capability Check, and all eight option families |
+| Step 5: Reality Check | Methodology | Main Agent | Skill, Subagent, deterministic program | Candidate runtime represents all Local/Global combinations and later outcome evaluation |
 | Fatigue | Value / Methodology | deterministic program | Hook, Subagent, Skill | Work Signature and repetition trigger verified live; full investigation path remains partial |
 | Curiosity | Value / Methodology | Skill | Subagent, MCP, deterministic program | Partially implemented; staged and synthetic evidence |
 | Greed | Value / Methodology | Skill | Main Agent, MCP, deterministic program | Partially implemented; synthetic evidence |
-| Project Review | Secondary Mechanism | Main Agent | Skill, Hook, deterministic program, optional verifier Subagent | Canonical Project Review records exist; the complete Skill contract has synthetic evidence |
+| Project Review | Secondary Mechanism | Main Agent | Skill, Hook, deterministic program, optional verifier Subagent | Candidate runtime records whole-Project scope, resources, neglected areas, opportunity cost, and continuation |
 | Deterministic Over Probabilistic | Mechanism | deterministic program | Hook, Skill | Implemented and used live by state, Hook, hash, and governance paths |
-| Quantity over Quality | Mechanism | Skill | Main Agent, deterministic program | Partially implemented; whole-history and no-early-causality contract still needs full runtime enforcement |
-| Subtraction First | Mechanism | Skill | deterministic program | Partially implemented; option order tested synthetically |
+| Quantity over Quality | Mechanism | Skill | Main Agent, deterministic program | Candidate runtime rejects incomplete history and early causal filtering |
+| Subtraction First | Mechanism | Skill | deterministic program | Candidate runtime enforces delete-to-no-change option coverage and order |
 | Global Outcome Over Local Optimisation | Mechanism | Main Agent | Skill, deterministic program | Partially implemented; later real outcome loop remains incomplete |
 | Work Signature | Mechanism | Hook | deterministic program | Verified live |
 | Naming System | Mechanism | Skill | deterministic linter, activation Hook | Built and projected; synthetic naming eval |

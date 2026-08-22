@@ -27,6 +27,45 @@ PROJECT_REVIEW_DIMENSIONS = (
     "remaining_work",
 )
 
+PROJECT_RESOURCE_DIMENSIONS = {"time", "attention"}
+
+
+def _validate_project_review_resources(resources: list[dict[str, Any]]) -> None:
+    if not isinstance(resources, list):
+        raise LifecycleError("Project Review requires planned-versus-actual resource records")
+    dimensions = {
+        item.get("dimension") for item in resources if isinstance(item, dict)
+    }
+    if not dimensions >= PROJECT_RESOURCE_DIMENSIONS:
+        missing = sorted(PROJECT_RESOURCE_DIMENSIONS.difference(dimensions))
+        raise LifecycleError(f"Project Review resource comparison is missing: {missing}")
+    for item in resources:
+        if not isinstance(item, dict):
+            raise LifecycleError("Project Review resource entries must be typed records")
+        if item.get("status") not in {"within-plan", "over-plan", "under-plan", "unknown"}:
+            raise LifecycleError("Project Review resource entry requires a comparison status")
+        if not str(item.get("unit", "")).strip() or not str(item.get("reason", "")).strip():
+            raise LifecycleError("Project Review resource entry requires unit and reason")
+        planned = item.get("planned")
+        actual = item.get("actual")
+        if item["status"] == "unknown":
+            if planned is not None or actual is not None:
+                raise LifecycleError("Unknown resource comparison keeps planned and actual null")
+        elif not isinstance(planned, int | float) or not isinstance(actual, int | float):
+            raise LifecycleError("Known resource comparison requires numeric planned and actual")
+
+
+def _validate_neglected_areas(areas: list[dict[str, Any]]) -> None:
+    if not isinstance(areas, list):
+        raise LifecycleError("Project Review requires a neglected-area assessment")
+    for item in areas:
+        if not isinstance(item, dict) or not str(item.get("area", "")).strip():
+            raise LifecycleError("Neglected-area records require an area")
+        if item.get("status") not in {"healthy", "watch", "neglected"}:
+            raise LifecycleError("Neglected-area record requires a status")
+        if not isinstance(item.get("evidence_ids"), list):
+            raise LifecycleError("Neglected-area record requires an evidence list")
+
 
 @dataclass(frozen=True, slots=True)
 class DirectionSummary:
@@ -343,6 +382,10 @@ class LifecycleController:
         plan_delta: str,
         concern: str,
         whole_project_assessment: dict[str, str],
+        planned_vs_actual_resources: list[dict[str, Any]],
+        neglected_areas: list[dict[str, Any]],
+        opportunity_cost: str,
+        continuation_decision: dict[str, str],
         evidence_ids: list[str],
         actor: str,
         platform: str,
@@ -361,6 +404,18 @@ class LifecycleController:
                 "Project Review must assess every whole-Project dimension; "
                 f"missing={missing}, extra={extra}"
             )
+        _validate_project_review_resources(planned_vs_actual_resources)
+        _validate_neglected_areas(neglected_areas)
+        if not opportunity_cost.strip():
+            raise LifecycleError("Project Review requires an explicit opportunity cost")
+        if continuation_decision.get("decision") not in {
+            "continue-as-planned",
+            "continue-with-plan-update",
+            "pause-and-request-decision",
+        } or not continuation_decision.get("justification", "").strip():
+            raise LifecycleError(
+                "Project Review requires a continuation decision and justification"
+            )
         points = copy.deepcopy(lifecycle["review_points"])
         open_points = [point for point in points if point["status"] == "open"]
         if not open_points:
@@ -369,6 +424,7 @@ class LifecycleController:
             if point["status"] == "open":
                 point["status"] = "reviewed"
         review = {
+            "record_version": 2,
             "id": f"review-{uuid.uuid4()}",
             "project_sha256": value_sha256(record.to_dict()),
             "review_point_ids": [point["id"] for point in open_points],
@@ -385,6 +441,15 @@ class LifecycleController:
                 dimension: whole_project_assessment[dimension].strip()
                 for dimension in PROJECT_REVIEW_DIMENSIONS
             },
+            "whole_project_scope_receipt": {
+                "assessed_dimensions": list(PROJECT_REVIEW_DIMENSIONS),
+                "project_snapshot_sha256": value_sha256(record.to_dict()),
+                "local_trigger_review_point_ids": [point["id"] for point in open_points],
+            },
+            "planned_vs_actual_resources": copy.deepcopy(planned_vs_actual_resources),
+            "neglected_areas": copy.deepcopy(neglected_areas),
+            "opportunity_cost": opportunity_cost.strip(),
+            "continuation_decision": copy.deepcopy(continuation_decision),
             "conclusion": conclusion,
             "confidence": confidence,
             "plan_delta": plan_delta,

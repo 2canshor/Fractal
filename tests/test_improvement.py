@@ -23,6 +23,7 @@ from fractal.improvement import (
     compare_trial_results,
     curiosity_routes,
     recognise_repetition,
+    route_value_evidence,
     semantic_comparison_payload,
 )
 
@@ -345,3 +346,51 @@ def test_greed_does_not_move_mid_project_goalposts() -> None:
         project_status="in_progress",
         original_criteria_achieved=False,
     )
+
+
+@pytest.mark.parametrize(
+    ("value", "stage_inputs"),
+    [
+        ("fatigue", ["issue-scan", "improvement-options"]),
+        ("curiosity", ["cause-research", "improvement-options"]),
+        ("greed", ["expected-effect", "improvement-options"]),
+    ],
+)
+def test_three_values_route_into_the_existing_review_backbone(
+    value: str,
+    stage_inputs: list[str],
+) -> None:
+    active = route_value_evidence(
+        value,
+        project_id="project-a",
+        project_status="in_progress",
+        summary="A bounded signal from completed work",
+        evidence_ids=["evidence-a"],
+        persistent_system_observation=True,
+    )
+    assert active["primary_route"] == "project-review"
+    assert active["system_review_evidence"] is True
+    assert active["system_review_stage_inputs"] == stage_inputs
+    assert active["decision_mechanism"] == "project-review"
+    assert active["competing_improvement_loop"] is False
+
+    completed = route_value_evidence(
+        value,
+        project_id="project-a",
+        project_status="completed",
+        summary="A bounded signal from the completed Project",
+        evidence_ids=["evidence-a"],
+    )
+    assert completed["primary_route"] == "system-review"
+    assert completed["system_review_evidence"] is True
+
+
+def test_value_evidence_requires_real_provenance() -> None:
+    with pytest.raises(ValueError, match="evidence ids"):
+        route_value_evidence(
+            "fatigue",
+            project_id="project-a",
+            project_status="in_progress",
+            summary="Repeated effort",
+            evidence_ids=[],
+        )

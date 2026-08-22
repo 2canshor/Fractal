@@ -81,6 +81,44 @@ def whole_project_assessment() -> dict[str, str]:
     }
 
 
+def project_review_resources() -> list[dict]:
+    return [
+        {
+            "dimension": "time",
+            "planned": 20,
+            "actual": 24,
+            "unit": "hours",
+            "status": "over-plan",
+            "reason": "Restore verification took four extra hours",
+        },
+        {
+            "dimension": "attention",
+            "planned": 30,
+            "actual": 40,
+            "unit": "percent",
+            "status": "over-plan",
+            "reason": "The risk investigation used more Project attention than planned",
+        },
+    ]
+
+
+def neglected_areas() -> list[dict]:
+    return [
+        {
+            "area": "user-level verification",
+            "status": "watch",
+            "evidence_ids": ["evidence-done"],
+        }
+    ]
+
+
+def continuation_decision() -> dict[str, str]:
+    return {
+        "decision": "continue-with-plan-update",
+        "justification": "The restore test is bounded and protects the whole deliverable",
+    }
+
+
 def approve_project(controller: LifecycleController, store: ProjectStore, project_id: str) -> None:
     record = store.read(project_id)
     controller.confirm_direction(
@@ -356,6 +394,10 @@ def test_deviation_review_failure_and_goal_change_paths(
         plan_delta="Add a restore test",
         concern="The restore path still needs user-level proof",
         whole_project_assessment=whole_project_assessment(),
+        planned_vs_actual_resources=project_review_resources(),
+        neglected_areas=neglected_areas(),
+        opportunity_cost="Four hours were unavailable for user-level verification",
+        continuation_decision=continuation_decision(),
         evidence_ids=["evidence-done"],
         actor="main-agent",
         platform="test-adapter",
@@ -379,6 +421,10 @@ def test_deviation_review_failure_and_goal_change_paths(
         plan_delta="No Goal change",
         concern="A repeated failure would require escalation",
         whole_project_assessment=whole_project_assessment(),
+        planned_vs_actual_resources=project_review_resources(),
+        neglected_areas=neglected_areas(),
+        opportunity_cost="The retry delays the next verification pass",
+        continuation_decision=continuation_decision(),
         evidence_ids=[],
         actor="main-agent",
         platform="test-adapter",
@@ -396,6 +442,18 @@ def test_deviation_review_failure_and_goal_change_paths(
     assert final.lifecycle["reviews"][0]["review_kinds"] == ["exception"]
     assert set(final.lifecycle["reviews"][0]["whole_project_assessment"]) == set(
         whole_project_assessment()
+    )
+    first_review = final.lifecycle["reviews"][0]
+    assert first_review["record_version"] == 2
+    assert first_review["whole_project_scope_receipt"]["assessed_dimensions"] == list(
+        whole_project_assessment()
+    )
+    assert {
+        item["dimension"] for item in first_review["planned_vs_actual_resources"]
+    } >= {"time", "attention"}
+    assert first_review["neglected_areas"][0]["status"] == "watch"
+    assert first_review["continuation_decision"]["decision"] == (
+        "continue-with-plan-update"
     )
     assert all(point["status"] == "reviewed" for point in final.lifecycle["review_points"])
     assert final.requests[-1]["path"] == "/lifecycle/goal"
@@ -473,6 +531,27 @@ def test_milestone_review_requires_the_whole_project(
             plan_delta="No change",
             concern="None beyond planned verification",
             whole_project_assessment=incomplete,
+            planned_vs_actual_resources=project_review_resources(),
+            neglected_areas=neglected_areas(),
+            opportunity_cost="No material opportunity cost is observed",
+            continuation_decision=continuation_decision(),
+            evidence_ids=["evidence-done"],
+            actor="main-agent",
+            platform="test-adapter",
+        )
+    with pytest.raises(LifecycleError, match="resource comparison is missing"):
+        controller.record_project_review(
+            project_id,
+            expected_revision=record.revision,
+            conclusion="Continue",
+            confidence="high",
+            plan_delta="No change",
+            concern="None beyond planned verification",
+            whole_project_assessment=whole_project_assessment(),
+            planned_vs_actual_resources=project_review_resources()[:1],
+            neglected_areas=neglected_areas(),
+            opportunity_cost="No material opportunity cost is observed",
+            continuation_decision=continuation_decision(),
             evidence_ids=["evidence-done"],
             actor="main-agent",
             platform="test-adapter",

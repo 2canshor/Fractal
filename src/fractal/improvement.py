@@ -9,6 +9,52 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+VALUE_STAGE_INPUTS = {
+    "fatigue": ("issue-scan", "improvement-options"),
+    "curiosity": ("cause-research", "improvement-options"),
+    "greed": ("expected-effect", "improvement-options"),
+}
+ACTIVE_PROJECT_STATUSES = {"planning", "in_progress", "awaiting_completion", "blocked"}
+
+
+def route_value_evidence(
+    value: Literal["fatigue", "curiosity", "greed"],
+    *,
+    project_id: str,
+    project_status: str,
+    summary: str,
+    evidence_ids: list[str],
+    persistent_system_observation: bool = False,
+) -> dict[str, Any]:
+    """Route each Value into the existing review backbone."""
+    if value not in VALUE_STAGE_INPUTS:
+        raise ValueError(f"Unknown Continuous Improvement Value: {value}")
+    if not project_id.strip() or not summary.strip() or not evidence_ids:
+        raise ValueError("Value evidence requires Project, summary, and evidence ids")
+    if len(evidence_ids) != len(set(evidence_ids)):
+        raise ValueError("Value evidence ids must be unique")
+    if project_status in ACTIVE_PROJECT_STATUSES:
+        primary_route = "project-review"
+    elif project_status == "completed":
+        primary_route = "system-review"
+    else:
+        raise ValueError(f"Unsupported Project status: {project_status}")
+    return {
+        "record_type": "value-evidence-route",
+        "value": value,
+        "project_id": project_id,
+        "project_status": project_status,
+        "summary": summary,
+        "evidence_ids": evidence_ids,
+        "primary_route": primary_route,
+        "system_review_evidence": (
+            primary_route == "system-review" or persistent_system_observation
+        ),
+        "system_review_stage_inputs": list(VALUE_STAGE_INPUTS[value]),
+        "decision_mechanism": primary_route,
+        "competing_improvement_loop": False,
+    }
+
 
 @dataclass(frozen=True, slots=True)
 class WorkSignature:

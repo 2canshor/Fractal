@@ -4,7 +4,9 @@ Continuous Improvement is Fractal's only Core Philosophy. System Review is its P
 
 ## Deterministic Over Probabilistic
 
-Fractal uses deterministic programs for work with an exact answer: schema validation, state transitions, hashes, authority checks, routing, Work Signature capture, capability reconciliation, drift detection, and restore. Main Agent judgement begins where evidence needs interpretation, causal reasoning, trade-offs, or synthesis.
+Fractal uses deterministic programs for work with an exact answer: schema validation, state transitions, hashes, authority checks, routing, Work Signature capture, capability reconciliation, drift detection, and restore. Main Agent judgement begins where evidence needs interpretation, causal reasoning, trade-offs, or synthesis. The runtime records one of three routes for every bounded unit: `deterministic-program`, `deterministic-first-then-main-agent`, or `main-agent`.
+
+For example, checking that all Project Review dimensions are present is a deterministic program. Deciding why a neglected area matters is Main Agent judgement. A mixed task first validates the complete evidence set, then gives that verified set to the Main Agent for interpretation.
 
 ## Fatigue — Value
 

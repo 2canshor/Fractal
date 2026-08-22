@@ -14,9 +14,11 @@ from fractal.system_review import (
     IndependentBranch,
     SystemReviewError,
     build_change_proposal,
+    classify_outcome_evidence,
     decide_change_proposal,
     detect_reversals,
     order_improvement_options,
+    record_later_outcome_evaluation,
     record_system_review_stage,
     review_feedback,
     select_lightest_capable_agent,
@@ -62,18 +64,150 @@ def safe_boundary(**overrides: bool) -> TrialBoundary:
 def stage_result(stage: str) -> dict:
     values = {
         "project-assessment": {
-            "what_went_well": ["The approved outcome was achieved"],
-            "what_could_be_better": ["One verification step was repeated"],
+            "comparison_baseline": "The approved Plan and previous comparable result",
+            "positive_delta": [
+                {
+                    "delta_id": "positive-a",
+                    "summary": "The approved outcome was achieved",
+                    "baseline": "The previous Project missed one criterion",
+                    "evidence_ids": ["evidence-a"],
+                }
+            ],
+            "negative_delta": [
+                {
+                    "delta_id": "negative-a",
+                    "summary": "One verification step was repeated",
+                    "baseline": "The Plan expected one verification pass",
+                    "evidence_ids": ["evidence-a"],
+                }
+            ],
         },
         "issue-scan": {
-            "scan_mode": "high-recall",
-            "observations": ["Repeated verification", "Late restore proof"],
+            "collection_mode": "quantity-over-quality",
+            "causal_filtering_applied": False,
+            "deduplication_status": "deferred-to-step-2",
+            "whole_project_history_manifest": {
+                "covered_sections": [
+                    "project-direction",
+                    "project-plan-history",
+                    "project-reviews",
+                    "work-records",
+                    "decisions-and-corrections",
+                    "outcome-evidence",
+                    "resource-use",
+                ],
+                "snapshot_sha256": "a" * 64,
+                "source_artifact_ids": ["project-snapshot"],
+            },
+            "observations": [
+                {
+                    "observation_id": "observation-a",
+                    "summary": "Verification repeated",
+                    "uncertainty": "The extra pass may have been necessary",
+                    "delta": "possible",
+                    "evidence_ids": ["evidence-a"],
+                },
+                {
+                    "observation_id": "observation-b",
+                    "summary": "Restore proof arrived late",
+                    "uncertainty": "The sequencing cause is not established",
+                    "delta": "negative",
+                    "evidence_ids": ["evidence-a"],
+                },
+            ],
+        },
+        "project-patterns": {
+            "status": "completed",
+            "observation_ids_considered": ["observation-a", "observation-b"],
+            "patterns": [
+                {
+                    "pattern_id": "pattern-a",
+                    "observation_ids": ["observation-a", "observation-b"],
+                    "symptom_summary": "Verification evidence was assembled more than once",
+                    "possible_cause": "Evidence requirements were staged too late",
+                    "causal_status": "plausible",
+                    "confidence": "medium",
+                    "counterevidence": ["One repeat may be an independent safety check"],
+                }
+            ],
         },
         "cross-project-patterns": {
             "history_status": "insufficient",
-            "summary": "Only one comparable Project exists",
+            "history_manifest": {
+                "projects": ["completed-project"],
+                "system-reviews": [],
+                "change-proposals": [],
+                "hypotheses": [],
+                "system-versions": [],
+                "interventions": [],
+                "outcomes": [],
+            },
+            "pattern_types_seen": [],
+            "comparisons": [],
+            "reason": "Only one comparable Project exists",
+        },
+        "reversal-check": {
+            "direction_history": [],
+            "reversals": [],
+            "problem_dimension_status": "not-enough-history",
+            "cause_research_warranted": False,
         },
         "cause-research": {"status": "not-needed", "reason": "Cause is directly observed"},
+        "reconciliation": {"status": "not-needed", "reason": "Cause Research was not needed"},
+        "improvement-options": {
+            "existing_capability_assessment": {
+                "checked": True,
+                "sufficient": True,
+                "component_ids": ["existing-review"],
+                "evidence_ids": ["evidence-a"],
+            },
+            "options": [
+                {
+                    "kind": kind,
+                    "status": "viable" if kind == "no-change" else "not-applicable",
+                    "reason": (
+                        "The evidence supports the current system"
+                        if kind == "no-change"
+                        else "No evidence supports this response"
+                    ),
+                    "evidence_ids": ["evidence-a"],
+                }
+                for kind in (
+                    "delete",
+                    "shorten",
+                    "merge",
+                    "simplify",
+                    "reconfigure",
+                    "modify",
+                    "add",
+                    "no-change",
+                )
+            ],
+            "preferred_kind": "no-change",
+            "complexity_delta": 0,
+        },
+        "expected-effect": {
+            "hypothesis_id": "hypothesis-a",
+            "problem_summary": "The possible repetition lacks enough history",
+            "causal_hypothesis": "The current evidence does not justify a system change",
+            "expected_local_effect": "No local behaviour changes",
+            "expected_global_effect": "System complexity stays stable",
+            "possible_downside": "A useful improvement may be delayed",
+            "uncertainty": "Only one completed Project exists",
+            "evaluation_horizon": "the next comparable Project",
+        },
+        "local-effect": {
+            "status": "not-applicable",
+            "hypothesis_id": "hypothesis-a",
+            "evidence_ids": [],
+            "reason": "No system change is proposed",
+        },
+        "global-effect": {
+            "status": "not-applicable",
+            "hypothesis_id": "hypothesis-a",
+            "evidence_ids": [],
+            "reason": "No system change is proposed",
+        },
         "two-sided-review": {
             "status": "not-warranted",
             "reason": "No consequential proposal",
@@ -82,6 +216,9 @@ def stage_result(stage: str) -> dict:
             "recommendation": "no-change",
             "confidence": "high",
             "synthesised_by": "main-agent",
+            "before_after_compared": True,
+            "history_checked": True,
+            "improvement_status": "not-applicable",
         },
         "biggest-remaining-concern": {
             "summary": "There is only one completed Project in the comparison set"
@@ -89,7 +226,7 @@ def stage_result(stage: str) -> dict:
         "result": {"outcome": "no-change", "reason": "Mutation lacks evidence"},
         "your-decision": {"decision": "accept-result"},
     }
-    return values.get(stage, {"summary": f"Observed {stage}"})
+    return values[stage]
 
 
 def test_full_system_review_accepts_no_change_as_a_real_result() -> None:
@@ -106,6 +243,155 @@ def test_full_system_review_accepts_no_change_as_a_real_result() -> None:
     assert review["status"] == "completed"
     assert review["result"]["outcome"] == "no-change"
     assert len(review["stages"]) == len(SYSTEM_REVIEW_STAGES)
+    assert [item["backbone_step"] for item in review["stages"]] == [
+        1,
+        1,
+        2,
+        3,
+        3,
+        3,
+        3,
+        4,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+    ]
+
+
+def test_step_one_requires_deltas_whole_history_and_no_early_cause() -> None:
+    review = start_system_review(completed_project())
+    with pytest.raises(SystemReviewError, match="Positive Delta and Negative Delta"):
+        record_system_review_stage(
+            review,
+            stage="project-assessment",
+            result={"comparison_baseline": "Project Plan"},
+            evidence_ids=["evidence-a"],
+        )
+    review = record_system_review_stage(
+        review,
+        stage="project-assessment",
+        result=stage_result("project-assessment"),
+        evidence_ids=["evidence-a"],
+    )
+    incomplete = stage_result("issue-scan")
+    incomplete["whole_project_history_manifest"]["covered_sections"].remove("resource-use")
+    with pytest.raises(SystemReviewError, match="history coverage mismatch"):
+        record_system_review_stage(
+            review,
+            stage="issue-scan",
+            result=incomplete,
+            evidence_ids=["evidence-a"],
+        )
+    premature = stage_result("issue-scan")
+    premature["observations"][0]["root_cause"] = "late planning"
+    with pytest.raises(SystemReviewError, match="too early"):
+        record_system_review_stage(
+            review,
+            stage="issue-scan",
+            result=premature,
+            evidence_ids=["evidence-a"],
+        )
+
+
+def test_step_two_keeps_plausible_and_confirmed_causes_distinct() -> None:
+    review = start_system_review(completed_project())
+    for stage in ("project-assessment", "issue-scan"):
+        review = record_system_review_stage(
+            review,
+            stage=stage,
+            result=stage_result(stage),
+            evidence_ids=["evidence-a"],
+        )
+    unsupported = stage_result("project-patterns")
+    unsupported["patterns"][0]["causal_status"] = "confirmed"
+    with pytest.raises(SystemReviewError, match="confirmation evidence"):
+        record_system_review_stage(
+            review,
+            stage="project-patterns",
+            result=unsupported,
+            evidence_ids=["evidence-a"],
+        )
+
+
+def test_reversal_challenges_dimension_and_forces_cause_research() -> None:
+    review = start_system_review(completed_project())
+    for stage in SYSTEM_REVIEW_STAGES[:4]:
+        review = record_system_review_stage(
+            review,
+            stage=stage,
+            result=stage_result(stage),
+            evidence_ids=["evidence-a"],
+        )
+    reversal = {
+        "direction_history": ["detailed", "concise", "detailed"],
+        "reversals": [{"from": "detailed", "to": "concise"}],
+        "problem_dimension_status": "challenged",
+        "cause_research_warranted": True,
+    }
+    review = record_system_review_stage(
+        review,
+        stage="reversal-check",
+        result=reversal,
+        evidence_ids=["evidence-a"],
+    )
+    with pytest.raises(SystemReviewError, match="cannot be skipped"):
+        record_system_review_stage(
+            review,
+            stage="cause-research",
+            result={"status": "not-needed", "reason": "Use the previous explanation"},
+            evidence_ids=["evidence-a"],
+        )
+
+
+def test_step_four_requires_complete_subtraction_first_and_capability_check() -> None:
+    result = stage_result("improvement-options")
+    result["options"].pop(4)
+    with pytest.raises(SystemReviewError, match="must cover"):
+        from fractal.system_review import _validate_system_review_stage
+
+        _validate_system_review_stage("improvement-options", result)
+    add = stage_result("improvement-options")
+    next(item for item in add["options"] if item["kind"] == "add")["status"] = "viable"
+    with pytest.raises(SystemReviewError, match="existing capability suffices"):
+        _validate_system_review_stage("improvement-options", add)
+
+
+@pytest.mark.parametrize(
+    ("local_supported", "system_improved", "expected"),
+    [
+        (True, True, "genuine-improvement"),
+        (True, False, "harmful-local-optimisation"),
+        (False, True, "helpful-wrong-causal-model"),
+        (False, False, "failed-intervention"),
+    ],
+)
+def test_step_five_keeps_local_and_global_outcomes_separate(
+    local_supported: bool,
+    system_improved: bool,
+    expected: str,
+) -> None:
+    local = {
+        "status": "observed",
+        "hypothesis_id": "hypothesis-a",
+        "before": {"elapsed": 10},
+        "after": {"elapsed": 5},
+        "hypothesis_supported": local_supported,
+        "evidence_ids": ["evidence-local"],
+    }
+    global_effect = {
+        "status": "observed",
+        "hypothesis_id": "hypothesis-a",
+        "before": {"project_quality": 8},
+        "after": {"project_quality": 9 if system_improved else 7},
+        "system_improved": system_improved,
+        "evidence_ids": ["evidence-global"],
+    }
+    assert classify_outcome_evidence(local, global_effect) == expected
 
 
 def test_system_review_cannot_start_before_primary_user_completion() -> None:
@@ -154,6 +440,9 @@ def test_final_suggestion_and_change_result_fail_closed() -> None:
             "recommendation": "change",
             "confidence": "medium",
             "synthesised_by": "main-agent",
+            "before_after_compared": True,
+            "history_checked": True,
+            "improvement_status": "not-applicable",
         },
         evidence_ids=["evidence-a"],
     )
@@ -288,9 +577,28 @@ def test_subtraction_first_reversal_and_change_proposal_authority() -> None:
         change_kind="remove",
         baseline={"routes": 2},
         candidate={"routes": 1},
-        expected_effect={"summary": "Less duplication"},
-        local_effect={"risk": "low"},
-        global_effect={"coverage": "unchanged"},
+        expected_effect={
+            "hypothesis_id": "hypothesis-simplify-route",
+            "problem_summary": "The route duplicates one responsibility",
+            "causal_hypothesis": "Removing the duplicate route reduces repeated handling",
+            "expected_local_effect": "One route handles the responsibility",
+            "expected_global_effect": "Coverage remains stable with less complexity",
+            "possible_downside": "A hidden caller may still use the old route",
+            "uncertainty": "Caller coverage is based on current evidence",
+            "evaluation_horizon": "the next two comparable Projects",
+        },
+        local_effect={
+            "status": "pending",
+            "hypothesis_id": "hypothesis-simplify-route",
+            "reason": "The candidate has not been tried",
+            "evidence_ids": [],
+        },
+        global_effect={
+            "status": "pending",
+            "hypothesis_id": "hypothesis-simplify-route",
+            "reason": "Later Project outcomes are required",
+            "evidence_ids": [],
+        },
         evidence_ids=["evidence-a"],
         restore_plan={"action": "restore previous manifest"},
     )
@@ -317,6 +625,30 @@ def test_subtraction_first_reversal_and_change_proposal_authority() -> None:
         human_action=True,
     )
     assert rejected["decision_status"] == "rejected"
+    later = record_later_outcome_evaluation(
+        proposal,
+        local_effect={
+            "status": "observed",
+            "hypothesis_id": "hypothesis-simplify-route",
+            "before": {"routes": 2},
+            "after": {"routes": 1},
+            "hypothesis_supported": True,
+            "evidence_ids": ["evidence-local"],
+        },
+        global_effect={
+            "status": "observed",
+            "hypothesis_id": "hypothesis-simplify-route",
+            "before": {"coverage": 100},
+            "after": {"coverage": 95},
+            "system_improved": False,
+            "evidence_ids": ["evidence-global"],
+        },
+        evidence_ids=["evidence-local", "evidence-global"],
+    )
+    assert later["learning_record"]["outcome_classification"] == (
+        "harmful-local-optimisation"
+    )
+    assert proposal["learning_record"]["later_evaluations"] == []
 
 
 def test_experiment_runner_safe_and_approval_required_paths() -> None:

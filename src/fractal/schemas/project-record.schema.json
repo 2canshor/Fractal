@@ -269,6 +269,7 @@
       "additionalProperties": false,
       "required": ["id", "project_sha256", "conclusion", "confidence", "plan_delta", "recorded_at", "evidence_ids"],
       "properties": {
+        "record_version": {"type": "integer", "minimum": 1},
         "id": {"$ref": "#/$defs/id"},
         "project_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
         "review_point_ids": {
@@ -305,6 +306,69 @@
             "risks_and_deviations": {"type": "string", "minLength": 1},
             "resources_and_deadline": {"type": "string", "minLength": 1},
             "remaining_work": {"type": "string", "minLength": 1}
+          }
+        },
+        "whole_project_scope_receipt": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["assessed_dimensions", "project_snapshot_sha256", "local_trigger_review_point_ids"],
+          "properties": {
+            "assessed_dimensions": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "uniqueItems": true
+            },
+            "project_snapshot_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "local_trigger_review_point_ids": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/id"},
+              "uniqueItems": true
+            }
+          }
+        },
+        "planned_vs_actual_resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["dimension", "planned", "actual", "unit", "status", "reason"],
+            "properties": {
+              "dimension": {"type": "string", "minLength": 1},
+              "planned": {"type": ["number", "null"]},
+              "actual": {"type": ["number", "null"]},
+              "unit": {"type": "string", "minLength": 1},
+              "status": {"enum": ["within-plan", "over-plan", "under-plan", "unknown"]},
+              "reason": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "neglected_areas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["area", "status", "evidence_ids"],
+            "properties": {
+              "area": {"type": "string", "minLength": 1},
+              "status": {"enum": ["healthy", "watch", "neglected"]},
+              "evidence_ids": {
+                "type": "array",
+                "items": {"$ref": "#/$defs/id"},
+                "uniqueItems": true
+              }
+            }
+          }
+        },
+        "opportunity_cost": {"type": "string", "minLength": 1},
+        "continuation_decision": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["decision", "justification"],
+          "properties": {
+            "decision": {
+              "enum": ["continue-as-planned", "continue-with-plan-update", "pause-and-request-decision"]
+            },
+            "justification": {"type": "string", "minLength": 1}
           }
         },
         "conclusion": {"type": "string", "minLength": 1},
