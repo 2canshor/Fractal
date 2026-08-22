@@ -348,12 +348,30 @@ def smoke_adapter(adapter: Path) -> dict[str, Any]:
     }
 
 
-def audit_adapter(expected: Path, installed: Path) -> dict[str, Any]:
+def audit_adapter(
+    expected: Path,
+    installed: Path,
+    *,
+    include_unexpected: bool = True,
+) -> dict[str, Any]:
     """Report missing, changed, and unexpected files deterministically."""
     expected_manifest = tree_manifest(expected)
-    installed_manifest = tree_manifest(installed) if installed.exists() else {}
+    if not installed.exists():
+        installed_manifest = {}
+    elif include_unexpected:
+        installed_manifest = tree_manifest(installed)
+    else:
+        installed_manifest = {}
+        for relative in expected_manifest:
+            candidate = installed / relative
+            if candidate.is_file() and not candidate.is_symlink():
+                installed_manifest[relative] = hashlib.sha256(candidate.read_bytes()).hexdigest()
     missing = sorted(set(expected_manifest).difference(installed_manifest))
-    unexpected = sorted(set(installed_manifest).difference(expected_manifest))
+    unexpected = (
+        sorted(set(installed_manifest).difference(expected_manifest))
+        if include_unexpected
+        else []
+    )
     changed = sorted(
         path
         for path in set(expected_manifest).intersection(installed_manifest)

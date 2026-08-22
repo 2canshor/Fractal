@@ -180,6 +180,8 @@ def test_drift_and_stale_reference_audits_are_deterministic(tmp_path: Path) -> N
     audit = audit_adapter(expected, installed)
     assert audit["changed"] == ["AGENTS.md"]
     assert audit["unexpected"] == ["unexpected.txt"]
+    managed_only = audit_adapter(expected, installed, include_unexpected=False)
+    assert managed_only["unexpected"] == []
     legacy = tmp_path / "legacy.md"
     legacy.write_text("Load /legacy/rules and Mega Rulebook")
     findings = find_legacy_references([legacy], ["/legacy/", "Mega Rulebook"])
