@@ -1,6 +1,6 @@
 # Fractal
 
-Fractal is an experimental local-first environment for doing Projects and learning from them. While a Project is active, Project Review checks the whole Project at milestones and exceptions so the Plan stays connected to the Goal. After the primary user declares Project Completion, System Review studies the completed Project and prepares any improvement for the user's decision.
+Fractal is a self-improving agentic environment for doing Projects and learning from them. While a Project is active, Project Review prevents local work from pulling attention, time, or resources away from the Project as a whole. After the primary user declares Project Completion, System Review uses the original five-step reasoning backbone to make future Projects better.
 
 ```text
 Brief -> Direction -> Research and Clarification -> Goal
@@ -9,6 +9,8 @@ Brief -> Direction -> Research and Clarification -> Goal
 ```
 
 Fractal keeps the Project record, evidence, capabilities, and review history together so an agent can continue work without rebuilding the story from scattered files.
+
+The original reasoning and its mapping to modern Nodes are documented in [Architecture Lineage](docs/architecture-lineage.md). [Fractal in One Competition Project](docs/product-introduction.md) shows the complete behaviour through a concrete example. [Architecture Lineage Coverage](docs/architecture-lineage-coverage.md) separates preserved architecture from the runtime work that still needs a new candidate.
 
 The public repository contains only reusable architecture, schemas, deterministic programs, tests, and documentation. Personal state, private policies, credentials, conversations, and runtime evidence belong outside this repository.
 

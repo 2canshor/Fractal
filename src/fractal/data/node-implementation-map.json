@@ -1,12 +1,61 @@
 {
   "record_type": "node-implementation-map",
-  "record_version": 1,
+  "record_version": 2,
   "system_version": "0.1.0-alpha.1",
   "status": "initial-build-mapping",
+  "architecture_alignment_status": "correction-recorded-awaiting-build-approval",
   "change_policy": {
     "evidence_required": true,
     "allowed_proposals": ["add", "remove", "replace", "merge", "split"],
     "active_change_requires_system_version_approval": true
+  },
+  "lineage_contract": {
+    "core_identity": "Protect the whole trajectory of an active Project through Project Review, then improve Fractal between completed Projects through System Review.",
+    "required_fields_for_major_nodes": [
+      "original_requirement",
+      "original_failure_mode",
+      "later_refinements",
+      "implemented_by",
+      "lineage_class"
+    ],
+    "allowed_lineage_classes": [
+      "original-backbone",
+      "supporting-infrastructure",
+      "separately-approved-later-capability"
+    ],
+    "original_system_review_backbone": [
+      {
+        "step": 1,
+        "name": "find-problems",
+        "original_question": "What can we learn from the whole Project before filtering or explaining it?",
+        "principle": "Quantity over Quality",
+        "implemented_by": ["project-assessment", "positive-delta", "negative-delta", "issue-scan"]
+      },
+      {
+        "step": 2,
+        "name": "find-local-patterns",
+        "original_question": "Why may these observations have happened, and which ones express the same system behaviour?",
+        "implemented_by": ["project-patterns", "causal-interpretation"]
+      },
+      {
+        "step": 3,
+        "name": "compare-history",
+        "original_question": "What did Fractal previously believe, change, and observe afterward?",
+        "implemented_by": ["cross-project-patterns", "reversal-check", "cause-research", "external-research", "internal-review", "reconciliation"]
+      },
+      {
+        "step": 4,
+        "name": "choose-system-response",
+        "original_question": "Can the current system solve this through deletion, simplification, reconfiguration, or modification?",
+        "implemented_by": ["improvement-options", "subtraction-first", "supporting-method-evidence", "experiments", "capability-evidence"]
+      },
+      {
+        "step": 5,
+        "name": "reality-check",
+        "original_question": "Did Fractal actually improve, or did it merely change?",
+        "implemented_by": ["expected-effect", "local-effect", "global-effect", "two-sided-review", "final-assessment", "biggest-remaining-concern", "result", "your-decision", "later-outcome-evaluation"]
+      }
+    ]
   },
   "nodes": [
     {
@@ -102,14 +151,14 @@
       "class": "lifecycle",
       "implementation_status": "implemented",
       "decision_status": "approved-technical-decision",
-      "purpose": "Open a milestone or exception trigger for a whole-Project check.",
-      "trigger": ["milestone-checkpoint", "exception-risk", "material-deviation", "failure", "human-request"],
+      "purpose": "Open a milestone or exception trigger for a whole-Project check; a time or resource threshold requests review rather than automatically stopping work.",
+      "trigger": ["milestone-checkpoint", "exception-risk", "time-or-resource-threshold-reached", "material-deviation", "failure", "human-request"],
       "non_trigger": ["deferred-philosophy", "minor-implementation-detail"],
       "preconditions": ["reason-present", "project-record-exists"],
       "stop_condition": ["project-review-recorded", "point-dismissed-with-evidence"],
       "fallback": ["keep-point-open", "surface-in-human-view"],
       "inputs": ["trigger", "review-kind", "reason", "evidence-ids"],
-      "outputs": ["review-point-record", "milestone-or-exception-classification"],
+      "outputs": ["review-point-record", "milestone-or-exception-classification", "continuation-decision-required-when-threshold-triggered"],
       "authority": "The system may open a Review Point; it cannot approve a material direction change.",
       "executor": ["python-trigger-checker", "future-hook"],
       "checks": ["valid-trigger", "stable-id", "status-transition"],
@@ -160,23 +209,29 @@
       "class": "lifecycle",
       "implementation_status": "implemented",
       "decision_status": "approved-technical-decision",
-      "purpose": "Protect the active Project trajectory by reviewing the whole Project at a milestone or exception.",
+      "lineage_class": "original-backbone",
+      "original_requirement": "Original Project Review requirement",
+      "original_failure_mode": "An agent can make one local area excellent while neglecting the Goal, other Success Criteria, remaining work, deadline, or the Project as a whole.",
+      "later_refinements": ["milestone-and-exception-trigger-families", "nine-dimension-assessment", "versioned-plan-history", "supporting-signal-evidence"],
+      "implemented_by": ["review-point", "project-review", "project-plan-update"],
+      "architecture_alignment_status": "build-required",
+      "purpose": "Prevent local excellence from damaging the active Project by comparing the whole trajectory, attention, time, and resources with the Project Plan at a milestone or exception.",
       "trigger": ["open-milestone-review-point", "open-exception-review-point", "human-request"],
       "non_trigger": ["local-code-comment-only"],
       "preconditions": ["canonical-project-readable", "evidence-links-known"],
       "stop_condition": ["conclusion-recorded", "confidence-recorded", "concern-recorded"],
       "fallback": ["state-evidence-gap", "keep-review-point-open"],
-      "inputs": ["whole-project-snapshot", "nine-dimension-assessment", "supporting-evidence", "open-review-points"],
+      "inputs": ["whole-project-snapshot", "nine-dimension-assessment", "planned-versus-actual-resources", "neglected-areas", "supporting-evidence", "open-review-points"],
       "outputs": ["review", "versioned-plan-delta", "system-observations-for-later-review", "biggest-remaining-concern"],
       "authority": "The Main Agent reviews; material outcome changes still require the primary user.",
       "executor": ["main-agent", "python-snapshot-and-hash"],
-      "checks": ["whole-project-hash", "all-nine-dimensions", "confidence", "plan-delta", "open-point-closure"],
+      "checks": ["whole-project-hash", "all-nine-dimensions", "planned-versus-actual-resources", "local-trigger-whole-project-scope", "confidence", "plan-delta", "open-point-closure"],
       "evidence": ["review-record", "project-snapshot-hash", "readable-plan-before-and-after"],
       "human_view": "Shows conclusion, confidence, Plan delta, and biggest remaining concern.",
       "evaluation": {
         "positive": ["multiple-whole-project-reviews"],
         "negative": ["local-issue-only-review"],
-        "boundary": ["evidence-gap-lowers-confidence"],
+        "boundary": ["evidence-gap-lowers-confidence", "time-threshold-opens-review-without-automatic-stop"],
         "false_positive": ["review-claims-complete-context-without-hash"],
         "missed_trigger": ["open-point-never-reviewed"]
       },
@@ -247,23 +302,29 @@
       "class": "continuous-improvement",
       "implementation_status": "implemented",
       "decision_status": "approved-technical-decision",
-      "purpose": "Learn from a primary-user-completed Project and prepare an evidence-backed result for the primary user's decision.",
+      "lineage_class": "original-backbone",
+      "original_requirement": "Original System Review Steps 1 to 5",
+      "original_failure_mode": "Fractal can miss weak evidence, create one fix per symptom, forget earlier analyses and reversals, add complexity automatically, or mistake local change for genuine system improvement.",
+      "later_refinements": ["positive-and-negative-delta", "cause-research", "subtraction-first", "supporting-capability-evidence", "two-sided-review", "typed-human-decision", "later-outcome-evaluation"],
+      "implemented_by": ["project-assessment", "issue-scan", "project-patterns", "cross-project-patterns", "reversal-check", "cause-research", "reconciliation", "improvement-options", "expected-effect", "local-effect", "global-effect", "two-sided-review", "final-assessment", "biggest-remaining-concern", "result", "your-decision"],
+      "architecture_alignment_status": "build-required",
+      "purpose": "Run the original five-step reasoning backbone over a primary-user-completed Project and prepare an evidence-backed result and later learning record for the primary user's decision.",
       "trigger": ["primary-user-project-completion"],
       "non_trigger": ["active-project", "awaiting-completion", "agent-finished-claim"],
       "preconditions": ["completed-project-snapshot", "completion-authority-verified"],
       "stop_condition": ["your-decision-recorded", "required-stage-evidence-missing"],
       "fallback": ["need-more-evidence", "no-change", "wait-for-primary-user-decision"],
-      "inputs": ["completed-project", "project-review-history", "supporting-method-observations", "component-history", "feedback"],
-      "outputs": ["final-assessment", "biggest-remaining-concern", "change-proposal-or-experiment-or-need-more-evidence-or-no-change", "your-decision"],
+      "inputs": ["completed-project-whole-history", "project-review-history", "previous-analysis-and-intervention-history", "supporting-method-observations", "component-history", "feedback"],
+      "outputs": ["positive-delta", "negative-delta", "quantity-over-quality-observations", "causal-local-patterns", "historical-patterns", "system-response-assessment", "effect-and-later-evaluation-record", "final-assessment", "biggest-remaining-concern", "change-proposal-or-experiment-or-need-more-evidence-or-no-change", "your-decision"],
       "authority": "The Main Agent synthesises the assessment; only the primary user records Your Decision and approves persistent activation.",
       "executor": ["main-agent", "independent-research-branches-when-needed", "python-stage-and-authority-check"],
-      "checks": ["required-stage-order", "positive-and-negative-assessment", "high-recall-issue-scan", "cross-project-evidence-sufficiency", "branch-independence", "subtraction-first", "biggest-remaining-concern", "primary-user-decision"],
+      "checks": ["original-five-step-lineage", "required-stage-order", "positive-delta", "negative-delta", "quantity-over-quality-whole-history-scan", "step-one-before-causal-synthesis", "symptom-and-cause-separation", "historical-analysis-and-intervention-chain", "recurrence-contradiction-overcorrection-patterns-of-patterns", "wrong-dimension-challenge", "branch-independence", "existing-system-before-addition", "subtraction-first", "hypothesis-versus-improvement-status", "local-and-global-effect", "later-outcome-evaluation", "biggest-remaining-concern", "primary-user-decision"],
       "evidence": ["completed-project-snapshot", "stage-records", "independent-branch-provenance", "typed-human-decision"],
-      "human_view": "Shows what worked, what could improve, the evidence, the biggest remaining concern, the result, and the user's available decision.",
+      "human_view": "Shows the original five questions beside the modern Nodes, Positive and Negative Delta, raw Issue Scan coverage, causal and historical reasoning, the system-response choice, Local and Global Effect, the biggest remaining concern, the result, and the user's available decision.",
       "evaluation": {
-        "positive": ["full-review-reaches-your-decision"],
+        "positive": ["full-five-step-review-reaches-your-decision", "later-outcome-evaluation-updates-learning-record"],
         "negative": ["active-project-cannot-start-system-review"],
-        "boundary": ["insufficient-cross-project-history-is-explicit"],
+        "boundary": ["insufficient-cross-project-history-is-explicit", "local-effect-succeeds-global-effect-fails", "local-effect-fails-global-effect-succeeds"],
         "false_positive": ["registration-or-test-pass-treated-as-project-completion"],
         "missed_trigger": ["completed-project-never-offers-system-review"]
       },
