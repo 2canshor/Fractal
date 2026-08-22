@@ -410,7 +410,9 @@ def test_real_stop_payload_captures_and_evaluates_work_signature(tmp_path: Path)
     signature = json.loads(journal.read_text().strip())
     assert signature["tools"] == ["exec_command"]
     assert signature["project_id"] == "project-a"
-    assert signature["work_id"] == "codex-stop-session-a-turn-a"
+    assert signature["work_id"] == "codex-turn-session-a-turn-a"
+    assert signature["work_type"] == "agent-turn"
+    assert signature["input_shape"] == "codex-completed-turn"
     second = capture_work_completion(
         context,
         {**payload, "last_assistant_message": "A second assistant fragment."},
@@ -448,6 +450,53 @@ def test_real_stop_payload_captures_and_evaluates_work_signature(tmp_path: Path)
     assert len(journal.read_text().splitlines()) == 2
     evaluation = json.loads(evaluations.read_text().splitlines()[-1])
     assert evaluation["recognition"]["status"] == "possible-repetition"
+
+
+def test_completed_turn_does_not_inherit_pre_fix_fragment_count(tmp_path: Path) -> None:
+    transcript = tmp_path / "transcript.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "user",
+                "uuid": "real-turn",
+                "message": {"role": "user", "content": "Complete one turn."},
+            }
+        )
+        + "\n"
+    )
+    journal = tmp_path / "work-signatures.jsonl"
+    journal.write_text(
+        json.dumps(
+            {
+                "work_id": "claude-stop-legacy-fragment",
+                "project_id": "project-a",
+                "work_type": "agent-session",
+                "input_shape": "claude-stop-event",
+                "steps": ["agent-session", "assistant-response"],
+                "tools": [],
+                "outcome_category": "completed-response",
+                "purpose_class": "ordinary",
+                "elapsed_seconds": None,
+                "token_usage": None,
+                "completed_at": "2026-08-22T00:00:00Z",
+            }
+        )
+        + "\n"
+    )
+    evaluations = tmp_path / "evaluations.jsonl"
+    capture_work_completion(
+        {"platform": "claude", "active_project": {"project_id": "project-a"}},
+        {
+            "session_id": "session-a",
+            "transcript_path": str(transcript),
+            "last_assistant_message": "Done.",
+        },
+        journal_path=journal,
+        evaluations_path=evaluations,
+    )
+    result = json.loads(evaluations.read_text().strip())
+    assert result["recognition"]["status"] == "first-occurrence"
+    assert result["recognition"]["occurrence_count"] == 1
 
 
 def test_final_cutover_context_removes_the_legacy_guard(tmp_path: Path) -> None:

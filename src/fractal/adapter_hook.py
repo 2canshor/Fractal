@@ -193,7 +193,7 @@ def capture_work_completion(
         turn_key = hashlib.sha256(
             str(payload.get("last_assistant_message") or "").encode("utf-8")
         ).hexdigest()[:16]
-    work_id = f"{platform}-stop-{session_id}-{turn_key}"
+    work_id = f"{platform}-turn-{session_id}-{turn_key}"
     store = WorkSignatureStore(journal_path)
     history_values = store.read_all()
     existing = next((item for item in history_values if item["work_id"] == work_id), None)
@@ -204,9 +204,9 @@ def capture_work_completion(
         signature = WorkSignature(
             work_id=work_id,
             project_id=project["project_id"],
-            work_type="agent-session",
-            input_shape=f"{platform}-stop-event",
-            steps=("agent-session", "assistant-response"),
+            work_type="agent-turn",
+            input_shape=f"{platform}-completed-turn",
+            steps=("user-turn", "assistant-response"),
             tools=tools,
             outcome_category="completed-response",
             purpose_class="ordinary",
