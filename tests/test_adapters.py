@@ -26,6 +26,7 @@ from fractal.component_governance import tree_sha256 as component_tree_sha256
 from fractal.component_installation import (
     ClaudeComponentInstaller,
     CodexComponentInstaller,
+    GeminiComponentInstaller,
 )
 from fractal.storage import value_sha256
 
@@ -131,7 +132,7 @@ def governed_builder(tmp_path: Path, output: str) -> AdapterBuilder:
                             "execution": "verified-staged",
                             "evidence_ids": ["test-evidence"],
                         },
-                        "platforms": ["claude", "codex"],
+                        "platforms": ["claude", "codex", "gemini"],
                         "projection": {
                             "mode": "generated-copy",
                             "target": "skills/research",
@@ -559,3 +560,28 @@ def test_claude_component_install_merges_settings_and_restores_extras(
     assert (home / "CLAUDE.md").read_text() == "previous entrypoint"
     assert (home / "skills" / "legacy-extra" / "SKILL.md").read_text() == "legacy extra"
     assert "skills/legacy-extra" in restored["restored_quarantine"]
+
+
+def test_gemini_component_install_switches_and_restores_skills(tmp_path: Path) -> None:
+    governed_builder(tmp_path, "governed-gemini").build_all()
+    built = tmp_path / "governed-gemini" / "gemini"
+    home = tmp_path / "gemini-home"
+    (home / "config" / "skills" / "legacy-extra").mkdir(parents=True)
+    (home / "config" / "skills" / "legacy-extra" / "SKILL.md").write_text(
+        "legacy extra"
+    )
+    (home / "GEMINI.md").write_text("previous entrypoint")
+    installer = GeminiComponentInstaller(
+        tmp_path / "component-installs", tmp_path / "quarantine"
+    )
+    record = installer.install(built, home)
+    assert (home / "GEMINI.md").is_symlink()
+    assert (home / "config" / "skills" / "research").is_symlink()
+    assert not (home / "config" / "skills" / "legacy-extra").exists()
+    assert record["persistent_system_version_activated"] is False
+    restored = installer.restore(record["install_id"])
+    assert (home / "GEMINI.md").read_text() == "previous entrypoint"
+    assert (
+        home / "config" / "skills" / "legacy-extra" / "SKILL.md"
+    ).read_text() == "legacy extra"
+    assert "config/skills/legacy-extra" in restored["restored_quarantine"]

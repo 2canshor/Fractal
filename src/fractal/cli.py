@@ -16,6 +16,7 @@ from fractal.component_governance import (
 from fractal.component_installation import (
     ClaudeComponentInstaller,
     CodexComponentInstaller,
+    GeminiComponentInstaller,
 )
 from fractal.component_inventory import (
     build_component_registry,
@@ -116,7 +117,9 @@ def build_parser() -> argparse.ArgumentParser:
     component_install = component_actions.add_parser(
         "install-candidate", help="Install a verified platform candidate recoverably."
     )
-    component_install.add_argument("--platform", choices=("claude", "codex"), default="codex")
+    component_install.add_argument(
+        "--platform", choices=("claude", "codex", "gemini"), default="codex"
+    )
     component_install.add_argument("--built", required=True, type=Path)
     component_install.add_argument("--home", required=True, type=Path)
     component_install.add_argument("--state-root", required=True, type=Path)
@@ -239,9 +242,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 0
         if args.component_action == "install-candidate":
-            installer_class = (
-                ClaudeComponentInstaller if args.platform == "claude" else CodexComponentInstaller
-            )
+            installer_class = {
+                "claude": ClaudeComponentInstaller,
+                "codex": CodexComponentInstaller,
+                "gemini": GeminiComponentInstaller,
+            }[args.platform]
             record = installer_class(
                 args.state_root.expanduser(), args.quarantine_root.expanduser()
             ).install(args.built.expanduser(), args.home.expanduser())

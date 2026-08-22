@@ -375,3 +375,78 @@ class ClaudeComponentInstaller(CodexComponentInstaller):
             encoding="utf-8",
         )
         return record
+
+
+class GeminiComponentInstaller(CodexComponentInstaller):
+    """Install the generated Gemini entrypoint and Skills recoverably."""
+
+    def install(self, built: Path, home: Path) -> dict[str, Any]:
+        built = Path(built).resolve(strict=True)
+        home = Path(home).expanduser().resolve()
+        smoke = smoke_adapter(built)
+        if smoke["platform"] != "gemini":
+            raise ComponentInstallationError("Gemini installer received another platform")
+        registry_path = built / "fractal" / "component-registry.json"
+        if not registry_path.is_file():
+            raise ComponentInstallationError("Candidate lacks a universal component registry")
+        load_component_registry(registry_path)
+        install_id = f"component-install-{uuid.uuid4()}"
+        state = self.state_root / install_id
+        backup = state / "backup"
+        quarantine = self.quarantine_root / install_id
+        links: dict[str, Path] = {
+            "GEMINI.md": built / "GEMINI.md",
+            "fractal": built / "fractal",
+        }
+        skills_source = built / "config" / "skills"
+        generated_skill_names: set[str] = set()
+        for skill in sorted(skills_source.iterdir()):
+            if not skill.is_dir():
+                continue
+            generated_skill_names.add(skill.name)
+            links[f"config/skills/{skill.name}"] = skill
+
+        previous: dict[str, dict[str, str]] = {}
+        managed = sorted(links)
+        for relative in managed:
+            previous[relative] = self._preserve(home / relative, backup / relative)
+
+        quarantined: list[dict[str, str]] = []
+        skills_root = home / "config" / "skills"
+        skills_root.mkdir(parents=True, exist_ok=True)
+        for path in sorted(skills_root.iterdir()):
+            if path.name in generated_skill_names:
+                continue
+            destination = quarantine / "config" / "skills" / path.name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(path), str(destination))
+            quarantined.append(
+                {
+                    "relative": f"config/skills/{path.name}",
+                    "quarantine": str(destination),
+                }
+            )
+
+        for relative, source in links.items():
+            target = home / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.symlink_to(source)
+
+        record = {
+            "record_type": "gemini-component-install",
+            "record_version": 1,
+            "install_id": install_id,
+            "candidate": str(built),
+            "home": str(home),
+            "managed": managed,
+            "previous": previous,
+            "quarantined": quarantined,
+            "persistent_system_version_activated": False,
+            "smoke": smoke,
+        }
+        state.mkdir(parents=True, exist_ok=True)
+        (state / "install.json").write_text(
+            json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        return record
