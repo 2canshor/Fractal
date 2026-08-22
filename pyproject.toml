@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fractal-system"
+version = "0.1.0a1"
+description = "A local-first continuous-improvement system with explicit state and evidence boundaries."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "jsonschema>=4.23",
+]
+
+[project.scripts]
+fractal = "fractal.cli:main"
+
+[dependency-groups]
+dev = [
+  "pytest>=8",
+  "ruff>=0.12",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fractal"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "record_type": "technical-decision-set",
+  "record_version": 1,
+  "decisions": [
+    {
+      "id": "TD-001",
+      "subject": "implementation-language",
+      "status": "accepted",
+      "decision": "Python 3.12 or newer, packaged with pyproject.toml and locked with uv",
+      "reason": "The required validation, JSON, SQLite, subprocess, and filesystem capabilities are available in the standard library or small portable dependencies.",
+      "sources": [
+        "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+        "https://docs.astral.sh/uv/concepts/projects/layout/"
+      ]
+    },
+    {
+      "id": "TD-002",
+      "subject": "canonical-formats",
+      "status": "accepted",
+      "decision": "JSON and JSON Schema for canonical state, JSON Lines for append-only events, Markdown for human views, and SQLite FTS5 for rebuildable indexes",
+      "reason": "The split makes canonical state portable, events auditable, views readable, and retrieval fast without making the index authoritative.",
+      "sources": [
+        "https://www.sqlite.org/fts5.html",
+        "https://json-schema.org/draft/2020-12/json-schema-core"
+      ]
+    },
+    {
+      "id": "TD-003",
+      "subject": "repository-boundary",
+      "status": "accepted",
+      "decision": "The public repository contains reusable architecture and programs; the private repository contains selected canonical application state; local runtime data remains outside both repositories",
+      "reason": "This prevents reusable system design, personal application state, and runtime evidence from becoming one trust boundary.",
+      "sources": [
+        "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility"
+      ]
+    },
+    {
+      "id": "TD-004",
+      "subject": "repository-names",
+      "status": "accepted",
+      "decision": "Use 2canshor/fractal for the public system and 2canshor/fractal-workspace for the private application",
+      "reason": "The names are concise noun phrases, describe distinct responsibilities, and avoid tying the generic system name to a historical implementation.",
+      "sources": [
+        "https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository"
+      ]
+    },
+    {
+      "id": "TD-005",
+      "subject": "versioning",
+      "status": "accepted",
+      "decision": "Use Semantic Versioning 0.1.0-alpha.1 for the system and PEP 440 version 0.1.0a1 for the Python package",
+      "reason": "The system is usable for development while its public interface and architecture remain unstable.",
+      "sources": [
+        "https://semver.org/spec/v2.0.0.html",
+        "https://packaging.python.org/en/latest/specifications/version-specifiers/"
+      ]
+    },
+    {
+      "id": "TD-006",
+      "subject": "large-file-storage",
+      "status": "accepted",
+      "decision": "Do not use Git LFS in version 0.1",
+      "reason": "Canonical state and code are text-first, while large evidence and runtime artefacts are explicitly outside the repositories."
+    },
+    {
+      "id": "TD-007",
+      "subject": "licence",
+      "status": "open",
+      "decision": "Do not add a licence until the repository owner explicitly selects one",
+      "reason": "Licence selection changes downstream legal permissions and is not a technical default."
+    }
+  ]
+}
