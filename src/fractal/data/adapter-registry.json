@@ -66,7 +66,7 @@
         "mcp": "empty-local-config-observed",
         "plugins": "unknown"
       },
-      "generated_surfaces": ["root-router", "skills-as-unverified-projection", "context", "capability-metadata"],
+      "generated_surfaces": ["root-router", "skills-as-antigravity-global-projection", "context", "capability-metadata"],
       "limitations": [
         {"surface": "skill-discovery", "status": "unknown", "fallback": "Root router points to capability metadata and requires a real platform smoke before activation is claimed."},
         {"surface": "hooks", "status": "unknown", "fallback": "Use the deterministic wrapper outside the platform."},

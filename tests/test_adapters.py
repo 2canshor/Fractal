@@ -137,9 +137,11 @@ def test_metadata_first_projection_and_platform_specific_outputs(tmp_path: Path)
     assert "permissionMode: plan" in claude_agent
     assert "Do not edit" in claude_agent
     assert list((tmp_path / "build" / "cowork" / "skill-packages").glob("*.skill"))
-    gemini_metadata = json.loads(
-        (tmp_path / "build" / "gemini" / "fractal" / "capability-metadata.json").read_text()
-    )
+    gemini = tmp_path / "build" / "gemini"
+    assert not (gemini / "skills").exists()
+    assert list((gemini / "config" / "skills").glob("*/SKILL.md"))
+    assert "~/.gemini/fractal/context.json" in (gemini / "GEMINI.md").read_text()
+    gemini_metadata = json.loads((gemini / "fractal" / "capability-metadata.json").read_text())
     assert {item["activation"] for item in gemini_metadata} == {"unknown"}
 
 
