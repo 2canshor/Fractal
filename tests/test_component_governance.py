@@ -13,6 +13,7 @@ from fractal.component_governance import (
     render_component_status,
     tree_sha256,
 )
+from fractal.component_inventory import observe_platform_components
 
 
 def component(component_id: str, *, disposition: str = "fractal-owned-canonical") -> dict:
@@ -158,3 +159,39 @@ def test_component_hash_ignores_transient_python_and_finder_clutter(tmp_path: Pa
     assert tree_sha256(source) == original
     (source / "SKILL.md").write_text("changed source")
     assert tree_sha256(source) != original
+
+
+def test_platform_runtime_observes_live_projection_not_source_artifact(tmp_path: Path) -> None:
+    artifact = tmp_path / "candidate.whl"
+    artifact.write_bytes(b"source artifact")
+    live = tmp_path / "site-packages" / "fractal"
+    live.mkdir(parents=True)
+    (live / "adapter_hook.py").write_text("live runtime")
+    runtime = component("platform-runtime")
+    runtime["kind"] = "platform-capability"
+    runtime["source"]["locator"] = str(artifact)
+    runtime["projection"] = {
+        "mode": "platform-reference",
+        "target": str(live),
+        "expected_sha256": tree_sha256(live),
+    }
+    registry = load_component_registry(
+        write_registry(tmp_path / "registry.json", [runtime])
+    )
+    tools = tmp_path / "tools.json"
+    tools.write_text(json.dumps({"platform_version": "test", "tools": []}))
+    observed = observe_platform_components(
+        registry,
+        platform="codex",
+        platform_home=tmp_path / "home",
+        tool_snapshot_path=tools,
+        configured_mcp=[],
+    )
+    assert observed["components"] == [
+        {
+            "component_id": "platform-runtime",
+            "discoverable": True,
+            "active": True,
+            "content_sha256": tree_sha256(live),
+        }
+    ]

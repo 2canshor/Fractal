@@ -483,7 +483,12 @@ def observe_platform_components(
                 add(component, actual_hash)
             continue
         if kind in {"plugin", "platform-capability"}:
-            source = Path(component["source"]["locator"]).expanduser()
+            locator = (
+                component["projection"]["target"]
+                if kind == "platform-capability"
+                else component["source"]["locator"]
+            )
+            source = Path(locator).expanduser()
             if source.exists():
                 actual_hash = (
                     tree_sha256(source)
