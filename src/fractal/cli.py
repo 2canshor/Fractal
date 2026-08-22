@@ -35,10 +35,17 @@ def build_parser() -> argparse.ArgumentParser:
     show_parser = project_actions.add_parser("show", help="Show a Human Control summary.")
     _add_storage_arguments(show_parser)
     show_parser.add_argument("--project-id", required=True)
+    show_parser.add_argument("--details", action="store_true")
 
     verify_parser = project_actions.add_parser("verify", help="Verify state and event integrity.")
     _add_storage_arguments(verify_parser)
     verify_parser.add_argument("--project-id", required=True)
+
+    migrate_parser = project_actions.add_parser("migrate", help="Migrate canonical schema.")
+    _add_storage_arguments(migrate_parser)
+    migrate_parser.add_argument("--project-id", required=True)
+    migrate_parser.add_argument("--actor", default="main-agent")
+    migrate_parser.add_argument("--platform", required=True)
     return parser
 
 
@@ -65,9 +72,23 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(json.dumps(created.to_dict(), ensure_ascii=False, sort_keys=True))
             return 0
         if args.project_action == "show":
-            print(render_project_summary(store.read(args.project_id)), end="")
+            print(
+                render_project_summary(
+                    store.read(args.project_id),
+                    details=args.details,
+                ),
+                end="",
+            )
             return 0
         if args.project_action == "verify":
             print(json.dumps(store.verify(args.project_id), sort_keys=True))
+            return 0
+        if args.project_action == "migrate":
+            migrated = store.migrate(
+                args.project_id,
+                actor=args.actor,
+                platform=args.platform,
+            )
+            print(json.dumps(migrated.to_dict(), ensure_ascii=False, sort_keys=True))
             return 0
     raise AssertionError(f"Unhandled action: {args.action}")

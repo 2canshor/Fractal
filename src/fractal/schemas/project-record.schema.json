@@ -14,7 +14,7 @@
     "revision",
     "created_at",
     "updated_at",
-    "direction",
+    "lifecycle",
     "plan",
     "decisions",
     "evidence",
@@ -24,7 +24,7 @@
     "completion"
   ],
   "properties": {
-    "schema_version": {"const": "1.0"},
+    "schema_version": {"const": "1.1"},
     "record_type": {"const": "project"},
     "project_id": {"$ref": "#/$defs/id"},
     "title": {"type": "string", "minLength": 1},
@@ -35,16 +35,7 @@
     "revision": {"type": "integer", "minimum": 0},
     "created_at": {"$ref": "#/$defs/timestamp"},
     "updated_at": {"$ref": "#/$defs/timestamp"},
-    "direction": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["summary", "status", "confirmed_at"],
-      "properties": {
-        "summary": {"type": "string"},
-        "status": {"enum": ["provisional", "confirmed"]},
-        "confirmed_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]}
-      }
-    },
+    "lifecycle": {"$ref": "#/$defs/lifecycle"},
     "plan": {
       "type": "object",
       "additionalProperties": false,
@@ -99,6 +90,202 @@
     "timestamp": {
       "type": "string",
       "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "brief",
+        "direction",
+        "goal",
+        "success_criteria",
+        "priorities",
+        "plan_history",
+        "review_points",
+        "deviations",
+        "reviews",
+        "unknowns",
+        "biggest_remaining_concern"
+      ],
+      "properties": {
+        "brief": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["summary", "source", "recorded_at"],
+          "properties": {
+            "summary": {"type": "string"},
+            "source": {"type": "string"},
+            "recorded_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]}
+          }
+        },
+        "direction": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["intended_outcome", "deliverable", "completion_standard", "exclusions", "status", "version", "confirmations", "material_change_reason"],
+          "properties": {
+            "intended_outcome": {"type": "string"},
+            "deliverable": {"type": "string"},
+            "completion_standard": {"type": "string"},
+            "exclusions": {"type": "string"},
+            "status": {"enum": ["provisional", "confirmed", "reconfirmation_required"]},
+            "version": {"type": "integer", "minimum": 1},
+            "confirmations": {"type": "array", "items": {"$ref": "#/$defs/confirmation"}},
+            "material_change_reason": {"type": ["string", "null"]}
+          }
+        },
+        "goal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["statement", "status", "version", "approved_at"],
+          "properties": {
+            "statement": {"type": "string"},
+            "status": {"enum": ["provisional", "approved", "change_requested"]},
+            "version": {"type": "integer", "minimum": 1},
+            "approved_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]}
+          }
+        },
+        "success_criteria": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["version", "status", "items", "pre_work_challenge", "post_work_challenges"],
+          "properties": {
+            "version": {"type": "integer", "minimum": 1},
+            "status": {"enum": ["candidate", "approved", "change_requested"]},
+            "items": {"type": "array", "items": {"$ref": "#/$defs/criterion"}},
+            "pre_work_challenge": {"oneOf": [{"$ref": "#/$defs/challenge"}, {"type": "null"}]},
+            "post_work_challenges": {"type": "array", "items": {"$ref": "#/$defs/challenge"}}
+          }
+        },
+        "priorities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "plan_history": {"type": "array", "items": {"$ref": "#/$defs/plan_history"}},
+        "review_points": {"type": "array", "items": {"$ref": "#/$defs/review_point"}},
+        "deviations": {"type": "array", "items": {"$ref": "#/$defs/deviation"}},
+        "reviews": {"type": "array", "items": {"$ref": "#/$defs/review"}},
+        "unknowns": {"type": "array", "items": {"$ref": "#/$defs/unknown"}},
+        "biggest_remaining_concern": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["summary", "evidence_ids"],
+          "properties": {
+            "summary": {"type": "string", "minLength": 1},
+            "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+          }
+        }
+      }
+    },
+    "confirmation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "actor", "confirmed_at", "summary_sha256", "authority_source"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "actor": {"type": "string", "minLength": 1},
+        "confirmed_at": {"$ref": "#/$defs/timestamp"},
+        "summary_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "authority_source": {"type": "string", "minLength": 1}
+      }
+    },
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "summary", "evidence_required", "achieved", "evidence_ids"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "summary": {"type": "string", "minLength": 1},
+        "evidence_required": {"type": "string", "minLength": 1},
+        "achieved": {"type": "boolean"},
+        "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+      }
+    },
+    "challenge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "criteria_version", "trigger", "status", "original_achievement_preserved", "higher_target", "recorded_at", "evidence_ids"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "criteria_version": {"type": "integer", "minimum": 1},
+        "trigger": {"enum": ["pre_work", "post_work"]},
+        "status": {"enum": ["completed", "skipped"]},
+        "original_achievement_preserved": {"type": "boolean"},
+        "higher_target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["summary", "status"],
+          "properties": {
+            "summary": {"type": "string"},
+            "status": {"enum": ["not_tested", "tested", "achieved", "not_achieved", "unsafe_to_test", "no_finding"]}
+          }
+        },
+        "recorded_at": {"$ref": "#/$defs/timestamp"},
+        "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+      }
+    },
+    "plan_history": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "reason", "material", "before_sha256", "after_sha256", "recorded_at", "authority"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "version": {"type": "integer", "minimum": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "material": {"type": "boolean"},
+        "before_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "after_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "recorded_at": {"$ref": "#/$defs/timestamp"},
+        "authority": {"type": "string", "minLength": 1}
+      }
+    },
+    "review_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "trigger", "reason", "status", "recorded_at", "evidence_ids"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "trigger": {"enum": ["checkpoint", "risk", "deviation", "failure", "human_request"]},
+        "reason": {"type": "string", "minLength": 1},
+        "status": {"enum": ["open", "reviewed", "dismissed"]},
+        "recorded_at": {"$ref": "#/$defs/timestamp"},
+        "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+      }
+    },
+    "deviation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "summary", "dimensions", "material", "recorded_at", "evidence_ids"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "summary": {"type": "string", "minLength": 1},
+        "dimensions": {"type": "array", "items": {"enum": ["goal", "success_criteria", "priorities", "scope", "risk", "delivery", "implementation"]}, "uniqueItems": true},
+        "material": {"type": "boolean"},
+        "recorded_at": {"$ref": "#/$defs/timestamp"},
+        "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "project_sha256", "conclusion", "confidence", "plan_delta", "recorded_at", "evidence_ids"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "project_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "conclusion": {"type": "string", "minLength": 1},
+        "confidence": {"enum": ["low", "medium", "high"]},
+        "plan_delta": {"type": "string"},
+        "recorded_at": {"$ref": "#/$defs/timestamp"},
+        "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+      }
+    },
+    "unknown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "summary", "status", "material", "recorded_at"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "summary": {"type": "string", "minLength": 1},
+        "status": {"enum": ["open", "resolved", "accepted"]},
+        "material": {"type": "boolean"},
+        "recorded_at": {"$ref": "#/$defs/timestamp"}
+      }
     },
     "plan_item": {
       "type": "object",

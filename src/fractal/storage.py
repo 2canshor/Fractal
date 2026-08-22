@@ -15,6 +15,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
+from fractal.migrations import CURRENT_PROJECT_SCHEMA_VERSION, migrate_project_record
 from fractal.models import Change, ProjectRecord, WriteResult, utc_now
 from fractal.validation import validate_project_record
 
@@ -147,18 +148,46 @@ class ProjectStore:
 
     def read(self, project_id: str) -> ProjectRecord:
         """Read, integrity-check, validate, and type a canonical Project."""
-        _validate_project_id(project_id)
-        record_path = self._record_path(project_id)
-        digest_path = self._digest_path(project_id)
-        if not record_path.exists() or not digest_path.exists():
-            raise ProjectNotFoundError(project_id)
-        value = json.loads(record_path.read_text(encoding="utf-8"))
-        expected = digest_path.read_text(encoding="ascii").strip()
-        actual = value_sha256(value)
-        if actual != expected:
-            raise IntegrityError(f"Project digest mismatch: {project_id}")
+        value = self._read_raw(project_id)
         validate_project_record(value)
         return ProjectRecord.from_dict(value)
+
+    def migrate(self, project_id: str, *, actor: str, platform: str) -> ProjectRecord:
+        """Migrate canonical state through a deterministic verified schema path."""
+        _validate_project_id(project_id)
+        with self._project_lock(project_id):
+            current = self._read_raw(project_id)
+            migrated, applied = migrate_project_record(current)
+            if not applied:
+                validate_project_record(migrated)
+                return ProjectRecord.from_dict(migrated)
+            before_version = current["schema_version"]
+            migrated["revision"] = current["revision"] + 1
+            migrated["updated_at"] = utc_now()
+            validate_project_record(migrated)
+            self._write_record(project_id, migrated)
+            self._append_event(
+                project_id,
+                {
+                    "event_id": f"event-{uuid.uuid4()}",
+                    "project_id": project_id,
+                    "base_revision": current["revision"],
+                    "new_revision": migrated["revision"],
+                    "actor": actor,
+                    "platform": platform,
+                    "action": "migrate-project-schema",
+                    "changes": [
+                        {
+                            "migration": migration,
+                            "from_version": before_version,
+                            "to_version": CURRENT_PROJECT_SCHEMA_VERSION,
+                        }
+                        for migration in applied
+                    ],
+                    "occurred_at": utc_now(),
+                },
+            )
+            return self.read(project_id)
 
     def apply_changes(
         self,
@@ -169,14 +198,19 @@ class ProjectStore:
         actor: str,
         platform: str,
         authority_write: bool = False,
+        action: str = "apply-changes",
     ) -> WriteResult:
         """Apply compatible changes or persist a Request Decision for a real conflict."""
         if not changes:
             raise ValueError("At least one change is required")
         _validate_project_id(project_id)
-        self._guard_authority(changes, authority_write=authority_write)
         with self._project_lock(project_id):
             current = self.read(project_id).to_dict()
+            self._guard_authority(
+                changes,
+                authority_write=authority_write,
+                current=current,
+            )
             stale = current["revision"] != expected_revision
             candidate = copy.deepcopy(current)
             changed = False
@@ -234,7 +268,7 @@ class ProjectStore:
                     "new_revision": candidate["revision"],
                     "actor": actor,
                     "platform": platform,
-                    "action": "apply-changes",
+                    "action": action,
                     "changes": event_changes,
                     "occurred_at": utc_now(),
                 },
@@ -321,12 +355,28 @@ class ProjectStore:
             conflict_request_id=request_id,
         )
 
-    def _guard_authority(self, changes: list[Change], *, authority_write: bool) -> None:
+    def _guard_authority(
+        self,
+        changes: list[Change],
+        *,
+        authority_write: bool,
+        current: dict[str, Any],
+    ) -> None:
         if authority_write:
             return
-        protected_paths = {"/project_id", "/system_version", "/revision", "/completion"}
+        protected_paths = {
+            "/project_id",
+            "/system_version",
+            "/revision",
+            "/completion",
+            "/completion/completed_at",
+            "/completion/completed_by",
+        }
+        authority_candidate = copy.deepcopy(current)
         for change in changes:
-            if change.path in protected_paths or change.path.startswith("/completion/"):
+            if (
+                change.path in protected_paths or change.path.startswith("/completion/")
+            ) and change.path != "/completion/requested_at":
                 raise AuthorityError(f"Authority-controlled path: {change.path}")
             if change.path == "/status" and change.value == "completed":
                 raise AuthorityError("Project Completion requires an authority action")
@@ -338,12 +388,52 @@ class ProjectStore:
                 raise AuthorityError(
                     "Decision approval or rejection requires an authority action"
                 )
+            try:
+                if change.operation == "set":
+                    _set_value(authority_candidate, change.path, change.value)
+                else:
+                    _append_value(authority_candidate, change.path, change.value)
+            except ValueError:
+                continue
+
+        current_lifecycle = current["lifecycle"]
+        candidate_lifecycle = authority_candidate["lifecycle"]
+        current_direction = current_lifecycle["direction"]
+        candidate_direction = candidate_lifecycle["direction"]
+        if (
+            current_direction != candidate_direction
+            and candidate_direction["status"] != "provisional"
+        ):
+            raise AuthorityError("Project Direction confirmation requires an authority action")
+        if current_lifecycle["goal"] != candidate_lifecycle["goal"]:
+            raise AuthorityError("Goal changes require an authority action")
+        if current_lifecycle["priorities"] != candidate_lifecycle["priorities"]:
+            raise AuthorityError("Priority changes require an authority action")
+        current_criteria = self._criteria_definition(current_lifecycle["success_criteria"])
+        candidate_criteria = self._criteria_definition(candidate_lifecycle["success_criteria"])
+        if current_criteria != candidate_criteria:
+            raise AuthorityError("Success Criteria definition changes require an authority action")
+
+    @staticmethod
+    def _criteria_definition(criteria: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "version": criteria["version"],
+            "status": criteria["status"],
+            "items": [
+                {
+                    "id": item["id"],
+                    "summary": item["summary"],
+                    "evidence_required": item["evidence_required"],
+                }
+                for item in criteria["items"]
+            ],
+        }
 
     @staticmethod
     def _guard_initial_authority(record: ProjectRecord) -> None:
         if record.status == "completed" or any(record.completion.values()):
             raise AuthorityError("Project Completion requires an authority action")
-        if record.direction.get("status") == "confirmed":
+        if record.lifecycle["direction"].get("status") == "confirmed":
             raise AuthorityError("Project Direction confirmation requires an authority action")
         if any(item.get("status") in {"approved", "rejected"} for item in record.decisions):
             raise AuthorityError("Decision approval or rejection requires an authority action")
@@ -367,6 +457,19 @@ class ProjectStore:
 
     def _event_path(self, project_id: str) -> Path:
         return self.runtime_root / "events" / f"{project_id}.jsonl"
+
+    def _read_raw(self, project_id: str) -> dict[str, Any]:
+        _validate_project_id(project_id)
+        record_path = self._record_path(project_id)
+        digest_path = self._digest_path(project_id)
+        if not record_path.exists() or not digest_path.exists():
+            raise ProjectNotFoundError(project_id)
+        value = json.loads(record_path.read_text(encoding="utf-8"))
+        expected = digest_path.read_text(encoding="ascii").strip()
+        actual = value_sha256(value)
+        if actual != expected:
+            raise IntegrityError(f"Project digest mismatch: {project_id}")
+        return value
 
     def _write_record(self, project_id: str, value: dict[str, Any]) -> None:
         project_path = self.project_root / project_id

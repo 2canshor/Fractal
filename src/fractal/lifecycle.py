@@ -1,0 +1,558 @@
+"""Deterministic Project lifecycle transitions and human authority gates."""
+
+from __future__ import annotations
+
+import copy
+import uuid
+from dataclasses import asdict, dataclass
+from typing import Any
+
+from fractal.models import Change, WriteResult, utc_now
+from fractal.storage import AuthorityError, ProjectStore, value_sha256
+
+
+class LifecycleError(RuntimeError):
+    """Raised when a lifecycle precondition is not satisfied."""
+
+
+@dataclass(frozen=True, slots=True)
+class DirectionSummary:
+    """The four short summaries used for formal Project confirmation."""
+
+    intended_outcome: str
+    deliverable: str
+    completion_standard: str
+    exclusions: str
+
+    def to_dict(self) -> dict[str, str]:
+        value = {key: item.strip() for key, item in asdict(self).items()}
+        if any(not item for item in value.values()):
+            raise LifecycleError("All four Project Direction summaries are required")
+        return value
+
+
+@dataclass(frozen=True, slots=True)
+class SuccessCriterion:
+    """An observable completion condition with an explicit evidence contract."""
+
+    id: str
+    summary: str
+    evidence_required: str
+
+    def to_dict(self) -> dict[str, Any]:
+        if not self.id or not self.summary.strip() or not self.evidence_required.strip():
+            raise LifecycleError("Success Criteria require id, summary, and evidence type")
+        return {
+            "id": self.id,
+            "summary": self.summary.strip(),
+            "evidence_required": self.evidence_required.strip(),
+            "achieved": False,
+            "evidence_ids": [],
+        }
+
+
+class LifecycleController:
+    """Apply typed lifecycle actions through the canonical conflict-safe store."""
+
+    MATERIAL_DIMENSIONS = {
+        "goal",
+        "success_criteria",
+        "priorities",
+        "scope",
+        "risk",
+        "delivery",
+    }
+
+    def __init__(self, store: ProjectStore) -> None:
+        self.store = store
+
+    def confirm_direction(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        summary: DirectionSummary,
+        actor: str,
+        platform: str,
+        human_action: bool,
+        authority_source: str,
+        material_change_reason: str | None = None,
+    ) -> WriteResult:
+        """Confirm or materially reconfirm the four-part Project Direction."""
+        self._require_primary_user(actor=actor, human_action=human_action)
+        record = self.store.read(project_id)
+        current = record.lifecycle["direction"]
+        summary_value = summary.to_dict()
+        current_summary = {key: current[key] for key in summary_value}
+        if current["status"] == "confirmed" and current_summary == summary_value:
+            return WriteResult(applied=True, merged=False, revision=record.revision)
+        if current["status"] == "confirmed" and not material_change_reason:
+            raise LifecycleError("Material direction changes require a reconfirmation reason")
+        now = utc_now()
+        version = current["version"] + (current["status"] == "confirmed")
+        confirmation = {
+            "id": f"confirmation-{uuid.uuid4()}",
+            "actor": actor,
+            "confirmed_at": now,
+            "summary_sha256": value_sha256(summary_value),
+            "authority_source": authority_source,
+        }
+        candidate = {
+            **summary_value,
+            "status": "confirmed",
+            "version": version,
+            "confirmations": [*current["confirmations"], confirmation],
+            "material_change_reason": material_change_reason,
+        }
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[Change("set", "/lifecycle/direction", candidate, base_value=current)],
+            actor=actor,
+            platform=platform,
+            authority_write=True,
+            action="confirm-project-direction",
+        )
+
+    def approve_outcome(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        goal: str,
+        criteria: list[SuccessCriterion],
+        priorities: list[str],
+        pre_work_challenge: dict[str, Any],
+        actor: str,
+        platform: str,
+        human_action: bool,
+    ) -> WriteResult:
+        """Approve Goal, Success Criteria, and priorities as one human action."""
+        self._require_primary_user(actor=actor, human_action=human_action)
+        if not goal.strip() or not criteria:
+            raise LifecycleError("An approved outcome needs a Goal and Success Criteria")
+        if len(priorities) != len(set(priorities)):
+            raise LifecycleError("Priorities cannot contain duplicates")
+        record = self.store.read(project_id)
+        now = utc_now()
+        current_criteria = record.lifecycle["success_criteria"]
+        version = current_criteria["version"]
+        goal_value = {
+            "statement": goal.strip(),
+            "status": "approved",
+            "version": record.lifecycle["goal"]["version"],
+            "approved_at": now,
+        }
+        criteria_value = {
+            "version": version,
+            "status": "approved",
+            "items": [item.to_dict() for item in criteria],
+            "pre_work_challenge": copy.deepcopy(pre_work_challenge),
+            "post_work_challenges": [],
+        }
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[
+                Change("set", "/lifecycle/goal", goal_value, record.lifecycle["goal"]),
+                Change(
+                    "set",
+                    "/lifecycle/success_criteria",
+                    criteria_value,
+                    current_criteria,
+                ),
+                Change(
+                    "set",
+                    "/lifecycle/priorities",
+                    list(priorities),
+                    record.lifecycle["priorities"],
+                ),
+            ],
+            actor=actor,
+            platform=platform,
+            authority_write=True,
+            action="approve-project-outcome",
+        )
+
+    def record_review_point(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        trigger: str,
+        reason: str,
+        evidence_ids: list[str],
+        actor: str,
+        platform: str,
+    ) -> WriteResult:
+        """Record a checkpoint that requires a whole-Project review."""
+        point = {
+            "id": f"review-point-{uuid.uuid4()}",
+            "trigger": trigger,
+            "reason": reason,
+            "status": "open",
+            "recorded_at": utc_now(),
+            "evidence_ids": evidence_ids,
+        }
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[Change("append", "/lifecycle/review_points", point)],
+            actor=actor,
+            platform=platform,
+            action="record-review-point",
+        )
+
+    def record_unknown(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        unknown_id: str,
+        summary: str,
+        status: str,
+        material: bool,
+        actor: str,
+        platform: str,
+    ) -> WriteResult:
+        """Persist one bounded unknown and its honest current status."""
+        unknown = {
+            "id": unknown_id,
+            "summary": summary,
+            "status": status,
+            "material": material,
+            "recorded_at": utc_now(),
+        }
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[Change("append", "/lifecycle/unknowns", unknown)],
+            actor=actor,
+            platform=platform,
+            action="record-project-unknown",
+        )
+
+    def record_deviation(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        summary: str,
+        dimensions: list[str],
+        evidence_ids: list[str],
+        actor: str,
+        platform: str,
+    ) -> WriteResult:
+        """Record a deviation and open a Review Point only when it is material."""
+        material = bool(self.MATERIAL_DIMENSIONS.intersection(dimensions))
+        now = utc_now()
+        deviation = {
+            "id": f"deviation-{uuid.uuid4()}",
+            "summary": summary,
+            "dimensions": dimensions,
+            "material": material,
+            "recorded_at": now,
+            "evidence_ids": evidence_ids,
+        }
+        changes = [Change("append", "/lifecycle/deviations", deviation)]
+        if material:
+            changes.append(
+                Change(
+                    "append",
+                    "/lifecycle/review_points",
+                    {
+                        "id": f"review-point-{uuid.uuid4()}",
+                        "trigger": "deviation",
+                        "reason": summary,
+                        "status": "open",
+                        "recorded_at": now,
+                        "evidence_ids": evidence_ids,
+                    },
+                )
+            )
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=changes,
+            actor=actor,
+            platform=platform,
+            action="record-material-deviation" if material else "record-minor-deviation",
+        )
+
+    def request_goal_change(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        proposed_goal: str,
+        actor: str,
+        platform: str,
+    ) -> WriteResult:
+        """Create a Request Decision instead of silently moving the Goal."""
+        record = self.store.read(project_id)
+        request = {
+            "id": f"request-{uuid.uuid4()}",
+            "kind": "request_decision",
+            "status": "pending",
+            "path": "/lifecycle/goal",
+            "base_value": record.lifecycle["goal"],
+            "current_value": record.lifecycle["goal"],
+            "proposed_value": {
+                "statement": proposed_goal,
+                "status": "change_requested",
+            },
+            "created_at": utc_now(),
+        }
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[Change("append", "/requests", request)],
+            actor=actor,
+            platform=platform,
+            action="request-goal-change",
+        )
+
+    def record_project_review(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        conclusion: str,
+        confidence: str,
+        plan_delta: str,
+        concern: str,
+        evidence_ids: list[str],
+        actor: str,
+        platform: str,
+    ) -> WriteResult:
+        """Review the whole Project snapshot and close its open Review Points."""
+        record = self.store.read(project_id)
+        lifecycle = record.lifecycle
+        points = copy.deepcopy(lifecycle["review_points"])
+        for point in points:
+            if point["status"] == "open":
+                point["status"] = "reviewed"
+        review = {
+            "id": f"review-{uuid.uuid4()}",
+            "project_sha256": value_sha256(record.to_dict()),
+            "conclusion": conclusion,
+            "confidence": confidence,
+            "plan_delta": plan_delta,
+            "recorded_at": utc_now(),
+            "evidence_ids": evidence_ids,
+        }
+        concern_value = {"summary": concern, "evidence_ids": evidence_ids}
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[
+                Change("append", "/lifecycle/reviews", review),
+                Change("set", "/lifecycle/review_points", points, lifecycle["review_points"]),
+                Change(
+                    "set",
+                    "/lifecycle/biggest_remaining_concern",
+                    concern_value,
+                    lifecycle["biggest_remaining_concern"],
+                ),
+            ],
+            actor=actor,
+            platform=platform,
+            action="record-project-review",
+        )
+
+    def record_plan_update(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        plan: dict[str, Any],
+        reason: str,
+        material: bool,
+        actor: str,
+        platform: str,
+        human_action: bool = False,
+    ) -> WriteResult:
+        """Version a Project Plan update and preserve before/after digests."""
+        if material:
+            self._require_primary_user(actor=actor, human_action=human_action)
+        record = self.store.read(project_id)
+        history = record.lifecycle["plan_history"]
+        entry = {
+            "id": f"plan-history-{uuid.uuid4()}",
+            "version": len(history) + 1,
+            "reason": reason,
+            "material": material,
+            "before_sha256": value_sha256(record.plan),
+            "after_sha256": value_sha256(plan),
+            "recorded_at": utc_now(),
+            "authority": "primary-user" if material else "delegated-project-work",
+        }
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[
+                Change("set", "/plan", plan, record.plan),
+                Change("append", "/lifecycle/plan_history", entry),
+            ],
+            actor=actor,
+            platform=platform,
+            authority_write=material,
+            action="record-project-plan-update",
+        )
+
+    def record_criterion_achievement(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        criterion_id: str,
+        evidence_ids: list[str],
+        actor: str,
+        platform: str,
+    ) -> WriteResult:
+        """Attach evidence to one approved criterion without changing its threshold."""
+        if not evidence_ids:
+            raise LifecycleError("Criterion achievement requires evidence")
+        record = self.store.read(project_id)
+        available_evidence = {item["id"] for item in record.evidence}
+        if not set(evidence_ids).issubset(available_evidence):
+            raise LifecycleError("Criterion evidence must exist in the canonical Project")
+        criteria = record.lifecycle["success_criteria"]
+        if criteria["status"] != "approved":
+            raise LifecycleError("Only approved Success Criteria can be achieved")
+        items = copy.deepcopy(criteria["items"])
+        target = next((item for item in items if item["id"] == criterion_id), None)
+        if target is None:
+            raise LifecycleError(f"Unknown Success Criterion: {criterion_id}")
+        target["achieved"] = True
+        target["evidence_ids"] = list(dict.fromkeys([*target["evidence_ids"], *evidence_ids]))
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[Change("set", "/lifecycle/success_criteria/items", items, criteria["items"])],
+            actor=actor,
+            platform=platform,
+            action="record-criterion-achievement",
+        )
+
+    def record_post_work_challenge(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        higher_target_summary: str,
+        higher_target_status: str,
+        evidence_ids: list[str],
+        actor: str,
+        platform: str,
+    ) -> WriteResult:
+        """Record one post-work challenge per approved criteria version."""
+        record = self.store.read(project_id)
+        criteria = record.lifecycle["success_criteria"]
+        if criteria["status"] != "approved" or not criteria["items"]:
+            raise LifecycleError("Post-work challenge requires approved Success Criteria")
+        if not all(item["achieved"] for item in criteria["items"]):
+            raise LifecycleError("Original Success Criteria must be achieved first")
+        version = criteria["version"]
+        if any(item["criteria_version"] == version for item in criteria["post_work_challenges"]):
+            raise LifecycleError("Post-work challenge already recorded for this criteria version")
+        challenge = {
+            "id": f"challenge-{uuid.uuid4()}",
+            "criteria_version": version,
+            "trigger": "post_work",
+            "status": "completed",
+            "original_achievement_preserved": True,
+            "higher_target": {
+                "summary": higher_target_summary,
+                "status": higher_target_status,
+            },
+            "recorded_at": utc_now(),
+            "evidence_ids": evidence_ids,
+        }
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[
+                Change(
+                    "append",
+                    "/lifecycle/success_criteria/post_work_challenges",
+                    challenge,
+                )
+            ],
+            actor=actor,
+            platform=platform,
+            action="record-post-work-challenge",
+        )
+
+    def mark_awaiting_completion(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        actor: str,
+        platform: str,
+    ) -> WriteResult:
+        """Enter Awaiting Completion only after evidence and challenge gates pass."""
+        record = self.store.read(project_id)
+        criteria = record.lifecycle["success_criteria"]
+        version = criteria["version"]
+        if criteria["status"] != "approved" or not criteria["items"]:
+            raise LifecycleError("Awaiting Completion requires approved Success Criteria")
+        if not all(item["achieved"] for item in criteria["items"]):
+            raise LifecycleError("Awaiting Completion requires achieved Success Criteria")
+        if not any(
+            item["criteria_version"] == version
+            for item in criteria["post_work_challenges"]
+        ):
+            raise LifecycleError("Awaiting Completion requires the post-work challenge")
+        requested_at = utc_now()
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[
+                Change("set", "/status", "awaiting_completion", record.status),
+                Change(
+                    "set",
+                    "/completion/requested_at",
+                    requested_at,
+                    record.completion["requested_at"],
+                ),
+            ],
+            actor=actor,
+            platform=platform,
+            action="mark-awaiting-completion",
+        )
+
+    def declare_project_completion(
+        self,
+        project_id: str,
+        *,
+        expected_revision: int,
+        actor: str,
+        platform: str,
+        human_action: bool,
+    ) -> WriteResult:
+        """Let only the primary user declare Project Completion."""
+        self._require_primary_user(actor=actor, human_action=human_action)
+        record = self.store.read(project_id)
+        if record.status != "awaiting_completion":
+            raise LifecycleError("Project must be Awaiting Completion")
+        now = utc_now()
+        return self.store.apply_changes(
+            project_id,
+            expected_revision=expected_revision,
+            changes=[
+                Change("set", "/status", "completed", record.status),
+                Change("set", "/completion/completed_at", now, None),
+                Change("set", "/completion/completed_by", actor, None),
+            ],
+            actor=actor,
+            platform=platform,
+            authority_write=True,
+            action="declare-project-completion",
+        )
+
+    @staticmethod
+    def _require_primary_user(*, actor: str, human_action: bool) -> None:
+        if not human_action or actor != "primary-user":
+            raise AuthorityError("This lifecycle action requires the primary user")

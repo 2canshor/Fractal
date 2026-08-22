@@ -12,6 +12,50 @@ def utc_now() -> str:
     return datetime.now(UTC).isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
+def default_lifecycle() -> dict[str, Any]:
+    """Return the initial lifecycle state for a formal Project."""
+    return {
+        "brief": {
+            "summary": "",
+            "source": "",
+            "recorded_at": None,
+        },
+        "direction": {
+            "intended_outcome": "",
+            "deliverable": "",
+            "completion_standard": "",
+            "exclusions": "",
+            "status": "provisional",
+            "version": 1,
+            "confirmations": [],
+            "material_change_reason": None,
+        },
+        "goal": {
+            "statement": "",
+            "status": "provisional",
+            "version": 1,
+            "approved_at": None,
+        },
+        "success_criteria": {
+            "version": 1,
+            "status": "candidate",
+            "items": [],
+            "pre_work_challenge": None,
+            "post_work_challenges": [],
+        },
+        "priorities": [],
+        "plan_history": [],
+        "review_points": [],
+        "deviations": [],
+        "reviews": [],
+        "unknowns": [],
+        "biggest_remaining_concern": {
+            "summary": "Not assessed",
+            "evidence_ids": [],
+        },
+    }
+
+
 @dataclass(frozen=True, slots=True)
 class Change:
     """A conflict-aware change against a canonical Project record."""
@@ -46,13 +90,7 @@ class ProjectRecord:
     revision: int = 0
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
-    direction: dict[str, Any] = field(
-        default_factory=lambda: {
-            "summary": "",
-            "status": "provisional",
-            "confirmed_at": None,
-        }
-    )
+    lifecycle: dict[str, Any] = field(default_factory=default_lifecycle)
     plan: dict[str, Any] = field(
         default_factory=lambda: {
             "criteria_version": 1,
@@ -72,7 +110,7 @@ class ProjectRecord:
             "completed_by": None,
         }
     )
-    schema_version: str = "1.0"
+    schema_version: str = "1.1"
     record_type: str = "project"
 
     def to_dict(self) -> dict[str, Any]:

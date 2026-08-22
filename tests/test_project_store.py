@@ -219,3 +219,8 @@ def test_human_view_is_derived_from_canonical_state(
     assert "# Real Project" in output
     assert "Status: `in_progress`" in output
     assert "System Version: `0.1.0-alpha.1`" in output
+    assert "Direction: `provisional`" in output
+    assert "Biggest Remaining Concern: Not assessed" in output
+    detailed = render_project_summary(store.read(project.project_id), details=True)
+    assert "## Project Direction" in detailed
+    assert "Intended Outcome: Not set" in detailed
