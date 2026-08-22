@@ -27,7 +27,7 @@
         "component_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
         "human_name": {"type": "string", "minLength": 1},
         "kind": {
-          "enum": ["adapter", "agent-role", "hook", "mcp", "platform-capability", "plugin", "skill", "tool"]
+          "enum": ["adapter", "agent-role", "app", "hook", "mcp", "platform-capability", "plugin", "skill", "tool"]
         },
         "disposition": {
           "enum": [

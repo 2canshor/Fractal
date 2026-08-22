@@ -26,7 +26,7 @@ A proposal is not active state. A claim is not evidence. Installation is not cap
 
 ## Component Governance
 
-Everything an agent can discover, select, or run is a registered component. This includes Skills, Hooks, agent roles, MCP servers, Plugins, Tools, adapters, platform runtimes, and later component types. Each record keeps its owner and source, version or content hash, dependency links, permissions and secret boundary, trigger, active and execution status, platform projection, evidence, overlap decision, and removal or restore route. An active component cannot depend on an absent or inactive component.
+Everything an agent can discover, select, or run is a registered component. This includes Skills, Hooks, agent roles, MCP servers, Plugins, Apps, Tools, adapters, platform runtimes, and later component types. Each record keeps its owner and source, version or content hash, dependency links, permissions and secret boundary, trigger, active and execution status, platform projection, evidence, overlap decision, and removal or restore route. An active component cannot depend on an absent or inactive component.
 
 The supported activation path is:
 
@@ -35,7 +35,7 @@ request -> source and overlap check -> Naming System -> permission and evaluatio
         -> registration -> candidate version -> generated adapter -> live verification
 ```
 
-An adapter carries the approved active set and a Human Control view. A pre-Tool guard blocks direct writes to managed component surfaces outside the candidate installer. Drift checks report an active component missing from the registry, a registered component missing from a platform, or a changed source hash. Uncertain material is quarantined outside active discovery and remains recoverable.
+An adapter carries the approved active set and a Human Control view. A pre-Tool guard blocks direct writes to managed component surfaces outside the candidate installer. Runtime reconciliation separates registration, loading, callability, and successful execution evidence. Drift checks report an active component missing from the registry, a registered component missing from a platform, a changed source hash, or a watched platform change. Uncertain material is routed to review or quarantined outside active discovery and remains recoverable.
 
 ## Public and Private Boundary
 

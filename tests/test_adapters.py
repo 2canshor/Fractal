@@ -361,6 +361,29 @@ def test_direct_component_install_is_denied_outside_governed_route() -> None:
     assert "permissionDecision" not in allowed["hookSpecificOutput"]
 
 
+def test_component_management_tool_cannot_bypass_fractal_route() -> None:
+    context = {
+        "protected_legacy_roots": [],
+        "authority": {"legacy_removal_enabled": False},
+        "component_governance": {"managed_roots": []},
+    }
+    result = handle_hook(
+        "pre-tool-use",
+        context,
+        {
+            "tool_name": "mcp__codex_apps__plugin_management_uninstall_app",
+            "tool_input": {"plugin_id": "example"},
+        },
+    )
+    assert result["hookSpecificOutput"]["permissionDecision"] == "deny"
+    ordinary = handle_hook(
+        "pre-tool-use",
+        context,
+        {"tool_name": "mcp__github__fetch_file", "tool_input": {"path": "README.md"}},
+    )
+    assert "permissionDecision" not in ordinary["hookSpecificOutput"]
+
+
 def test_real_stop_payload_captures_and_evaluates_work_signature(tmp_path: Path) -> None:
     transcript = tmp_path / "transcript.jsonl"
     transcript.write_text(
@@ -626,57 +649,6 @@ def test_governed_component_install_quarantines_and_restores_extras(
     assert (home / "AGENTS.md").read_text() == "previous entrypoint"
     assert (home / "skills" / "fable-loop" / "SKILL.md").read_text() == "legacy extra"
     assert "skills/fable-loop" in restored["restored_quarantine"]
-
-
-def test_codex_mcp_activation_projection_preserves_config_and_secrets() -> None:
-    config = """theme = \"dark\"
-
-[mcp_servers.node_repl]
-command = \"node\"
-
-[mcp_servers.firecrawl]
-enabled = true
-command = \"npx\"
-
-[mcp_servers.firecrawl.env]
-FIRECRAWL_API_KEY = \"secret-value\"
-
-[mcp_servers.higgsfield]
-url = \"https://example.invalid/mcp\"
-"""
-    registry = {
-        "components": [
-            {
-                "kind": "mcp",
-                "platforms": ["codex"],
-                "source": {
-                    "locator": "~/.codex/config.toml#mcp_servers.node_repl"
-                },
-                "status": {"active": True},
-            },
-            {
-                "kind": "mcp",
-                "platforms": ["codex"],
-                "source": {
-                    "locator": "~/.codex/config.toml#mcp_servers.firecrawl"
-                },
-                "status": {"active": True},
-            },
-            {
-                "kind": "mcp",
-                "platforms": ["codex"],
-                "source": {
-                    "locator": "~/.codex/config.toml#mcp_servers.higgsfield"
-                },
-                "status": {"active": False},
-            },
-        ]
-    }
-    projected = CodexComponentInstaller._project_mcp_activation(config, registry)
-    assert "[mcp_servers.node_repl]\nenabled = true\ncommand" in projected
-    assert "[mcp_servers.firecrawl]\nenabled = true\ncommand" in projected
-    assert "[mcp_servers.higgsfield]\nenabled = false\nurl" in projected
-    assert 'FIRECRAWL_API_KEY = "secret-value"' in projected
 
 
 def test_claude_component_install_merges_settings_and_restores_extras(

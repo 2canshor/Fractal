@@ -36,6 +36,7 @@ def handle_hook(event: str, context: dict[str, Any], payload: dict[str, Any]) ->
     if event != "pre-tool-use":
         raise ValueError(f"Unsupported adapter hook event: {event}")
     serialized = json.dumps(payload.get("tool_input", {}), ensure_ascii=False)
+    tool_name = str(payload.get("tool_name") or "")
     destructive = re.search(
         r"\b(?:rm|rmdir|unlink|trash|mv|delete|overwrite)\b",
         serialized,
@@ -55,20 +56,30 @@ def handle_hook(event: str, context: dict[str, Any], payload: dict[str, Any]) ->
         }
     governance = context.get("component_governance", {})
     managed_roots = [str(Path(root).expanduser()) for root in governance.get("managed_roots", [])]
-    write_like = payload.get("tool_name") in {"apply_patch", "Edit", "Write"} or re.search(
-        r"\b(?:cp|install|ln|mkdir|mv|rm|rmdir|touch|unlink|trash|delete|edit|write|overwrite)\b",
-        serialized,
-        flags=re.IGNORECASE,
+    component_mutation_tool = re.search(
+        r"(?i)(?:plugin|skill|hook|mcp|agent).*(?:install|uninstall|create|update|remove|delete)"
+        r"|(?:install|uninstall|create|update|remove|delete).*(?:plugin|skill|hook|mcp|agent)",
+        tool_name,
+    )
+    write_like = (
+        component_mutation_tool
+        or tool_name in {"apply_patch", "Edit", "Write"}
+        or re.search(
+            r"\b(?:cp|install|ln|mkdir|mv|rm|rmdir|touch|unlink|trash|delete|edit|write|overwrite)\b",
+            serialized,
+            flags=re.IGNORECASE,
+        )
     )
     targets_managed_root = any(
         root in serialized or _home_abbreviation(root) in serialized for root in managed_roots
     )
     supported_route = re.search(
         r"(?:^|[\s\"'])(?:(?:[^\"']*/)?fractal|python(?:3)?\s+-m\s+fractal\.cli)"
-        r"[\"']?\s+components\s+install-candidate(?:\s|$)",
+        r"[\"']?\s+(?:components\s+install-candidate|codex\s+(?:config-apply|trust-hooks))"
+        r"(?:\s|$)",
         serialized,
     )
-    if write_like and targets_managed_root and not supported_route:
+    if write_like and (targets_managed_root or component_mutation_tool) and not supported_route:
         return {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
@@ -174,6 +185,10 @@ def _signature_from_dict(value: dict[str, Any]) -> WorkSignature:
         elapsed_seconds=value["elapsed_seconds"],
         token_usage=value["token_usage"],
         completed_at=value["completed_at"],
+        thread_id=value.get("thread_id"),
+        turn_id=value.get("turn_id"),
+        tool_evidence=tuple(value.get("tool_evidence", ())),
+        evidence_state=value.get("evidence_state", "stop-captured"),
     )
 
 
@@ -187,8 +202,12 @@ def capture_work_completion(
     """Capture one compact Work Signature from a real platform Stop event."""
     project = context["active_project"]
     platform = context.get("platform", "unknown")
-    session_id = str(payload.get("session_id") or "unknown-session")
+    thread_id = payload.get("thread_id") or payload.get("threadId")
+    turn_id = payload.get("turn_id") or payload.get("turnId")
+    session_id = str(thread_id or payload.get("session_id") or "unknown-session")
     turn_key, tools = _transcript_work_context(payload.get("transcript_path"))
+    if isinstance(turn_id, str) and turn_id:
+        turn_key = turn_id
     if turn_key is None:
         turn_key = hashlib.sha256(
             str(payload.get("last_assistant_message") or "").encode("utf-8")
@@ -213,6 +232,9 @@ def capture_work_completion(
             elapsed_seconds=None,
             token_usage=None,
             completed_at=utc_now(),
+            thread_id=str(thread_id) if thread_id else None,
+            turn_id=str(turn_id) if turn_id else None,
+            evidence_state="stop-captured",
         )
         try:
             captured = store.capture_completion(signature)

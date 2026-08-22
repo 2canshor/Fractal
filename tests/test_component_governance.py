@@ -129,6 +129,9 @@ def test_human_view_explains_status_route(tmp_path: Path) -> None:
     )
     view = render_component_status(registry, platform="codex")
     assert "Active and Managed: `1`" in view
+    assert "Verified Staged: `1`" in view
+    assert "Available, Not Yet Proven: `0`" in view
+    assert "Execution Still Unknown" not in view
     assert "slash-command menu is not this status surface" in view
 
 

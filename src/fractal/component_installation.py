@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
-import re
 import shutil
 import uuid
 from pathlib import Path
 from typing import Any
 
 from fractal.adapters import smoke_adapter
+from fractal.codex_app_server import CodexAppServerClient, audit_codex_config_projection
 from fractal.component_governance import active_components, load_component_registry
 
 
@@ -35,13 +35,25 @@ class CodexComponentInstaller:
         if not registry_path.is_file():
             raise ComponentInstallationError("Candidate lacks a universal component registry")
         registry = load_component_registry(registry_path)
-        config_target = home / "config.toml"
-        config_text = config_target.read_text(encoding="utf-8") if config_target.is_file() else None
-        projected_config = (
-            self._project_mcp_activation(config_text, registry)
-            if config_text is not None
-            else None
-        )
+        live_codex_home = Path("~/.codex").expanduser().resolve()
+        if home == live_codex_home:
+            with CodexAppServerClient() as client:
+                config_projection = audit_codex_config_projection(
+                    client, registry, cwd=Path.cwd()
+                )
+            if not config_projection["clean"]:
+                raise ComponentInstallationError(
+                    "Codex MCP config does not match the candidate. Use the governed "
+                    "config-apply route before installation: "
+                    + ", ".join(config_projection["mismatched"])
+                )
+        else:
+            config_projection = {
+                "record_type": "codex-config-projection-audit",
+                "clean": None,
+                "claim_level": "staged-non-live-home",
+                "secret_values_included": False,
+            }
         install_id = f"component-install-{uuid.uuid4()}"
         state = self.state_root / install_id
         backup = state / "backup"
@@ -71,8 +83,6 @@ class CodexComponentInstaller:
 
         previous: dict[str, dict[str, str]] = {}
         managed = [*sorted(links), "hooks.json"]
-        if projected_config is not None and projected_config != config_text:
-            managed.append("config.toml")
         for relative in managed:
             target = home / relative
             previous[relative] = self._preserve(target, backup / relative)
@@ -103,9 +113,6 @@ class CodexComponentInstaller:
             target.symlink_to(source)
         hooks_target = home / "hooks.json"
         shutil.copy2(built / "hooks.json", hooks_target)
-        if "config.toml" in managed:
-            config_target.write_text(projected_config, encoding="utf-8")
-
         record = {
             "record_type": "codex-component-install",
             "record_version": 1,
@@ -116,6 +123,7 @@ class CodexComponentInstaller:
             "previous": previous,
             "quarantined": quarantined,
             "persistent_system_version_activated": False,
+            "config_projection": config_projection,
             "smoke": smoke,
         }
         state.mkdir(parents=True, exist_ok=True)
@@ -124,53 +132,6 @@ class CodexComponentInstaller:
             encoding="utf-8",
         )
         return record
-
-    @staticmethod
-    def _project_mcp_activation(config_text: str, registry: dict[str, Any]) -> str:
-        """Project registered config-backed MCP activation without exposing secrets."""
-        projected = config_text
-        for component in registry["components"]:
-            if component["kind"] != "mcp" or "codex" not in component["platforms"]:
-                continue
-            locator = component["source"]["locator"]
-            if not locator.startswith("~/.codex/config.toml#mcp_servers."):
-                continue
-            name = locator.rsplit(".", 1)[-1]
-            header = f"[mcp_servers.{name}]"
-            header_match = re.search(
-                rf"(?m)^\[mcp_servers\.{re.escape(name)}\]\s*$", projected
-            )
-            if header_match is None:
-                if component["status"]["active"]:
-                    raise ComponentInstallationError(
-                        f"Registered active MCP is missing from Codex config: {name}"
-                    )
-                continue
-            next_header = re.search(r"(?m)^\[", projected[header_match.end() :])
-            section_end = (
-                header_match.end() + next_header.start()
-                if next_header is not None
-                else len(projected)
-            )
-            body = projected[header_match.end() : section_end]
-            desired = "true" if component["status"]["active"] else "false"
-            enabled_match = re.search(r"(?m)^enabled\s*=\s*(?:true|false)\s*$", body)
-            if enabled_match is None:
-                replacement = f"{header}\nenabled = {desired}"
-                projected = (
-                    projected[: header_match.start()]
-                    + replacement
-                    + projected[header_match.end() :]
-                )
-            else:
-                absolute_start = header_match.end() + enabled_match.start()
-                absolute_end = header_match.end() + enabled_match.end()
-                projected = (
-                    projected[:absolute_start]
-                    + f"enabled = {desired}"
-                    + projected[absolute_end:]
-                )
-        return projected
 
     def restore(self, install_id: str) -> dict[str, Any]:
         """Restore the exact pre-install paths and quarantined extras."""

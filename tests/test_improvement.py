@@ -56,6 +56,28 @@ def test_completion_hook_captures_compact_signature_once(tmp_path: Path) -> None
     assert "conversation" not in captured[0]
 
 
+def test_stop_signature_can_be_enriched_once_with_final_turn_evidence(tmp_path: Path) -> None:
+    store = WorkSignatureStore(tmp_path / "work-signatures.jsonl")
+    lightweight = signature("work-a")
+    assert store.capture_completion(lightweight)
+    final = replace(
+        lightweight,
+        outcome_category="completed",
+        elapsed_seconds=1.25,
+        token_usage=42,
+        thread_id="thread-a",
+        turn_id="turn-a",
+        tool_evidence=("exec_command:completed:0",),
+        evidence_state="turn-completed",
+    )
+    assert store.enrich_completion(final)
+    assert store.enrich_completion(final) is False
+    assert len(store.read_all()) == 1
+    assert store.read_all()[0]["token_usage"] == 42
+    with pytest.raises(ValueError, match="cannot be changed"):
+        store.enrich_completion(replace(final, token_usage=43))
+
+
 def test_repetition_trigger_and_necessary_repetition_rules() -> None:
     first = signature("work-1")
     second = signature("work-2")

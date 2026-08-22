@@ -25,6 +25,10 @@ class WorkSignature:
     elapsed_seconds: float | None
     token_usage: int | None
     completed_at: str
+    thread_id: str | None = None
+    turn_id: str | None = None
+    tool_evidence: tuple[str, ...] = ()
+    evidence_state: Literal["stop-captured", "turn-completed"] = "stop-captured"
 
     def to_dict(self) -> dict[str, Any]:
         if self.elapsed_seconds is not None and self.elapsed_seconds < 0:
@@ -34,11 +38,12 @@ class WorkSignature:
         value = asdict(self)
         value["steps"] = list(self.steps)
         value["tools"] = list(self.tools)
+        value["tool_evidence"] = list(self.tool_evidence)
         return value
 
 
 class WorkSignatureStore:
-    """Idempotent local JSON Lines capture for the completion Hook."""
+    """Idempotent local capture with one controlled completion enrichment."""
 
     def __init__(self, journal_path: Path) -> None:
         self.journal_path = Path(journal_path)
@@ -73,6 +78,51 @@ class WorkSignatureStore:
             for line in self.journal_path.read_text(encoding="utf-8").splitlines()
             if line.strip()
         ]
+
+    def enrich_completion(self, signature: WorkSignature) -> bool:
+        """Replace a lightweight Stop record with final App Server evidence once."""
+        value = signature.to_dict()
+        if signature.evidence_state != "turn-completed":
+            raise ValueError("Completion enrichment needs final turn evidence")
+        self.journal_path.parent.mkdir(parents=True, exist_ok=True)
+        lock_path = self.journal_path.with_suffix(self.journal_path.suffix + ".lock")
+        with lock_path.open("a", encoding="utf-8") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            try:
+                records = self.read_all()
+                matches = [
+                    index
+                    for index, item in enumerate(records)
+                    if item["work_id"] == signature.work_id
+                ]
+                if not matches:
+                    with self.journal_path.open("a", encoding="utf-8") as stream:
+                        stream.write(json.dumps(value, ensure_ascii=False, sort_keys=True) + "\n")
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    return True
+                if len(matches) != 1:
+                    raise ValueError("Work Signature journal contains duplicate ids")
+                index = matches[0]
+                existing = records[index]
+                if existing == value:
+                    return False
+                if existing.get("evidence_state", "stop-captured") != "stop-captured":
+                    raise ValueError("A completed Work Signature cannot be changed")
+                for key in ("work_id", "project_id", "work_type", "input_shape"):
+                    if existing[key] != value[key]:
+                        raise ValueError("Completion evidence does not match the Stop record")
+                records[index] = value
+                temporary = self.journal_path.with_suffix(self.journal_path.suffix + ".tmp")
+                with temporary.open("w", encoding="utf-8") as stream:
+                    for item in records:
+                        stream.write(json.dumps(item, ensure_ascii=False, sort_keys=True) + "\n")
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                temporary.replace(self.journal_path)
+                return True
+            finally:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
 
 @dataclass(frozen=True, slots=True)

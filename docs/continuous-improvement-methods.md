@@ -4,7 +4,7 @@ Continuous Improvement is Fractal's only Core Philosophy. Methods and Supporting
 
 ## Fatigue
 
-The completion Hook captures one compact `Work Signature` per work id. It stores work shape, steps, tools, outcome category, elapsed time, and Token usage when observed; unavailable measurements remain `null`. It does not copy prompts, conversations, or raw work.
+The live completion Hook captures one compact `Work Signature` per `thread_id + turn_id`. The Stop event creates the immediate lightweight record. When Codex App Server events are available, `turn/completed`, `thread/tokenUsage/updated`, and `item/completed` enrich that same record with completed, failed, or interrupted outcome, elapsed time, Token use, and compact Tool evidence. The enrichment cannot create a second record for the same turn or rewrite a final record. It does not copy prompts, conversations, Tool output, or raw work.
 
 Deterministic comparison handles clear matches first:
 
@@ -43,4 +43,4 @@ Quality and outcome equivalence are checked before time or Token savings. A posi
 
 ## Honest Status
 
-The exact effort meter, similarity weights, semantic threshold, retention, research budget, source-quality threshold, benchmark freshness, materiality threshold, and representative-trial rule remain Open Design. No Repetition Monitor, Fatigue Monitor, or Curiosity Explorer exists in version 0.1.
+The exact effort meter, similarity weights, semantic threshold, retention, research budget, source-quality threshold, benchmark freshness, materiality threshold, and representative-trial rule remain Open Design. Version 0.1 has deterministic completion capture and repetition evaluation, but it does not run an autonomous background self-improvement loop. Investigation and adoption still follow Project and System authority.

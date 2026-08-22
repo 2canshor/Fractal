@@ -195,7 +195,16 @@ def render_component_status(registry: dict[str, Any], *, platform: str | None = 
         ]
     active_count = sum(item["status"]["active"] for item in components)
     quarantined_count = sum(item["disposition"] == "inactive-quarantined" for item in components)
-    unknown_count = sum(item["status"]["execution"] == "unknown" for item in components)
+    execution_counts = {
+        state: sum(item["status"]["execution"] == state for item in components)
+        for state in (
+            "verified-live",
+            "verified-staged",
+            "available-unverified",
+            "unknown",
+            "unavailable",
+        )
+    }
     dependency_count = sum(len(item["dependencies"]) for item in components)
     lines = [
         "# Fractal Component Status",
@@ -206,8 +215,16 @@ def render_component_status(registry: dict[str, Any], *, platform: str | None = 
         f"- Registered Components: `{len(components)}`",
         f"- Active and Managed: `{active_count}`",
         f"- Inactive or Quarantined: `{quarantined_count}`",
-        f"- Execution Still Unknown: `{unknown_count}`",
+        f"- Verified Live: `{execution_counts['verified-live']}`",
+        f"- Verified Staged: `{execution_counts['verified-staged']}`",
+        f"- Available, Not Yet Proven: `{execution_counts['available-unverified']}`",
+        f"- Unknown: `{execution_counts['unknown']}`",
+        f"- Unavailable: `{execution_counts['unavailable']}`",
         f"- Registered Dependency Links: `{dependency_count}`",
+        "",
+        "`Registered` means Fractal knows and governs the component. `Verified Live` means "
+        "there is evidence that it completed real work. Loading and callability are checked "
+        "separately by `fractal codex inspect`; neither one proves a successful result.",
         "",
         "## Components",
         "",
