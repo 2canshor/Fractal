@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review"
+  short_description: "Review the requested object properly"
+  default_prompt: "Use $review to review the object I named with its matching review method."

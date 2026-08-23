@@ -1,0 +1,4 @@
+interface:
+  display_name: "Version"
+  short_description: "Record an approved Fractal change batch"
+  default_prompt: "Use $version to apply and record the exact permitted Fractal changes without activating them."

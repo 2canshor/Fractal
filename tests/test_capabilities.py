@@ -65,6 +65,13 @@ def test_design_sources_are_merged_instead_of_competing() -> None:
     )
 
 
+@pytest.mark.parametrize("skill_id", ["assess", "complete", "create", "match", "review", "version"])
+def test_user_job_skills_have_portable_source_and_explicit_ui_examples(
+    skill_id: str,
+) -> None:
+    assert validate_skill_source(SKILLS / skill_id)["valid"] is True
+
+
 def test_package_and_projection_are_verifiably_derived_from_source(tmp_path: Path) -> None:
     source = SKILLS / "clarification"
     package = tmp_path / "clarification.skill"

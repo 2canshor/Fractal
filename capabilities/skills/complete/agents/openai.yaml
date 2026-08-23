@@ -1,0 +1,4 @@
+interface:
+  display_name: "Complete"
+  short_description: "Prepare the complete System Review"
+  default_prompt: "Use $complete to finish the five-step System Review before presenting its Patterns."
