@@ -12,6 +12,8 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
+from fractal.review_contracts import ReviewContractError, validate_claim_receipt
+
 
 class ComponentGovernanceError(RuntimeError):
     """Raised when component state is incomplete, ambiguous, or drifting."""
@@ -54,6 +56,8 @@ def tree_sha256(root: Path) -> str:
 def load_component_registry(path: Path) -> dict[str, Any]:
     """Load the canonical registry and enforce governance invariants."""
     registry = json.loads(Path(path).read_text(encoding="utf-8"))
+    if registry.get("record_version") == 2:
+        registry = _migrate_component_registry_v2(registry)
     schema = json.loads(
         files("fractal.schemas")
         .joinpath("component-registry.schema.json")
@@ -86,6 +90,31 @@ def load_component_registry(path: Path) -> dict[str, Any]:
                     f"{component['component_id']} -> {dependency_id}"
                 )
     return registry
+
+
+def _migrate_component_registry_v2(registry: dict[str, Any]) -> dict[str, Any]:
+    """Classify a v2 registry in memory without promoting any item to a user job."""
+    migrated = json.loads(json.dumps(registry))
+    migrated["record_version"] = 3
+    for component in migrated.get("components", []):
+        active = component.get("status", {}).get("active") is True
+        if not active:
+            audience = "technical-quarantine"
+        elif component.get("disposition") == "platform-managed-adapter":
+            audience = "platform-owned-external"
+        elif component.get("kind") in {"tool", "mcp", "app", "plugin", "hook"}:
+            audience = "tool-prerequisite"
+        else:
+            audience = "supporting-capability"
+        mode = component.get("trigger", {}).get("mode")
+        component["surface_audience"] = audience
+        component["invocation"] = {
+            "automatic_matching": active and mode == "automatic",
+            "explicit_invocation": active and mode in {"automatic", "explicit", "platform"},
+        }
+        component["job_contract"] = None
+        component["status"]["claim_receipt"] = None
+    return migrated
 
 
 def _validate_component_invariants(component: dict[str, Any]) -> None:
@@ -130,6 +159,60 @@ def _validate_component_invariants(component: dict[str, Any]) -> None:
     if component["component_id"] in component["dependencies"]:
         raise ComponentGovernanceError(
             f"Component cannot depend on itself: {component['component_id']}"
+        )
+    audience = component["surface_audience"]
+    contract = component["job_contract"]
+    invocation = component["invocation"]
+    if audience == "user-job":
+        if component["kind"] != "skill" or not isinstance(contract, dict):
+            raise ComponentGovernanceError(
+                f"A user job requires one Skill job contract: {component['component_id']}"
+            )
+        if contract["action"] != component["component_id"]:
+            raise ComponentGovernanceError(
+                f"User job action and component id disagree: {component['component_id']}"
+            )
+        if not invocation["explicit_invocation"]:
+            raise ComponentGovernanceError(
+                f"A user job must remain commandable: {component['component_id']}"
+            )
+    elif contract is not None:
+        raise ComponentGovernanceError(
+            f"Only a user job may define a job contract: {component['component_id']}"
+        )
+    if audience == "technical-quarantine" and component["status"]["active"]:
+        raise ComponentGovernanceError(
+            f"Technical quarantine cannot be active: {component['component_id']}"
+        )
+    if not component["status"]["active"] and any(invocation.values()):
+        raise ComponentGovernanceError(
+            f"An inactive component cannot be invocable: {component['component_id']}"
+        )
+    execution = component["status"]["execution"]
+    claim_receipt = component["status"]["claim_receipt"]
+    if execution == "verified-live":
+        if not isinstance(claim_receipt, dict):
+            raise ComponentGovernanceError(
+                f"Verified-live requires a Claim Gate receipt: {component['component_id']}"
+            )
+        try:
+            validated_claim = validate_claim_receipt(claim_receipt)
+        except ReviewContractError as error:
+            raise ComponentGovernanceError(
+                f"Invalid verified-live Claim Gate receipt: {component['component_id']}"
+            ) from error
+        if (
+            validated_claim["subject_id"] != component["component_id"]
+            or validated_claim["asserted_state"] != "verified-live"
+            or validated_claim["scope"]["platform"] not in component["platforms"]
+        ):
+            raise ComponentGovernanceError(
+                f"Verified-live Claim Gate scope mismatch: {component['component_id']}"
+            )
+    elif claim_receipt is not None:
+        raise ComponentGovernanceError(
+            "A non-live component cannot carry a live Claim Gate receipt: "
+            f"{component['component_id']}"
         )
 
 
@@ -211,6 +294,8 @@ def render_component_status(
         )
     }
     dependency_count = sum(len(item["dependencies"]) for item in components)
+    user_job_count = sum(item["surface_audience"] == "user-job" for item in components)
+    internal_count = sum(item["surface_audience"] != "user-job" for item in components)
     lines = [
         "# Fractal Component Status",
         "",
@@ -244,6 +329,8 @@ def render_component_status(
             f"- Unknown: `{execution_counts['unknown']}`",
             f"- Unavailable: `{execution_counts['unavailable']}`",
             f"- Registered Dependency Links: `{dependency_count}`",
+            f"- User Jobs: `{user_job_count}`",
+            f"- Internal or Platform Components: `{internal_count}`",
             "",
             "`Registered` means Fractal knows and governs the component. `Verified Live` means "
             "there is evidence that it completed real work. Loading and callability are checked "
@@ -251,14 +338,15 @@ def render_component_status(
             "",
             "## Components",
             "",
-            "| Component | Kind | Disposition | Platforms | Execution | Dependencies |",
-            "|---|---|---|---|---|---|",
+            "| Component | Audience | Kind | Disposition | Platforms | Execution | Dependencies |",
+            "|---|---|---|---|---|---|---|",
         ]
     )
     for item in components:
         lines.append(
-            "| `{}` | {} | {} | {} | {} | {} |".format(
+            "| `{}` | {} | {} | {} | {} | {} | {} |".format(
                 item["component_id"],
+                item["surface_audience"],
                 item["kind"],
                 item["disposition"],
                 ", ".join(item["platforms"]),

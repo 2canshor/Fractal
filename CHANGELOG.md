@@ -20,13 +20,19 @@ The format follows Keep a Changelog, and system versions follow Semantic Version
 - Final Work Signature enrichment from Codex turn, Token usage, and completed-item events.
 - A canonical Project Review capability with milestone and exception triggers, nine-dimension whole-Project assessment, and readable Plan snapshots.
 - Required Biggest Remaining Concern, four System Review result types, Your Decision, and two-sided Feedback Review records.
+- User-perspective `review`, `create`, `complete`, `assess`, `match`, and `version` Skills with provider and prerequisite details kept internal.
+- Exact response-unit coverage, automatic Two-Sided warrants, three-part plain handoff preflight, evidence Claim Gate, and architecture-lineage receipts.
+- Single-use primary-user authority receipts for local System Version build, activation, rejection, and restore actions.
+- Honest Project Plan resource states: provided, unknown at plan time, or not applicable.
 
 ### Changed
 
 - Adapter capability metadata now describes the active-on-install projection instead of calling live-discoverable Skills inactive.
 - Component status separates registration, loading, callability, and successful execution evidence.
-- The candidate development version is `0.1.0-alpha.2`; persistent activation remains under primary-user authority.
+- Persistent activation remains under primary-user authority; candidate builds cannot activate themselves.
 - The product lifecycle now centres Project Review during active work and System Review after primary-user Project Completion; Fatigue, Curiosity, Greed, and other components feed those reviews.
+- Component records now separate user-surface audience from automatic and explicit invocation. Adapter build evidence no longer implies installation, active runtime, callability, or user execution.
+- The candidate development version is `0.1.0-alpha.4`; activation and GitHub publication remain separately controlled by the primary user.
 
 ## [0.1.0-alpha.1] - 2026-08-22
 

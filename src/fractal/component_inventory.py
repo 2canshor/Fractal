@@ -14,6 +14,7 @@ from fractal.component_governance import (
     load_component_registry,
     tree_sha256,
 )
+from fractal.review_contracts import ReviewContractError, validate_claim_receipt
 from fractal.storage import value_sha256
 
 
@@ -41,16 +42,47 @@ def projection_tree_sha256(root: Path) -> str:
 
 
 def _frontmatter(path: Path) -> dict[str, str]:
+    """Parse the bounded top-level YAML subset used by Skill frontmatter.
+
+    Literal and folded scalars are handled explicitly so `|` and `>` can never
+    leak into the user-visible description. Nested metadata remains out of scope.
+    """
     values: dict[str, str] = {}
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
     if not lines or lines[0].strip() != "---":
         return values
-    for line in lines[1:]:
+    index = 1
+    while index < len(lines):
+        line = lines[index]
         if line.strip() == "---":
             break
         if ":" in line and not line.startswith((" ", "\t")):
             key, value = line.split(":", 1)
-            values[key.strip()] = value.strip().strip('"').strip("'")
+            key = key.strip()
+            value = value.strip()
+            if value in {"|", "|-", "|+", ">", ">-", ">+"}:
+                scalar_lines: list[str] = []
+                index += 1
+                while index < len(lines):
+                    scalar_line = lines[index]
+                    if scalar_line.strip() == "---":
+                        break
+                    if scalar_line and not scalar_line.startswith((" ", "\t")):
+                        break
+                    scalar_lines.append(scalar_line.lstrip())
+                    index += 1
+                parsed = (
+                    "\n".join(scalar_lines).strip()
+                    if value.startswith("|")
+                    else " ".join(item.strip() for item in scalar_lines).strip()
+                )
+                if parsed:
+                    values[key] = parsed
+                continue
+            parsed = value.strip('"').strip("'").strip()
+            if parsed and parsed not in {"|", ">"}:
+                values[key] = parsed
+        index += 1
     return values
 
 
@@ -86,8 +118,41 @@ def _record(
     removal: str,
     restore: str,
     dependencies: list[str] | None = None,
+    surface_audience: str | None = None,
+    invocation: dict[str, bool] | None = None,
+    job_contract: dict[str, Any] | None = None,
+    claim_receipt: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     external = external_identifier is not None
+    if surface_audience is None:
+        if disposition == "inactive-quarantined":
+            surface_audience = "technical-quarantine"
+        elif disposition == "platform-managed-adapter":
+            surface_audience = "platform-owned-external"
+        else:
+            surface_audience = "supporting-capability"
+    invocation_value = (
+        invocation
+        if invocation is not None
+        else {
+            "automatic_matching": active and trigger_mode == "automatic",
+            "explicit_invocation": active
+            and trigger_mode in {"automatic", "explicit", "platform"},
+        }
+    )
+    if claim_receipt is not None:
+        try:
+            claim_receipt = validate_claim_receipt(claim_receipt)
+        except ReviewContractError as error:
+            raise ValueError(f"Invalid component Claim Gate receipt: {component_id}") from error
+        if (
+            claim_receipt["subject_id"] != component_id
+            or claim_receipt["asserted_state"] != "verified-live"
+        ):
+            raise ValueError(f"Component Claim Gate scope mismatch: {component_id}")
+    elif execution == "verified-live":
+        execution = "available-unverified"
+        evidence_ids = [*evidence_ids, "claim-gate:verified-live-receipt-missing"]
     return {
         "component_id": component_id,
         "human_name": human_name,
@@ -120,11 +185,15 @@ def _record(
             "secret_boundary": secret_boundary,
         },
         "trigger": {"mode": trigger_mode, "description": trigger_description},
+        "surface_audience": surface_audience,
+        "invocation": invocation_value,
+        "job_contract": job_contract,
         "status": {
             "discoverable": discoverable,
             "active": active,
             "execution": execution,
             "evidence_ids": sorted(set(evidence_ids)),
+            "claim_receipt": claim_receipt,
         },
         "platforms": sorted(set(platforms)),
         "projection": {
@@ -213,6 +282,10 @@ def _skill_record(
         ),
         restore=definition.get("restore", "Restore from the pinned source locator and hash."),
         dependencies=definition.get("dependencies", []),
+        surface_audience=definition.get("surface_audience"),
+        invocation=definition.get("invocation"),
+        job_contract=definition.get("job_contract"),
+        claim_receipt=definition.get("claim_receipt"),
     )
 
 
@@ -602,7 +675,7 @@ def build_component_registry(policy_path: Path, output_path: Path) -> dict[str, 
         by_id[component["component_id"]] = component
     registry = {
         "record_type": "component-registry",
-        "record_version": 2,
+        "record_version": 3,
         "system_version": policy["system_version"],
         "candidate_status": policy["candidate_status"],
         "components": sorted(by_id.values(), key=lambda item: item["component_id"]),

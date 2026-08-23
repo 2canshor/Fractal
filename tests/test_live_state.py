@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import sys
@@ -15,8 +16,55 @@ from fractal.models import ProjectRecord
 from fractal.storage import ProjectStore
 from fractal.versioning import VersionStore
 
+PROJECT_ID = "current-project"
+PROJECT_REVISION = 0
+
+
+def authority_evidence(store: VersionStore, label: str) -> dict[str, str]:
+    text = f"approve {label}\n"
+    message_id = f"msg-{label}"
+    turn_id = f"turn-{label}"
+    path = store.root / f"session-{label}.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "id": message_id,
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": text}],
+                    "internal_chat_message_metadata_passthrough": {"turn_id": turn_id},
+                },
+            }
+        )
+        + "\n"
+    )
+    return {
+        "session_path": str(path),
+        "turn_id": turn_id,
+        "message_id": message_id,
+        "message_sha256": hashlib.sha256((text + "\n").encode()).hexdigest(),
+    }
+
 
 def build_version(store: VersionStore, version: str) -> None:
+    batch = {"decision_batch_id": f"batch-{version}"}
+    target, expected_state = store.build_authority_scope(
+        version=version,
+        public_commit="a" * 40,
+        private_commit="b" * 40,
+        decision_batch=batch,
+    )
+    receipt = store.authority.issue(
+        action="build",
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        target=target,
+        expected_state=expected_state,
+        authority_evidence=authority_evidence(store, f"build-{version}"),
+    )
     store.build_candidate(
         version=version,
         public_commit="a" * 40,
@@ -39,6 +87,19 @@ def build_version(store: VersionStore, version: str) -> None:
             "migrations_verified": True,
             "restore_verified": True,
         },
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        decision_batch=batch,
+        architecture_lineage={"structural_gate_passed": True},
+        claim_gate_audit={"passed": True, "claim_count": 20},
+        preservation_audits={
+            "phase_a_pre_build": {"passed": True, "receipt_sha256": "e" * 64},
+            "phase_b_post_build_pre_activation": {
+                "passed": True,
+                "receipt_sha256": "f" * 64,
+            },
+        },
+        authority_receipt_id=receipt["receipt_id"],
     )
 
 
@@ -56,8 +117,22 @@ def live_fixture(tmp_path: Path) -> tuple[ProjectStore, VersionStore, Path, Path
     )
     version_store = VersionStore(runtime_root / "system-version")
     build_version(version_store, "0.1.0-alpha.1")
+    target, expected_state = version_store.action_authority_scope(
+        "0.1.0-alpha.1", action="activate"
+    )
+    receipt = version_store.authority.issue(
+        action="activate",
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        target=target,
+        expected_state=expected_state,
+        authority_evidence=authority_evidence(version_store, "activate-alpha-1"),
+    )
     version_store.activate(
-        "0.1.0-alpha.1", actor="primary-user", human_action=True
+        "0.1.0-alpha.1",
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        authority_receipt_id=receipt["receipt_id"],
     )
     return (
         project_store,

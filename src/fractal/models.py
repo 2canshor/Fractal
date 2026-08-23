@@ -56,6 +56,25 @@ def default_lifecycle() -> dict[str, Any]:
     }
 
 
+def default_plan() -> dict[str, Any]:
+    """Return a Project Plan with honest minimum resource states from the start."""
+    return {
+        "criteria_version": 1,
+        "current_phase": None,
+        "items": [],
+        "resources": [
+            {
+                "dimension": dimension,
+                "plan_state": "unknown-at-plan-time",
+                "estimate": None,
+                "unit": None,
+                "reason": "No estimate was provided when the Project Plan was created.",
+            }
+            for dimension in ("time", "attention")
+        ],
+    }
+
+
 @dataclass(frozen=True, slots=True)
 class Change:
     """A conflict-aware change against a canonical Project record."""
@@ -91,13 +110,7 @@ class ProjectRecord:
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
     lifecycle: dict[str, Any] = field(default_factory=default_lifecycle)
-    plan: dict[str, Any] = field(
-        default_factory=lambda: {
-            "criteria_version": 1,
-            "current_phase": None,
-            "items": [],
-        }
-    )
+    plan: dict[str, Any] = field(default_factory=default_plan)
     decisions: list[dict[str, Any]] = field(default_factory=list)
     evidence: list[dict[str, Any]] = field(default_factory=list)
     progress: list[dict[str, Any]] = field(default_factory=list)
@@ -110,7 +123,7 @@ class ProjectRecord:
             "completed_by": None,
         }
     )
-    schema_version: str = "1.1"
+    schema_version: str = "1.2"
     record_type: str = "project"
 
     def to_dict(self) -> dict[str, Any]:

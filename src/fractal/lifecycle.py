@@ -28,6 +28,38 @@ PROJECT_REVIEW_DIMENSIONS = (
 )
 
 PROJECT_RESOURCE_DIMENSIONS = {"time", "attention"}
+PLAN_RESOURCE_STATES = {"provided", "unknown-at-plan-time", "not-applicable"}
+
+
+def validate_plan_resources(resources: list[dict[str, Any]]) -> None:
+    """Validate the minimum plan-time resource truth without inventing estimates."""
+    if not isinstance(resources, list):
+        raise LifecycleError("Project Plan requires resource state records")
+    dimensions = [item.get("dimension") for item in resources if isinstance(item, dict)]
+    if len(dimensions) != len(set(dimensions)):
+        raise LifecycleError("Project Plan resource dimensions must be unique")
+    missing = sorted(PROJECT_RESOURCE_DIMENSIONS.difference(dimensions))
+    if missing:
+        raise LifecycleError(f"Project Plan resource state is missing: {missing}")
+    for item in resources:
+        if not isinstance(item, dict):
+            raise LifecycleError("Project Plan resource states must be typed records")
+        state = item.get("plan_state")
+        if state not in PLAN_RESOURCE_STATES:
+            raise LifecycleError("Project Plan resource state is invalid")
+        if not str(item.get("reason", "")).strip():
+            raise LifecycleError("Project Plan resource state requires a reason")
+        estimate = item.get("estimate")
+        unit = item.get("unit")
+        if state == "provided":
+            if not isinstance(estimate, int | float) or estimate < 0:
+                raise LifecycleError("Provided resource state requires a non-negative estimate")
+            if not isinstance(unit, str) or not unit.strip():
+                raise LifecycleError("Provided resource state requires a unit")
+        elif estimate is not None or unit is not None:
+            raise LifecycleError(
+                "Unknown or not-applicable resource state keeps estimate and unit null"
+            )
 
 
 def _validate_project_review_resources(resources: list[dict[str, Any]]) -> None:
@@ -488,6 +520,7 @@ class LifecycleController:
         human_action: bool = False,
     ) -> WriteResult:
         """Version a Project Plan update and preserve before/after snapshots."""
+        validate_plan_resources(plan.get("resources"))
         if material:
             self._require_primary_user(actor=actor, human_action=human_action)
         record = self.store.read(project_id)

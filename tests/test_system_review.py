@@ -222,6 +222,16 @@ def stage_result(stage: str) -> dict:
         "two-sided-review": {
             "status": "not-warranted",
             "reason": "No consequential proposal",
+            "warrant": {
+                "high_impact": False,
+                "hard_to_restore": False,
+                "cross_project": False,
+                "cross_platform": False,
+                "authority_change": False,
+                "evidence_conflict": False,
+                "direction_reversal": False,
+                "primary_user_requested": False,
+            },
         },
         "final-assessment": {
             "recommendation": "no-change",
@@ -234,7 +244,24 @@ def stage_result(stage: str) -> dict:
         "biggest-remaining-concern": {
             "summary": "There is only one completed Project in the comparison set"
         },
-        "result": {"outcome": "no-change", "reason": "Mutation lacks evidence"},
+        "result": {
+            "outcome": "no-change",
+            "reason": "Mutation lacks evidence",
+            "response_units": [
+                {
+                    "response_unit_id": "response-a",
+                    "pattern_ids": ["pattern-a"],
+                    "decision_ids": ["decision-a"],
+                }
+            ],
+            "unmapped_pattern_ids": [],
+            "plain_handoff": {
+                "problem": "One verification step repeated.",
+                "solution": "Keep the current system until more evidence exists.",
+                "decision": "Carson decides whether to accept No Change.",
+            },
+            "newcomer_shadow_handoff_number": 1,
+        },
         "your-decision": {"decision": "accept-result"},
     }
     return values[stage]

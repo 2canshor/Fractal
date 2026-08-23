@@ -235,6 +235,31 @@ def test_all_staging_homes_build_reproducibly_and_smoke(tmp_path: Path) -> None:
         second_tree = tree_manifest(tmp_path / "second" / platform)
         assert first_tree == second_tree
         assert smoke_adapter(tmp_path / "first" / platform)["passed"] is True
+    for result in first["adapters"]:
+        assert result["contract_receipt"] == {
+            "built": True,
+            "staged_smoke_passed": True,
+            "exact_live_boundary_smoke_passed": False,
+            "representative_real_task_passed": False,
+            "installed": False,
+            "loaded": False,
+            "active": False,
+            "callable": False,
+            "actual_user_outcome_observed": False,
+            "claim_boundary": (
+                "Build and staged smoke evidence do not prove an exact live boundary, "
+                "a representative real task, or an actual user outcome."
+            ),
+        }
+        manifest = json.loads(
+            (tmp_path / "first" / result["platform"] / "fractal" / "adapter-manifest.json")
+            .read_text()
+        )
+        boundary = manifest["boundary_contract"]
+        assert boundary["live_promotion_eligible"] is False
+        assert boundary["exact_live_boundary_smoke"] == "not-run"
+        assert boundary["facts"]["runtime_interpreter"]["provenance"] == "observed"
+        assert boundary["facts"]["path_expansion"]["provenance"] == "inferred"
 
 
 def test_builder_refuses_existing_output_and_manifest_tamper(tmp_path: Path) -> None:

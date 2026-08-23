@@ -39,9 +39,11 @@ observe -> propose -> validate -> authorise -> apply -> verify -> record
 
 A proposal is not active state. A claim is not evidence. Installation is not capability proof.
 
+Consequential local version actions use exact, single-use primary-user receipts bound to the Project revision, action, candidate manifest, and expected prior state. System Review cannot become ready until every discovered Pattern has a disposition, required Curiosity and Two-Sided Review have finished, and the public handoff is complete. Candidate build also requires evidence Claim Gate and architecture-lineage receipts.
+
 ## Component Governance
 
-Everything an agent can discover, select, or run is a registered component. This includes Skills, Hooks, agent roles, MCP servers, Plugins, Apps, Tools, adapters, platform runtimes, and later component types. Each record keeps its owner and source, version or content hash, dependency links, permissions and secret boundary, trigger, active and execution status, platform projection, evidence, overlap decision, and removal or restore route. An active component cannot depend on an absent or inactive component.
+Everything an agent can discover, select, or run is a registered component. This includes Skills, Hooks, agent roles, MCP servers, Plugins, Apps, Tools, adapters, platform runtimes, and later component types. Each record keeps its owner and source, version or content hash, dependency links, permissions and secret boundary, trigger, user-surface audience, automatic and explicit invocation state, active and execution status, platform projection, evidence, overlap decision, and removal or restore route. A user job has one verb, outcome, completion contract, and authority boundary; providers and prerequisites stay internal. An active component cannot depend on an absent or inactive component.
 
 The supported activation path is:
 

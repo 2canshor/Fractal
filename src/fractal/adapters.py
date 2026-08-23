@@ -78,6 +78,7 @@ class AdapterBuilder:
         legacy_root: Path | None,
         runtime_python: Path | None = None,
         runtime_root: Path | None = None,
+        boundary_observed_at: str = "1970-01-01T00:00:00Z",
         verify_source_commits: bool = True,
     ) -> None:
         self.public_root = Path(public_root)
@@ -93,6 +94,7 @@ class AdapterBuilder:
             if runtime_root is not None
             else Path.home() / "Library" / "Application Support" / "Fractal" / "runtime"
         )
+        self.boundary_observed_at = boundary_observed_at
         component_registry_path = self.private_root / "system" / "components" / "registry.json"
         self.component_registry = (
             load_component_registry(component_registry_path)
@@ -175,6 +177,7 @@ class AdapterBuilder:
             "public_commit": self.public_commit,
             "private_commit": self.private_commit,
             "root_file": spec["root_file"],
+            "boundary_contract": self._boundary_contract(platform, spec),
             "files": generated,
             "source_sha256": value_sha256(
                 {
@@ -195,6 +198,88 @@ class AdapterBuilder:
             "adapter_sha256": value_sha256(tree_manifest(destination)),
             "file_count": len(tree_manifest(destination)),
             "smoke": smoke,
+            "contract_receipt": {
+                "built": True,
+                "staged_smoke_passed": smoke["passed"],
+                "exact_live_boundary_smoke_passed": False,
+                "representative_real_task_passed": False,
+                "installed": False,
+                "loaded": False,
+                "active": False,
+                "callable": False,
+                "actual_user_outcome_observed": False,
+                "claim_boundary": (
+                    "Build and staged smoke evidence do not prove an exact live boundary, "
+                    "a representative real task, or an actual user outcome."
+                ),
+            },
+        }
+
+    def _boundary_contract(self, platform: str, spec: dict[str, Any]) -> dict[str, Any]:
+        """Record only the exact staged boundary facts this adapter build relies on."""
+        common = {
+            "proof_scope": "staged-adapter-build",
+            "platform": platform,
+            "adapter_version": self.system_version,
+            "observed_at": self.boundary_observed_at,
+        }
+        facts = {
+            "runtime_interpreter": {
+                **common,
+                "provenance": "observed",
+                "value": self.runtime_python,
+                "reason": "Exact command written into this staged adapter.",
+            },
+            "root_file_format": {
+                **common,
+                "provenance": "official",
+                "value": spec["root_file"],
+                "reason": "Pinned by the packaged platform adapter registry.",
+            },
+            "installation_root": {
+                **common,
+                "provenance": "observed",
+                "value": f"staging-root/{platform}",
+                "reason": "Observed staging destination only; not a live installation root.",
+            },
+            "path_expansion": {
+                **common,
+                "provenance": "inferred",
+                "value": "platform-expands-home-marker",
+                "reason": "Not exercised at the exact live platform boundary.",
+            },
+            "agent_format": {
+                **common,
+                "provenance": (
+                    "not-applicable" if platform in {"cowork", "gemini"} else "inferred"
+                ),
+                "value": "none" if platform in {"cowork", "gemini"} else "staged-format",
+                "reason": (
+                    "This staged adapter does not project agent files."
+                    if platform in {"cowork", "gemini"}
+                    else "Generated format has not been exercised by this live platform version."
+                ),
+            },
+            "hook_payload": {
+                **common,
+                "provenance": "unknown" if platform in {"cowork", "gemini"} else "inferred",
+                "value": "unverified-live",
+                "reason": "No exact live boundary smoke is authorised by candidate build approval.",
+            },
+        }
+        return {
+            "record_type": "adapter-boundary-contract",
+            "record_version": 1,
+            "platform": platform,
+            "platform_version": "unknown",
+            "adapter_version": self.system_version,
+            "observed_at": self.boundary_observed_at,
+            "facts": facts,
+            "exact_live_boundary_smoke": "not-run",
+            "representative_real_task": "not-run",
+            "actual_user_outcome_observed": False,
+            "live_promotion_eligible": False,
+            "live_promotion_block_reason": "exact-live-boundary-proof-missing",
         }
 
     def _build_context(self, platform: str) -> dict[str, Any]:
@@ -330,6 +415,9 @@ class AdapterBuilder:
                     "capability_id": component["component_id"],
                     "human_name": component["human_name"],
                     "description": component["trigger"]["description"],
+                    "surface_audience": component["surface_audience"],
+                    "invocation": component["invocation"],
+                    "job_contract": component["job_contract"],
                     "version": component["source"]["version"],
                     "activation": "active-when-adapter-is-installed",
                     "authority": "fractal-component-registry",

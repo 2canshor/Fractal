@@ -5,9 +5,9 @@ from __future__ import annotations
 import copy
 from typing import Any
 
-from fractal.models import default_lifecycle
+from fractal.models import default_lifecycle, default_plan
 
-CURRENT_PROJECT_SCHEMA_VERSION = "1.1"
+CURRENT_PROJECT_SCHEMA_VERSION = "1.2"
 
 
 class MigrationError(ValueError):
@@ -38,6 +38,16 @@ def migrate_project_record(value: dict[str, Any]) -> tuple[dict[str, Any], list[
         migrated["schema_version"] = "1.1"
         version = "1.1"
         applied.append("project-1.0-to-1.1")
+    if version == "1.1":
+        resources = default_plan()["resources"]
+        for item in resources:
+            item["reason"] = (
+                "Migrated from Project schema 1.1; no plan-time resource state was recorded."
+            )
+        migrated["plan"]["resources"] = resources
+        migrated["schema_version"] = "1.2"
+        version = "1.2"
+        applied.append("project-1.1-to-1.2")
     if version != CURRENT_PROJECT_SCHEMA_VERSION:
         raise MigrationError(f"Unsupported Project schema version: {version}")
     return migrated, applied

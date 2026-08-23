@@ -25,8 +25,8 @@ def legacy_record() -> dict:
 
 def test_project_1_0_migrates_without_losing_direction() -> None:
     migrated, applied = migrate_project_record(legacy_record())
-    assert applied == ["project-1.0-to-1.1"]
-    assert migrated["schema_version"] == "1.1"
+    assert applied == ["project-1.0-to-1.1", "project-1.1-to-1.2"]
+    assert migrated["schema_version"] == "1.2"
     assert migrated["lifecycle"]["direction"]["intended_outcome"] == (
         "Preserve the approved outcome"
     )
@@ -55,6 +55,10 @@ def test_store_migration_is_evented_and_verified(tmp_path: Path) -> None:
         actor="main-agent",
         platform="test-adapter",
     )
-    assert migrated.schema_version == "1.1"
+    assert migrated.schema_version == "1.2"
+    assert [item["dimension"] for item in migrated.plan["resources"]] == [
+        "time",
+        "attention",
+    ]
     assert migrated.revision == 1
     assert store.verify("migration-project")["event_count"] == 2

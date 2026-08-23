@@ -6,7 +6,7 @@
   "required": ["record_type", "record_version", "system_version", "candidate_status", "components"],
   "properties": {
     "record_type": {"const": "component-registry"},
-    "record_version": {"const": 2},
+    "record_version": {"const": 3},
     "system_version": {"type": "string", "minLength": 1},
     "candidate_status": {"enum": ["candidate", "active", "inactive"]},
     "components": {
@@ -20,7 +20,7 @@
       "additionalProperties": false,
       "required": [
         "component_id", "human_name", "kind", "disposition", "owner", "source", "dependencies",
-        "naming", "permissions", "trigger", "status", "platforms", "projection",
+        "naming", "permissions", "trigger", "surface_audience", "invocation", "job_contract", "status", "platforms", "projection",
         "verification_evidence", "overlap", "recovery"
       ],
       "properties": {
@@ -94,15 +94,93 @@
             "description": {"type": "string", "minLength": 1}
           }
         },
+        "surface_audience": {
+          "enum": [
+            "user-job",
+            "supporting-capability",
+            "tool-prerequisite",
+            "template-variant",
+            "platform-owned-external",
+            "technical-quarantine"
+          ]
+        },
+        "invocation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["automatic_matching", "explicit_invocation"],
+          "properties": {
+            "automatic_matching": {"type": "boolean"},
+            "explicit_invocation": {"type": "boolean"}
+          }
+        },
+        "job_contract": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["job_id", "action", "outcome", "completion", "authority_boundary"],
+              "properties": {
+                "job_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+                "action": {"type": "string", "pattern": "^[a-z]+$"},
+                "outcome": {"type": "string", "minLength": 1},
+                "completion": {"type": "string", "minLength": 1},
+                "authority_boundary": {"type": "string", "minLength": 1}
+              }
+            }
+          ]
+        },
         "status": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["discoverable", "active", "execution", "evidence_ids"],
+          "required": ["discoverable", "active", "execution", "evidence_ids", "claim_receipt"],
           "properties": {
             "discoverable": {"type": "boolean"},
             "active": {"type": "boolean"},
             "execution": {"enum": ["verified-live", "verified-staged", "available-unverified", "unknown", "unavailable"]},
-            "evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+            "evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+            "claim_receipt": {
+              "oneOf": [
+                {"type": "null"},
+                {
+                  "type": "object",
+                  "required": ["claim_id", "subject_id", "surface", "observed_at", "asserted_state", "proof_type", "evidence_ids", "scope", "version_dependencies", "actual_user_outcome", "human_label", "reason_code", "claim_supported"],
+                  "properties": {
+                    "claim_id": {"type": "string", "minLength": 1},
+                    "subject_id": {"type": "string", "minLength": 1},
+                    "surface": {"type": "string", "minLength": 1},
+                    "observed_at": {"type": "string", "format": "date-time"},
+                    "asserted_state": {"const": "verified-live"},
+                    "proof_type": {"const": "representative-real-task"},
+                    "evidence_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+                    "scope": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["platform", "account", "task"],
+                      "properties": {
+                        "platform": {"enum": ["claude", "codex", "cowork", "gemini"]},
+                        "account": {"type": "string"},
+                        "task": {"type": "string", "minLength": 1}
+                      }
+                    },
+                    "version_dependencies": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "minLength": 1}},
+                    "actual_user_outcome": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["observed", "evidence_ids"],
+                      "properties": {
+                        "observed": {"type": "boolean"},
+                        "evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+                      }
+                    },
+                    "human_label": {"const": "verified-live"},
+                    "reason_code": {"const": "proof:representative-real-task"},
+                    "claim_supported": {"const": true}
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
           }
         },
         "platforms": {

@@ -24,7 +24,7 @@
     "completion"
   ],
   "properties": {
-    "schema_version": {"const": "1.1"},
+    "schema_version": {"const": "1.2"},
     "record_type": {"const": "project"},
     "project_id": {"$ref": "#/$defs/id"},
     "title": {"type": "string", "minLength": 1},
@@ -39,13 +39,18 @@
     "plan": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["criteria_version", "current_phase", "items"],
+      "required": ["criteria_version", "current_phase", "items", "resources"],
       "properties": {
         "criteria_version": {"type": "integer", "minimum": 1},
         "current_phase": {"type": ["integer", "null"], "minimum": 0},
         "items": {
           "type": "array",
           "items": {"$ref": "#/$defs/plan_item"}
+        },
+        "resources": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"$ref": "#/$defs/plan_resource"}
         }
       }
     },
@@ -399,6 +404,18 @@
         "summary": {"type": "string", "minLength": 1},
         "status": {"enum": ["pending", "in_progress", "completed", "blocked"]},
         "evidence_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}
+      }
+    },
+    "plan_resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dimension", "plan_state", "estimate", "unit", "reason"],
+      "properties": {
+        "dimension": {"enum": ["time", "attention", "tokens", "detail"]},
+        "plan_state": {"enum": ["provided", "unknown-at-plan-time", "not-applicable"]},
+        "estimate": {"type": ["number", "null"], "minimum": 0},
+        "unit": {"type": ["string", "null"], "minLength": 1},
+        "reason": {"type": "string", "minLength": 1}
       }
     },
     "decision": {

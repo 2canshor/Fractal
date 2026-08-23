@@ -18,6 +18,11 @@ from fractal.improvement import (
     curiosity_routes,
 )
 from fractal.models import ProjectRecord, utc_now
+from fractal.review_contracts import (
+    ReviewContractError,
+    validate_review_ready,
+    validate_two_sided_result,
+)
 from fractal.storage import AuthorityError, value_sha256
 
 SYSTEM_REVIEW_STAGES = [
@@ -236,8 +241,13 @@ def record_system_review_stage(
         }
     )
     if stage == "result":
+        try:
+            readiness = validate_review_ready(updated)
+        except ReviewContractError as error:
+            raise SystemReviewError(str(error)) from error
         updated["status"] = "awaiting-primary-user-decision"
         updated["result"] = copy.deepcopy(result)
+        updated["readiness"] = readiness
     if stage == "your-decision":
         updated["status"] = "completed"
         updated["decision"] = copy.deepcopy(result)
@@ -326,22 +336,10 @@ def _validate_system_review_stage(stage: str, result: dict[str, Any]) -> None:
     elif stage == "global-effect":
         _validate_effect_record(result, effect="global")
     elif stage == "two-sided-review":
-        if result.get("status") not in {"completed", "not-warranted"}:
-            raise SystemReviewError(
-                "Two-Sided Review must be completed or explicitly not warranted"
-            )
-        if (
-            result.get("status") == "completed"
-            and result.get("independent_cases_verified") is not True
-        ):
-            raise SystemReviewError("Case For and Case Against must be independently verified")
-        if result.get("status") == "completed":
-            if not result.get("case_for_artifact_id") or not result.get(
-                "case_against_artifact_id"
-            ):
-                raise SystemReviewError("Two-Sided Review requires both case artifacts")
-        elif not str(result.get("reason", "")).strip():
-            raise SystemReviewError("Two-Sided Review marked not warranted requires a reason")
+        try:
+            validate_two_sided_result(result)
+        except ReviewContractError as error:
+            raise SystemReviewError(str(error)) from error
     elif stage == "final-assessment":
         if result.get("synthesised_by") != "main-agent":
             raise SystemReviewError(
@@ -386,6 +384,13 @@ def _validate_system_review_stage(stage: str, result: dict[str, Any]) -> None:
             result.get("reason", "")
         ).strip():
             raise SystemReviewError(f"{outcome} result requires a reason")
+        response_units = result.get("response_units")
+        if not isinstance(response_units, list) or not response_units:
+            raise SystemReviewError("System Review result requires response-unit coverage")
+        if result.get("unmapped_pattern_ids") != []:
+            raise SystemReviewError("System Review result cannot leave Patterns unmapped")
+        if not isinstance(result.get("plain_handoff"), dict):
+            raise SystemReviewError("System Review result requires a plain-language handoff")
     elif stage == "your-decision" and result.get("decision") not in {
         "accept-result",
         "reject-result",

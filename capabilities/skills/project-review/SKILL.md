@@ -12,7 +12,7 @@ Use this Skill when an active formal Project reaches a planned milestone or a me
 
 Assess all nine dimensions: Project Direction, Goal, Success Criteria, priorities, Project Plan, progress and evidence, risks and deviations, resources and deadline, and remaining work. Record a whole-Project scope receipt so the review proves which snapshot and dimensions it checked.
 
-Compare planned and actual time and attention. Mark each other important area as healthy, watch, or neglected, link the supporting evidence, and state the opportunity cost. Record one continuation decision with its reason: continue as planned, continue with a Plan update, or pause and ask Carson for a decision.
+Compare planned and actual time and attention. The Plan must preserve each plan-time state as `provided`, `unknown-at-plan-time`, or `not-applicable`; do not invent a baseline after seeing the result. Tokens and level of detail may use the same state model when they matter. Mark each other important area as healthy, watch, or neglected, link the supporting evidence, and state the opportunity cost. Record one continuation decision with its reason: continue as planned, continue with a Plan update, or pause and ask Carson for a decision.
 
 Record the conclusion, confidence, Plan delta, Biggest Remaining Concern, Review Point ids, evidence ids, resource comparison, neglected areas, opportunity cost, and continuation decision through the deterministic lifecycle runtime.
 

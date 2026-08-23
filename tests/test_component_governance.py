@@ -13,7 +13,12 @@ from fractal.component_governance import (
     render_component_status,
     tree_sha256,
 )
-from fractal.component_inventory import build_component_registry, observe_platform_components
+from fractal.component_inventory import (
+    _frontmatter,
+    build_component_registry,
+    observe_platform_components,
+)
+from fractal.review_contracts import validate_claim_receipt
 
 
 def component(component_id: str, *, disposition: str = "fractal-owned-canonical") -> dict:
@@ -52,6 +57,7 @@ def component(component_id: str, *, disposition: str = "fractal-owned-canonical"
             "active": active,
             "execution": "verified-staged" if active else "unavailable",
             "evidence_ids": ["test-evidence"],
+            "claim_receipt": None,
         },
         "platforms": ["codex"],
         "projection": {
@@ -297,3 +303,90 @@ def test_gemini_observes_generated_skills_in_config_directory(tmp_path: Path) ->
         configured_mcp=[],
     )
     assert [item["component_id"] for item in observed["components"]] == ["research"]
+
+
+def test_skill_frontmatter_parses_literal_and_folded_descriptions(tmp_path: Path) -> None:
+    literal = tmp_path / "literal.md"
+    literal.write_text(
+        "---\nname: review\ndescription: |\n"
+        "  Review the requested object.\n  Keep tools internal.\n---\n"
+    )
+    folded = tmp_path / "folded.md"
+    folded.write_text(
+        "---\nname: create\ndescription: >\n"
+        "  Create one complete outcome.\n  Coordinate tools internally.\n---\n"
+    )
+    malformed = tmp_path / "malformed.md"
+    malformed.write_text("---\nname: bad\ndescription: |\n---\n")
+    assert _frontmatter(literal)["description"] == (
+        "Review the requested object.\nKeep tools internal."
+    )
+    assert _frontmatter(folded)["description"] == (
+        "Create one complete outcome. Coordinate tools internally."
+    )
+    assert "description" not in _frontmatter(malformed)
+
+
+def test_user_job_requires_one_commandable_verb_contract(tmp_path: Path) -> None:
+    review = component("review")
+    review["surface_audience"] = "user-job"
+    review["invocation"] = {"automatic_matching": True, "explicit_invocation": True}
+    review["job_contract"] = {
+        "job_id": "review",
+        "action": "review",
+        "outcome": "Review the requested object",
+        "completion": "Findings and next action are ready",
+        "authority_boundary": "Read-only unless repair is separately requested",
+    }
+    registry_value = {
+        "record_type": "component-registry",
+        "record_version": 3,
+        "system_version": "0.1.0-alpha.4",
+        "candidate_status": "candidate",
+        "components": [review],
+    }
+    path = tmp_path / "user-job.json"
+    path.write_text(json.dumps(registry_value))
+    assert load_component_registry(path)["components"][0]["job_contract"]["action"] == "review"
+    review["job_contract"]["action"] = "inspect"
+    path.write_text(json.dumps({**registry_value, "components": [review]}))
+    with pytest.raises(ComponentGovernanceError, match="action and component id disagree"):
+        load_component_registry(path)
+
+
+def test_verified_live_status_requires_same_component_claim_gate_receipt(tmp_path: Path) -> None:
+    live = component("review")
+    live["surface_audience"] = "supporting-capability"
+    live["invocation"] = {"automatic_matching": False, "explicit_invocation": True}
+    live["job_contract"] = None
+    live["status"]["execution"] = "verified-live"
+    registry = {
+        "record_type": "component-registry",
+        "record_version": 3,
+        "system_version": "0.1.0-alpha.4",
+        "candidate_status": "candidate",
+        "components": [live],
+    }
+    path = tmp_path / "live.json"
+    path.write_text(json.dumps(registry))
+    with pytest.raises(ComponentGovernanceError, match="requires a Claim Gate receipt"):
+        load_component_registry(path)
+
+    live["status"]["claim_receipt"] = validate_claim_receipt(
+        {
+            "claim_id": "claim-review-live",
+            "subject_id": "review",
+            "surface": "codex-skill",
+            "observed_at": "2026-08-23T05:00:00Z",
+            "asserted_state": "verified-live",
+            "proof_type": "representative-real-task",
+            "evidence_ids": ["representative-review-task"],
+            "scope": {"platform": "codex", "account": "local", "task": "review file"},
+            "version_dependencies": {"codex": "2026.08", "adapter": "alpha.4"},
+            "actual_user_outcome": {"observed": False, "evidence_ids": []},
+        }
+    )
+    path.write_text(json.dumps(registry))
+    assert load_component_registry(path)["components"][0]["status"]["execution"] == (
+        "verified-live"
+    )

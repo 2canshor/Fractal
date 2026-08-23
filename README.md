@@ -29,7 +29,7 @@ The public repository contains only reusable architecture, schemas, deterministi
 
 ## Current Status
 
-Version `0.1.0-alpha.3` is a candidate development build. It reconciles mutable live runtime state outside immutable adapters and makes Curiosity 60/20/20 mandatory whenever Improvement Options needs a solution. It is not a persistently activated System Version. The repository does not yet make a stability or compatibility promise.
+Version `0.1.0-alpha.4` is an inactive candidate development build. It preserves live runtime reconciliation and mandatory Curiosity 60/20/20, then adds complete Pattern coverage, automatic Two-Sided Review warrants, evidence Claim Gates, user-perspective action Skills, exact single-use version authority, architecture-lineage proof, adapter truth receipts, and honest plan-time resource states. It is not a persistently activated System Version. The repository does not yet make a stability or compatibility promise.
 
 Fractal registers every active or discoverable Skill, Hook, agent role, MCP, Plugin, App, Tool, and adapter individually. Use `fractal components show` for the human-readable registered view and `fractal codex inspect` to compare it with the live Codex runtime. Registration, loading, callability, and successful execution are reported separately. A component being installed or present in a cache is not proof that it is active or working.
 

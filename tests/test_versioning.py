@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -13,7 +14,74 @@ from fractal.versioning import (
     decide_node_map_change,
     propose_node_map_change,
     trial_node_map_change,
+    validate_publication_order,
 )
+
+PROJECT_ID = "version-project"
+PROJECT_REVISION = 7
+
+
+def authority_evidence(store: VersionStore, label: str) -> dict[str, str]:
+    text = f"approve {label}\n"
+    message_id = f"msg-{label}"
+    turn_id = f"turn-{label}"
+    path = store.root / f"session-{label}.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "id": message_id,
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": text}],
+                    "internal_chat_message_metadata_passthrough": {"turn_id": turn_id},
+                },
+            }
+        )
+        + "\n"
+    )
+    return {
+        "session_path": str(path),
+        "turn_id": turn_id,
+        "message_id": message_id,
+        "message_sha256": hashlib.sha256((text + "\n").encode()).hexdigest(),
+    }
+
+
+def decision_batch() -> dict:
+    return {"decision_batch_id": "batch-a", "included": ["decision-a"]}
+
+
+def architecture_lineage() -> dict:
+    return {"structural_gate_passed": True, "receipt_id": "lineage-a"}
+
+
+def claim_gate_audit() -> dict:
+    return {"passed": True, "claim_count": 20, "receipt_id": "claim-gate-a"}
+
+
+def preservation_audits() -> dict:
+    return {
+        "phase_a_pre_build": {"passed": True, "receipt_sha256": "d" * 64},
+        "phase_b_post_build_pre_activation": {
+            "passed": True,
+            "receipt_sha256": "e" * 64,
+        },
+    }
+
+
+def issue_action(store: VersionStore, version: str, action: str, label: str) -> str:
+    target, expected_state = store.action_authority_scope(version, action=action)
+    return store.authority.issue(
+        action=action,
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        target=target,
+        expected_state=expected_state,
+        authority_evidence=authority_evidence(store, label),
+    )["receipt_id"]
 
 
 def verification(**overrides: bool) -> dict[str, bool]:
@@ -38,6 +106,21 @@ def component() -> dict:
 
 
 def build(store: VersionStore, version: str) -> dict:
+    batch = decision_batch()
+    target, expected_state = store.build_authority_scope(
+        version=version,
+        public_commit="a" * 40,
+        private_commit="b" * 40,
+        decision_batch=batch,
+    )
+    receipt_id = store.authority.issue(
+        action="build",
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        target=target,
+        expected_state=expected_state,
+        authority_evidence=authority_evidence(store, f"build-{version}"),
+    )["receipt_id"]
     return store.build_candidate(
         version=version,
         public_commit="a" * 40,
@@ -47,6 +130,13 @@ def build(store: VersionStore, version: str) -> dict:
         migrations=["project-1.0-to-1.1"],
         restore_point={"kind": "manifest", "version": "previous"},
         verification=verification(),
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        decision_batch=batch,
+        architecture_lineage=architecture_lineage(),
+        claim_gate_audit=claim_gate_audit(),
+        preservation_audits=preservation_audits(),
+        authority_receipt_id=receipt_id,
     )
 
 
@@ -55,45 +145,56 @@ def test_candidate_requires_human_activation_rejection_and_restore(tmp_path: Pat
     first = build(store, "0.1.0-alpha.1")
     assert first["status"] == "candidate"
     assert store.read_active() is None
-    with pytest.raises(AuthorityError, match="primary user"):
+    wrong_receipt = issue_action(store, "0.1.0-alpha.1", "reject", "wrong-action")
+    with pytest.raises(AuthorityError, match="scope"):
         store.activate(
             "0.1.0-alpha.1",
-            actor="main-agent",
-            human_action=False,
+            project_id=PROJECT_ID,
+            project_revision=PROJECT_REVISION,
+            authority_receipt_id=wrong_receipt,
         )
+    activate_first = issue_action(store, "0.1.0-alpha.1", "activate", "activate-first")
     store.activate(
         "0.1.0-alpha.1",
-        actor="primary-user",
-        human_action=True,
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        authority_receipt_id=activate_first,
     )
     assert store.read_active()["version"] == "0.1.0-alpha.1"
 
     build(store, "0.1.0-alpha.2")
+    reject_second = issue_action(store, "0.1.0-alpha.2", "reject", "reject-second")
     store.reject(
         "0.1.0-alpha.2",
-        actor="primary-user",
-        human_action=True,
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        authority_receipt_id=reject_second,
     )
     assert store.version_state("0.1.0-alpha.2") == "rejected"
     assert store.read_active()["version"] == "0.1.0-alpha.1"
     with pytest.raises(VersionError, match="rejected"):
         store.activate(
             "0.1.0-alpha.2",
-            actor="primary-user",
-            human_action=True,
+            project_id=PROJECT_ID,
+            project_revision=PROJECT_REVISION,
+            authority_receipt_id=wrong_receipt,
         )
 
     build(store, "0.1.0-alpha.3")
+    activate_third = issue_action(store, "0.1.0-alpha.3", "activate", "activate-third")
     store.activate(
         "0.1.0-alpha.3",
-        actor="primary-user",
-        human_action=True,
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        authority_receipt_id=activate_third,
     )
     assert store.read_active()["version"] == "0.1.0-alpha.3"
+    restore_first = issue_action(store, "0.1.0-alpha.1", "restore", "restore-first")
     store.restore(
         "0.1.0-alpha.1",
-        actor="primary-user",
-        human_action=True,
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        authority_receipt_id=restore_first,
     )
     assert store.read_active()["version"] == "0.1.0-alpha.1"
     assert store.version_state("0.1.0-alpha.3") == "previously-active"
@@ -111,6 +212,13 @@ def test_candidate_build_fails_closed_when_any_gate_is_missing(tmp_path: Path) -
             migrations=[],
             restore_point={},
             verification=verification(restore_verified=False),
+            project_id=PROJECT_ID,
+            project_revision=PROJECT_REVISION,
+            decision_batch=decision_batch(),
+            architecture_lineage=architecture_lineage(),
+            claim_gate_audit=claim_gate_audit(),
+            preservation_audits=preservation_audits(),
+            authority_receipt_id="missing",
         )
 
 
@@ -130,6 +238,13 @@ def test_candidate_build_is_idempotent_but_version_content_is_immutable(tmp_path
             migrations=["project-1.0-to-1.1"],
             restore_point={"kind": "manifest", "version": "previous"},
             verification=verification(),
+            project_id=PROJECT_ID,
+            project_revision=PROJECT_REVISION,
+            decision_batch=decision_batch(),
+            architecture_lineage=architecture_lineage(),
+            claim_gate_audit=claim_gate_audit(),
+            preservation_audits=preservation_audits(),
+            authority_receipt_id="unused-because-content-diff-fails-first",
         )
 
 
@@ -145,12 +260,99 @@ def test_manifest_and_active_pointer_integrity_fail_closed(tmp_path: Path) -> No
 
     store = VersionStore(tmp_path / "pointer")
     build(store, "0.1.0-alpha.1")
-    store.activate("0.1.0-alpha.1", actor="primary-user", human_action=True)
+    receipt = issue_action(store, "0.1.0-alpha.1", "activate", "pointer-integrity")
+    store.activate(
+        "0.1.0-alpha.1",
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        authority_receipt_id=receipt,
+    )
     pointer = json.loads(store.active_pointer.read_text())
     pointer["manifest_sha256"] = "0" * 64
     store.active_pointer.write_text(json.dumps(pointer))
     with pytest.raises(VersionError, match="pointer integrity"):
         store.read_active()
+
+
+def test_imported_candidate_without_governed_build_event_cannot_activate(
+    tmp_path: Path,
+) -> None:
+    store = VersionStore(tmp_path / "imported")
+    manifest = build(store, "0.1.0-alpha.1")
+    store.events.write_text("")
+    target = {
+        "version": "0.1.0-alpha.1",
+        "manifest_sha256": manifest["manifest_sha256"],
+    }
+    receipt = store.authority.issue(
+        action="activate",
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        target=target,
+        expected_state={"active_version": None, "version_state": "candidate"},
+        authority_evidence=authority_evidence(store, "activate-imported"),
+    )
+    with pytest.raises(VersionError, match="governed build event"):
+        store.activate(
+            "0.1.0-alpha.1",
+            project_id=PROJECT_ID,
+            project_revision=PROJECT_REVISION,
+            authority_receipt_id=receipt["receipt_id"],
+        )
+    assert store.read_active() is None
+
+
+def test_pointer_is_compensated_when_event_write_boundary_fails(tmp_path: Path) -> None:
+    def inject(point: str) -> None:
+        if point == "after-pointer-before-event":
+            raise RuntimeError("injected pointer event boundary failure")
+
+    store = VersionStore(tmp_path / "fault", fault_injector=inject)
+    build(store, "0.1.0-alpha.1")
+    receipt = issue_action(store, "0.1.0-alpha.1", "activate", "activate-fault")
+    with pytest.raises(RuntimeError, match="injected"):
+        store.activate(
+            "0.1.0-alpha.1",
+            project_id=PROJECT_ID,
+            project_revision=PROJECT_REVISION,
+            authority_receipt_id=receipt,
+        )
+    assert store.read_active() is None
+    assert all(event["action"] != "activate" for event in store.read_events())
+    assert store.authority.read(receipt)["state"] == "failed"
+
+
+def test_candidate_manifest_is_removed_when_build_event_boundary_fails(
+    tmp_path: Path,
+) -> None:
+    def inject(point: str) -> None:
+        if point == "after-manifest-before-build-event":
+            raise RuntimeError("injected candidate event boundary failure")
+
+    store = VersionStore(tmp_path / "build-fault", fault_injector=inject)
+    with pytest.raises(RuntimeError, match="injected"):
+        build(store, "0.1.0-alpha.1")
+    assert not (store.versions / "0.1.0-alpha.1.json").exists()
+    assert store.read_active() is None
+    assert store.read_events() == []
+
+
+def test_publication_order_never_infers_scope_or_force(tmp_path: Path) -> None:
+    del tmp_path
+    order = {
+        "version": "0.1.0-alpha.4-candidate",
+        "repository_id": "2canshor/fractal",
+        "remote": "origin",
+        "ref": "refs/heads/main",
+        "commit": "a" * 40,
+        "expected_remote_commit": "b" * 40,
+        "force": False,
+    }
+    assert validate_publication_order(order)["passed"] is True
+    with pytest.raises(VersionError, match="incomplete or unexpected"):
+        validate_publication_order({key: value for key, value in order.items() if key != "ref"})
+    with pytest.raises(VersionError, match="cannot authorise force push"):
+        validate_publication_order({**order, "force": True})
 
 
 def safe_boundary() -> TrialBoundary:

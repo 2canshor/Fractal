@@ -9,6 +9,7 @@ from fractal.lifecycle import (
     LifecycleController,
     LifecycleError,
     SuccessCriterion,
+    validate_plan_resources,
 )
 from fractal.models import Change, ProjectRecord, utc_now
 from fractal.storage import AuthorityError, ProjectStore
@@ -117,6 +118,38 @@ def continuation_decision() -> dict[str, str]:
         "decision": "continue-with-plan-update",
         "justification": "The restore test is bounded and protects the whole deliverable",
     }
+
+
+def test_plan_time_resource_states_are_explicit_and_do_not_invent_estimates(
+    lifecycle_project: tuple[LifecycleController, ProjectStore, str],
+) -> None:
+    _, store, project_id = lifecycle_project
+    resources = store.read(project_id).plan["resources"]
+    assert [item["dimension"] for item in resources] == ["time", "attention"]
+    assert {item["plan_state"] for item in resources} == {"unknown-at-plan-time"}
+    assert all(item["estimate"] is None and item["unit"] is None for item in resources)
+
+    provided = [
+        {
+            "dimension": "time",
+            "plan_state": "provided",
+            "estimate": 12,
+            "unit": "hours",
+            "reason": "The deadline allows twelve hours.",
+        },
+        {
+            "dimension": "attention",
+            "plan_state": "not-applicable",
+            "estimate": None,
+            "unit": None,
+            "reason": "Attention is not separately constrained for this Project.",
+        },
+    ]
+    validate_plan_resources(provided)
+    invalid = [{**item} for item in provided]
+    invalid[1]["estimate"] = 50
+    with pytest.raises(LifecycleError, match="keeps estimate and unit null"):
+        validate_plan_resources(invalid)
 
 
 def approve_project(controller: LifecycleController, store: ProjectStore, project_id: str) -> None:
