@@ -28,7 +28,7 @@ The architecture keeps dependent reasoning in the Main Agent. It creates a Subag
 | Step 4: Choose the System Response | Methodology | Main Agent | Skill, deterministic program | Candidate runtime enforces existing-system assessment, Capability Check, and all eight option families |
 | Step 5: Reality Check | Methodology | Main Agent | Skill, Subagent, deterministic program | Candidate runtime represents all Local/Global combinations and later outcome evaluation |
 | Fatigue | Value / Methodology | deterministic program | Hook, Subagent, Skill | Work Signature and repetition trigger verified live; full investigation path remains partial |
-| Curiosity | Value / Methodology | Skill | Subagent, MCP, deterministic program | Partially implemented; staged and synthetic evidence |
+| Curiosity | Value / Methodology | Skill | Subagent, MCP, deterministic program | Solution-needed 60/20/20 gate implemented; wider routes remain staged with synthetic evidence |
 | Greed | Value / Methodology | Skill | Main Agent, MCP, deterministic program | Partially implemented; synthetic evidence |
 | Project Review | Secondary Mechanism | Main Agent | Skill, Hook, deterministic program, optional verifier Subagent | Candidate runtime records whole-Project scope, resources, neglected areas, opportunity cost, and continuation |
 | Deterministic Over Probabilistic | Mechanism | deterministic program | Hook, Skill | Implemented and used live by state, Hook, hash, and governance paths |

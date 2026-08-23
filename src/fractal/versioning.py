@@ -134,6 +134,7 @@ class VersionStore:
                 }
                 self._atomic_json_write(self.active_pointer, pointer)
                 self._append_event("activate", version, actor)
+                self._refresh_live_system_version(pointer)
             finally:
                 fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
         return pointer
@@ -184,6 +185,7 @@ class VersionStore:
                 }
                 self._atomic_json_write(self.active_pointer, pointer)
                 self._append_event("restore", version, actor)
+                self._refresh_live_system_version(pointer)
             finally:
                 fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
         return pointer
@@ -250,6 +252,15 @@ class VersionStore:
 
     def _manifest_path(self, version: str) -> Path:
         return self.versions / f"{version}.json"
+
+    def _refresh_live_system_version(self, pointer: dict[str, Any]) -> None:
+        """Refresh rebuildable live state only after an authority pointer write."""
+        from fractal.live_state import LiveRuntimeStateStore
+
+        LiveRuntimeStateStore(self.root.parent).update_system_version(
+            pointer,
+            self.active_pointer,
+        )
 
     @staticmethod
     def _validate_version(version: str) -> None:

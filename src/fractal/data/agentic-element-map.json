@@ -178,8 +178,8 @@
       "primary_element": "skill",
       "supporting_elements": ["subagent", "mcp", "deterministic-program"],
       "selection_reason": "Curiosity is a reusable research procedure. A read-only Subagent protects the main context for larger searches, MCP connects governed sources, and deterministic provenance checks keep source, date, and analogy visible.",
-      "trigger": "Fatigue investigation, explicit research need, or evidence-backed Success Criteria Challenge",
-      "output": "finding, analogy hypothesis, bounded experiment, or No Finding",
+      "trigger": "Whenever a solution is needed, a Fatigue investigation, explicit research need, or evidence-backed Success Criteria Challenge",
+      "output": "Three recorded 60/20/20 route outcomes, including finding, analogy hypothesis, bounded experiment, or No Finding",
       "permissions": "Read approved sources; no external mutation or self-adoption.",
       "status": {"source": "partially-implemented", "projection": "staged", "execution": "verified-synthetic"}
     },

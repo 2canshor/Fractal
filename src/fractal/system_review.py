@@ -15,6 +15,7 @@ from fractal.improvement import (
     TrialMeasurement,
     assess_trial_boundary,
     compare_trial_results,
+    curiosity_routes,
 )
 from fractal.models import ProjectRecord, utc_now
 from fractal.storage import AuthorityError, value_sha256
@@ -573,6 +574,91 @@ def _validate_improvement_options(result: dict[str, Any]) -> None:
         raise SystemReviewError("Preferred response is not a recognised option kind")
     if not isinstance(result.get("complexity_delta"), int):
         raise SystemReviewError("Improvement Options requires a complexity delta")
+    _validate_solution_curiosity(
+        result.get("curiosity"),
+        solution_needed=result["preferred_kind"] != "no-change",
+    )
+
+
+def _validate_solution_curiosity(value: Any, *, solution_needed: bool) -> None:
+    """Require auditable Curiosity whenever Improvement Options selects a solution."""
+    if not isinstance(value, dict):
+        raise SystemReviewError(
+            "Improvement Options requires Curiosity 60/20/20 evidence"
+        )
+    if value.get("automatic_adoption") is not False:
+        raise SystemReviewError("Curiosity findings cannot be adopted automatically")
+    if not solution_needed:
+        if value.get("status") != "not-needed" or not str(
+            value.get("reason", "")
+        ).strip():
+            raise SystemReviewError(
+                "No-change must explicitly record why Curiosity is not needed"
+            )
+        return
+    if value.get("trigger") != "solution-needed":
+        raise SystemReviewError(
+            "Solution selection requires the Curiosity solution-needed trigger"
+        )
+    expected_allocation = curiosity_routes("solution-needed")
+    if value.get("allocation") != expected_allocation:
+        raise SystemReviewError(
+            "Solution selection requires the exact Curiosity 60/20/20 allocation"
+        )
+    if value.get("status") not in {"candidate-findings", "no-finding"}:
+        raise SystemReviewError("Curiosity requires an honest finding status")
+    findings = value.get("findings")
+    if not isinstance(findings, list):
+        raise SystemReviewError("Curiosity requires a candidate findings list")
+    expected_status = "candidate-findings" if findings else "no-finding"
+    if value["status"] != expected_status:
+        raise SystemReviewError("Curiosity finding status does not match its evidence")
+    route_results = value.get("route_results")
+    expected_actions = [item["action_id"] for item in expected_allocation]
+    if (
+        not isinstance(route_results, list)
+        or [item.get("action_id") for item in route_results if isinstance(item, dict)]
+        != expected_actions
+    ):
+        raise SystemReviewError(
+            "Curiosity 60/20/20 requires one recorded outcome for every route"
+        )
+    flattened_findings = []
+    for action_id, route_result in zip(expected_actions, route_results, strict=True):
+        if route_result.get("status") not in {"candidate-findings", "no-finding"}:
+            raise SystemReviewError("Each Curiosity route requires an honest outcome")
+        route_findings = route_result.get("findings")
+        if not isinstance(route_findings, list):
+            raise SystemReviewError("Each Curiosity route requires a findings list")
+        route_status = "candidate-findings" if route_findings else "no-finding"
+        if route_result["status"] != route_status:
+            raise SystemReviewError("Curiosity route status does not match its evidence")
+        for finding in route_findings:
+            if not isinstance(finding, dict) or finding.get("action_id") != action_id:
+                raise SystemReviewError("Curiosity finding is attached to the wrong route")
+            if not str(finding.get("summary", "")).strip() or not str(
+                finding.get("observed_at", "")
+            ).strip():
+                raise SystemReviewError("Curiosity finding requires summary and provenance")
+            if action_id == "research-latest-findings" and (
+                not str(finding.get("source", "")).strip()
+                or not str(finding.get("source_date", "")).strip()
+            ):
+                raise SystemReviewError(
+                    "Curiosity latest finding requires source and source date"
+                )
+            if action_id == "explore-related-fields" and (
+                not str(finding.get("related_field", "")).strip()
+                or not str(finding.get("relationship", "")).strip()
+            ):
+                raise SystemReviewError(
+                    "Curiosity related-field finding requires a concrete relationship"
+                )
+        flattened_findings.extend(route_findings)
+    if flattened_findings != findings:
+        raise SystemReviewError(
+            "Curiosity route outcomes and combined findings do not match"
+        )
 
 
 def _validate_effect_record(result: dict[str, Any], *, effect: str) -> None:

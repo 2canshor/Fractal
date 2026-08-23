@@ -12,15 +12,42 @@ from pathlib import Path
 from typing import Any
 
 from fractal.improvement import WorkSignature, WorkSignatureStore, recognise_repetition
+from fractal.live_state import LiveRuntimeStateError, LiveRuntimeStateStore
 from fractal.models import utc_now
 
 
-def handle_hook(event: str, context: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+def resolve_session_state(context: dict[str, Any]) -> dict[str, Any] | None:
+    """Verify current Project and System Version state against canonical sources."""
+    route = context.get("live_runtime")
+    if route is None:
+        return None
+    if not isinstance(route, dict):
+        raise LiveRuntimeStateError("Live runtime route is invalid")
+    required = {"state_path"}
+    if not required.issubset(route):
+        raise LiveRuntimeStateError("Live runtime route is incomplete")
+    state_path = Path(route["state_path"]).expanduser()
+    store = LiveRuntimeStateStore(state_path.parent.parent, state_path=state_path)
+    return store.verify_current()
+
+
+def handle_hook(
+    event: str,
+    context: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    live_state: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Return a typed hook result without granting new authority."""
     if event == "session-start":
-        project = context["active_project"]
+        project = live_state["project"] if live_state is not None else context["active_project"]
+        system_version = (
+            live_state["system_version"]["version"]
+            if live_state is not None
+            else context["system_version"]
+        )
         summary = (
-            f"Fractal {context['system_version']}; active Project {project['project_id']} "
+            f"Fractal {system_version}; active Project {project['project_id']} "
             f"is {project['status']} at revision {project['revision']} and Phase "
             f"{project['current_phase']}. Legacy removal is "
             f"{'enabled' if context['authority']['legacy_removal_enabled'] else 'disabled'} "
@@ -316,7 +343,30 @@ def main(argv: list[str] | None = None) -> int:
             evaluations_path=arguments.evaluations.expanduser(),
         )
     else:
-        result = handle_hook(arguments.event, context, payload)
+        if arguments.event == "session-start":
+            try:
+                live_state = resolve_session_state(context)
+            except LiveRuntimeStateError as error:
+                result = {
+                    "hookSpecificOutput": {
+                        "hookEventName": "SessionStart",
+                        "additionalContext": (
+                            "FRACTAL LIVE STATE ERROR: current Project or System Version "
+                            f"could not be verified ({error}). Do not use the adapter build "
+                            "snapshot as current truth. Stop Project-state-dependent routing "
+                            "until canonical live state is repaired."
+                        ),
+                    }
+                }
+            else:
+                result = handle_hook(
+                    arguments.event,
+                    context,
+                    payload,
+                    live_state=live_state,
+                )
+        else:
+            result = handle_hook(arguments.event, context, payload)
     print(json.dumps(result, ensure_ascii=False))
     return 0
 

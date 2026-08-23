@@ -307,15 +307,17 @@ def curiosity_routes(trigger: str) -> list[dict[str, Any]]:
     """Return the approved 60/20/20 bounded research routes."""
     if trigger not in {
         "improvement-investigation",
+        "solution-needed",
         "success-criteria-challenge-pre",
         "success-criteria-challenge-post",
     }:
         raise ValueError(f"Unsupported Curiosity trigger: {trigger}")
-    current_focus = (
-        "improve the current method"
-        if trigger == "improvement-investigation"
-        else "raise the current Goal, criteria, or architecture"
-    )
+    current_focus = {
+        "improvement-investigation": "improve the current method",
+        "solution-needed": "solve the current evidenced problem",
+        "success-criteria-challenge-pre": "raise the current Goal, criteria, or architecture",
+        "success-criteria-challenge-post": "raise the current Goal, criteria, or architecture",
+    }[trigger]
     return [
         {
             "action_id": "improve-current-method",
@@ -370,16 +372,34 @@ def combine_curiosity_findings(trigger: str, findings: list[ResearchFinding]) ->
     """Combine research as candidate evidence without automatic adoption."""
     for finding in findings:
         finding.validate()
+    allocation = curiosity_routes(trigger)
+    route_results = []
+    for route in allocation:
+        matching = [
+            asdict(item) for item in findings if item.action_id == route["action_id"]
+        ]
+        route_results.append(
+            {
+                "action_id": route["action_id"],
+                "status": "candidate-findings" if matching else "no-finding",
+                "findings": matching,
+            }
+        )
     return {
         "trigger": trigger,
-        "allocation": curiosity_routes(trigger),
+        "allocation": allocation,
+        "route_results": route_results,
         "status": "candidate-findings" if findings else "no-finding",
         "findings": [asdict(item) for item in findings],
         "automatic_adoption": False,
         "next_route": (
             "project-review"
             if trigger == "improvement-investigation"
-            else "main-agent-success-criteria-options"
+            else (
+                "system-review-improvement-options"
+                if trigger == "solution-needed"
+                else "main-agent-success-criteria-options"
+            )
         ),
     }
 

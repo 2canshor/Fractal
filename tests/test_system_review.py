@@ -4,7 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from fractal.improvement import TrialBoundary, TrialMeasurement
+from fractal.improvement import (
+    ResearchFinding,
+    TrialBoundary,
+    TrialMeasurement,
+    combine_curiosity_findings,
+)
 from fractal.models import ProjectRecord
 from fractal.storage import AuthorityError
 from fractal.system_review import (
@@ -185,6 +190,12 @@ def stage_result(stage: str) -> dict:
             ],
             "preferred_kind": "no-change",
             "complexity_delta": 0,
+            "curiosity": {
+                "trigger": "solution-needed",
+                "status": "not-needed",
+                "reason": "No solution is needed because no-change is preferred",
+                "automatic_adoption": False,
+            },
         },
         "expected-effect": {
             "hypothesis_id": "hypothesis-a",
@@ -359,6 +370,92 @@ def test_step_four_requires_complete_subtraction_first_and_capability_check() ->
     next(item for item in add["options"] if item["kind"] == "add")["status"] = "viable"
     with pytest.raises(SystemReviewError, match="existing capability suffices"):
         _validate_system_review_stage("improvement-options", add)
+
+
+def test_solution_needed_fails_closed_without_curiosity_60_20_20() -> None:
+    from fractal.system_review import _validate_system_review_stage
+
+    result = stage_result("improvement-options")
+    result["preferred_kind"] = "modify"
+    result["complexity_delta"] = 0
+    result["existing_capability_assessment"]["sufficient"] = True
+    del result["curiosity"]
+    with pytest.raises(SystemReviewError, match="Curiosity 60/20/20"):
+        _validate_system_review_stage("improvement-options", result)
+
+
+def test_solution_needed_accepts_complete_curiosity_60_20_20() -> None:
+    from fractal.system_review import _validate_system_review_stage
+
+    result = stage_result("improvement-options")
+    result["preferred_kind"] = "modify"
+    result["complexity_delta"] = 0
+    result["existing_capability_assessment"]["sufficient"] = True
+    result["curiosity"] = combine_curiosity_findings(
+        "solution-needed",
+        [
+            ResearchFinding(
+                "improve-current-method",
+                "Move mutable live state out of immutable adapter snapshots",
+                None,
+                "2026-08-23T00:00:00Z",
+            ),
+            ResearchFinding(
+                "research-latest-findings",
+                "Atomic replacement keeps readers away from partial state",
+                "https://docs.python.org/3/library/os.html#os.replace",
+                "2026-08-23T00:00:00Z",
+                source_date="2026-08-23",
+            ),
+            ResearchFinding(
+                "explore-related-fields",
+                "Materialized views must be refreshed or rejected when stale",
+                "https://martinfowler.com/eaaDev/EventSourcing.html",
+                "2026-08-23T00:00:00Z",
+                related_field="event-sourced projections",
+                relationship="Both derive fast read state from a canonical write model",
+            ),
+        ],
+    )
+    _validate_system_review_stage("improvement-options", result)
+
+
+def test_solution_needed_rejects_cosmetic_or_misrouted_curiosity() -> None:
+    from fractal.system_review import _validate_system_review_stage
+
+    result = stage_result("improvement-options")
+    result["preferred_kind"] = "modify"
+    result["curiosity"] = combine_curiosity_findings(
+        "solution-needed",
+        [
+            ResearchFinding(
+                "improve-current-method",
+                "Use a verified mutable read model",
+                None,
+                "2026-08-23T00:00:00Z",
+            )
+        ],
+    )
+    result["curiosity"]["allocation"][0]["effort_share"] = 59
+    with pytest.raises(SystemReviewError, match="exact Curiosity 60/20/20"):
+        _validate_system_review_stage("improvement-options", result)
+
+    result["curiosity"] = combine_curiosity_findings(
+        "solution-needed",
+        [
+            ResearchFinding(
+                "improve-current-method",
+                "Use a verified mutable read model",
+                None,
+                "2026-08-23T00:00:00Z",
+            )
+        ],
+    )
+    result["curiosity"]["route_results"][0]["findings"][0]["action_id"] = (
+        "research-latest-findings"
+    )
+    with pytest.raises(SystemReviewError, match="wrong route"):
+        _validate_system_review_stage("improvement-options", result)
 
 
 @pytest.mark.parametrize(

@@ -204,7 +204,7 @@ class AdapterBuilder:
         project = json.loads(record_path.read_text())
         return {
             "record_type": "adapter-context",
-            "record_version": 1,
+            "record_version": 2,
             "platform": platform,
             "system_version": self.system_version,
             "active_project": {
@@ -213,6 +213,11 @@ class AdapterBuilder:
                 "revision": project["revision"],
                 "current_phase": project["plan"]["current_phase"],
                 "completion_authority": "primary-user-only",
+                "state_role": "adapter-build-snapshot-not-live-truth",
+            },
+            "live_runtime": {
+                "state_path": str(self.runtime_root / "live-state" / "current.json"),
+                "session_policy": "verify-current-canonical-sources-or-stop",
             },
             "communication": profile["communication"],
             "interaction": profile["interaction"],
@@ -651,11 +656,16 @@ class AdapterBuilder:
             "# Fractal Router\n\n"
             f"This {platform.title()} projection is generated from Fractal System Version "
             f"`{self.system_version}`. It is an entrypoint, not a second rulebook.\n\n"
-            f"- Read `{context_root}/context.json` for the active Project summary and authority.\n"
+            f"- Read `{context_root}/context.json` for authority and live-state source routes; "
+            "its embedded Project is only an adapter-build snapshot.\n"
+            "- At SessionStart, verify the mutable runtime state against the current "
+            "canonical Project and active System Version; if verification fails, stop "
+            "Project-state-dependent routing instead of using the build snapshot.\n"
             f"- Discover `{context_root}/active-components.json` first; use only the "
             "registered active set.\n"
-            f"- Use `{context_root}/component-status.md` or `fractal components show` "
-            "for the human-readable status route; the slash-command menu is separate.\n"
+            f"- `{context_root}/component-status.md` describes the adapter build. Use "
+            "`fractal components show` with verified live runtime state for current status; "
+            "the slash-command menu is separate.\n"
             f"- Use `{context_root}/capability-metadata.json` to select one matching "
             "Skill only when it "
             "matches the task.\n"

@@ -132,7 +132,23 @@ def test_human_view_explains_status_route(tmp_path: Path) -> None:
     assert "Verified Staged: `1`" in view
     assert "Available, Not Yet Proven: `0`" in view
     assert "Execution Still Unknown" not in view
+    assert "Adapter Build State: `candidate`" in view
+    assert "Current Version State: `unknown until live verification`" in view
     assert "slash-command menu is not this status surface" in view
+
+    live_view = render_component_status(
+        registry,
+        platform="codex",
+        live_state={
+            "system_version": {
+                "version": "0.1.0-alpha.2-live",
+                "status": "active",
+            }
+        },
+    )
+    assert "Adapter Build State: `candidate`" in live_view
+    assert "Current Active System Version: `0.1.0-alpha.2-live`" in live_view
+    assert "Current Version State: `active`" in live_view
 
 
 def test_active_dependency_must_be_registered_and_active(tmp_path: Path) -> None:

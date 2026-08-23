@@ -144,6 +144,7 @@ class ProjectStore:
                     "occurred_at": utc_now(),
                 },
             )
+            self._refresh_live_project(record.project_id, value)
             return self.read(record.project_id)
 
     def read(self, project_id: str) -> ProjectRecord:
@@ -187,6 +188,7 @@ class ProjectStore:
                     "occurred_at": utc_now(),
                 },
             )
+            self._refresh_live_project(project_id, migrated)
             return self.read(project_id)
 
     def apply_changes(
@@ -273,6 +275,7 @@ class ProjectStore:
                     "occurred_at": utc_now(),
                 },
             )
+            self._refresh_live_project(project_id, candidate)
             read_back = self.read(project_id)
             return WriteResult(
                 applied=True,
@@ -348,6 +351,7 @@ class ProjectStore:
                 "occurred_at": utc_now(),
             },
         )
+        self._refresh_live_project(current["project_id"], current)
         return WriteResult(
             applied=False,
             merged=False,
@@ -478,6 +482,15 @@ class ProjectStore:
         self._atomic_write(self._record_path(project_id), record_text.encode("utf-8"))
         digest = value_sha256(value) + "\n"
         self._atomic_write(self._digest_path(project_id), digest.encode("ascii"))
+
+    def _refresh_live_project(self, project_id: str, value: dict[str, Any]) -> None:
+        """Refresh rebuildable live state only after record and event writes succeed."""
+        from fractal.live_state import LiveRuntimeStateStore
+
+        LiveRuntimeStateStore(self.runtime_root).update_project(
+            value,
+            self._record_path(project_id),
+        )
 
     def _append_event(self, project_id: str, event: dict[str, Any]) -> None:
         event_path = self._event_path(project_id)

@@ -49,7 +49,7 @@
       "id": "TD-005",
       "subject": "versioning",
       "status": "accepted",
-      "decision": "Use Semantic Versioning prereleases for the system; the current candidate is 0.1.0-alpha.2 and the Python package is 0.1.0a2",
+      "decision": "Use Semantic Versioning prereleases for the system; the current candidate is 0.1.0-alpha.3 and the Python package is 0.1.0a3",
       "reason": "The system is usable for development while its public interface and architecture remain unstable.",
       "sources": [
         "https://semver.org/spec/v2.0.0.html",

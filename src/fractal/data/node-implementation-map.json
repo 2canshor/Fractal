@@ -1,7 +1,7 @@
 {
   "record_type": "node-implementation-map",
   "record_version": 2,
-  "system_version": "0.1.0-alpha.2",
+  "system_version": "0.1.0-alpha.3",
   "status": "initial-build-mapping",
   "architecture_alignment_status": "hierarchy-and-agentic-element-mapping-recorded",
   "agentic_element_map": "agentic-element-map.json",

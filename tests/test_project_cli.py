@@ -63,4 +63,4 @@ def test_cli_component_status_route(tmp_path: Path, capsys) -> None:
     assert main(["components", "show", "--registry", str(registry)]) == 0
     output = capsys.readouterr().out
     assert "# Fractal Component Status" in output
-    assert "Version State: `candidate`" in output
+    assert "Adapter Build State: `candidate`" in output

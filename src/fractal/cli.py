@@ -36,6 +36,7 @@ from fractal.component_inventory import (
     observe_platform_components,
 )
 from fractal.context import RetrievalRequest, assemble_context_package, rebuild_context_index
+from fractal.live_state import LiveRuntimeStateStore
 from fractal.models import ProjectRecord
 from fractal.storage import ProjectStore
 from fractal.views import render_project_summary
@@ -49,6 +50,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="action", required=True)
     subparsers.add_parser("version", help="Show the active Fractal system version.")
+    live_state_parser = subparsers.add_parser(
+        "live-state", help="Rebuild or verify the mutable runtime read model."
+    )
+    live_state_actions = live_state_parser.add_subparsers(
+        dest="live_state_action", required=True
+    )
+    live_state_reconcile = live_state_actions.add_parser(
+        "reconcile", help="Rebuild live state from canonical sources."
+    )
+    live_state_reconcile.add_argument("--state", required=True, type=Path)
+    live_state_reconcile.add_argument("--project-record", required=True, type=Path)
+    live_state_reconcile.add_argument("--active-pointer", required=True, type=Path)
+    live_state_show = live_state_actions.add_parser(
+        "show", help="Verify and show the current live state."
+    )
+    live_state_show.add_argument("--state", required=True, type=Path)
     project_parser = subparsers.add_parser("project", help="Record and inspect Projects.")
     project_actions = project_parser.add_subparsers(dest="project_action", required=True)
 
@@ -106,6 +123,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("~/.codex/fractal/component-registry.json"),
     )
     component_show.add_argument("--platform")
+    component_show.add_argument(
+        "--live-state",
+        type=Path,
+        default=Path(
+            "~/Library/Application Support/Fractal/runtime/live-state/current.json"
+        ),
+    )
     component_audit = component_actions.add_parser(
         "audit", help="Compare observed components with the registered active set."
     )
@@ -213,6 +237,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.action == "version":
         print(SYSTEM_VERSION)
+        return 0
+    if args.action == "live-state":
+        state_path = args.state.expanduser()
+        store = LiveRuntimeStateStore(state_path.parent.parent, state_path=state_path)
+        if args.live_state_action == "reconcile":
+            state = store.reconcile(
+                project_record_path=args.project_record.expanduser(),
+                active_pointer_path=args.active_pointer.expanduser(),
+            )
+        else:
+            state = store.verify_current()
+        print(json.dumps(state, ensure_ascii=False, sort_keys=True))
         return 0
     if args.action == "project":
         store = ProjectStore(args.project_root, args.runtime_root)
@@ -398,7 +434,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         registry = load_component_registry(args.registry.expanduser())
         if args.component_action == "show":
-            print(render_component_status(registry, platform=args.platform), end="")
+            live_state_path = args.live_state.expanduser()
+            live_state = None
+            if live_state_path.is_file():
+                live_state = LiveRuntimeStateStore(
+                    live_state_path.parent.parent,
+                    state_path=live_state_path,
+                ).verify_current()
+            print(
+                render_component_status(
+                    registry,
+                    platform=args.platform,
+                    live_state=live_state,
+                ),
+                end="",
+            )
             return 0
         if args.component_action == "audit":
             observed = json.loads(args.observed.expanduser().read_text(encoding="utf-8"))

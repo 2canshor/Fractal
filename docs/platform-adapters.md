@@ -2,7 +2,11 @@
 
 Fractal generates Codex, Claude, Cowork, and Gemini projections in one direction from a pinned Public commit and selected Private state. An installed projection never overwrites canonical source in reverse.
 
-Each adapter contains a minimal root router, a bounded Project and authority context, the universal component registry, the approved platform active set, selector-facing capability metadata, a Human Control status view, applicable generated Skill folders or packages, limitations, and a hash-pinned manifest. Codex and Claude also receive their locally observed Hook and agent-role formats. The root router is deliberately small and is not a replacement mega-rulebook.
+Each adapter contains a minimal root router, a build-time Project snapshot and authority context, the universal component registry, the approved platform active set, selector-facing capability metadata, a build-status view, applicable generated Skill folders or packages, limitations, and a hash-pinned manifest. Codex and Claude also receive their locally observed Hook and agent-role formats. The root router is deliberately small and is not a replacement mega-rulebook.
+
+Fast-changing state does not live inside that immutable projection. Canonical Project writes and primary-user System Version activation or restore refresh `runtime/live-state/current.json` atomically. It is a disposable read model: the canonical Project record and verified active pointer remain the sources of truth. At every `SessionStart`, Fractal verifies the live-state digest and both canonical sources again. If any source is missing, changed without its digest, or inconsistent with the read model, the Hook tells the agent to stop Project-state-dependent routing; it never falls back silently to the adapter-build snapshot.
+
+Candidate migration or recovery bootstraps the read model explicitly with `fractal live-state reconcile --state <runtime>/live-state/current.json --project-record <private>/projects/active/<id>/record.json --active-pointer <runtime>/system-version/active.json`. `fractal live-state show --state <path>` verifies the stored state and both recorded sources before displaying it.
 
 ## Current Platform Evidence
 
@@ -18,7 +22,7 @@ Existing platform MCP servers and connected Apps are registered individually wit
 
 ## Human Status Route
 
-Use `fractal components show --registry ~/.codex/fractal/component-registry.json --platform codex` for the registered status, and `fractal codex inspect` for what Codex has loaded now. This is intentionally separate from the slash-command menu. A menu showing “No commands” does not mean the root `AGENTS.md` router failed, and Fractal does not add decorative slash commands.
+Use `fractal components show --registry ~/.codex/fractal/component-registry.json --platform codex` for the registered status and verified current System Version, and `fractal codex inspect` for what Codex has loaded now. The generated `component-status.md` labels its System Version and lifecycle as **Adapter Build** state so it cannot masquerade as current active state. This is intentionally separate from the slash-command menu. A menu showing “No commands” does not mean the root `AGENTS.md` router failed, and Fractal does not add decorative slash commands.
 
 ## Tool Results
 

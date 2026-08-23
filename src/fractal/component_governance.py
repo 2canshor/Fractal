@@ -184,8 +184,13 @@ def audit_component_drift(
     }
 
 
-def render_component_status(registry: dict[str, Any], *, platform: str | None = None) -> str:
-    """Render a Human Control View without requiring raw JSON inspection."""
+def render_component_status(
+    registry: dict[str, Any],
+    *,
+    platform: str | None = None,
+    live_state: dict[str, Any] | None = None,
+) -> str:
+    """Render build identity separately from verified current runtime state."""
     components = registry["components"]
     if platform is not None:
         components = [
@@ -209,28 +214,47 @@ def render_component_status(registry: dict[str, Any], *, platform: str | None = 
     lines = [
         "# Fractal Component Status",
         "",
-        f"- System Version: `{registry['system_version']}`",
-        f"- Version State: `{registry['candidate_status']}`",
-        f"- Scope: `{platform or 'all-platforms'}`",
-        f"- Registered Components: `{len(components)}`",
-        f"- Active and Managed: `{active_count}`",
-        f"- Inactive or Quarantined: `{quarantined_count}`",
-        f"- Verified Live: `{execution_counts['verified-live']}`",
-        f"- Verified Staged: `{execution_counts['verified-staged']}`",
-        f"- Available, Not Yet Proven: `{execution_counts['available-unverified']}`",
-        f"- Unknown: `{execution_counts['unknown']}`",
-        f"- Unavailable: `{execution_counts['unavailable']}`",
-        f"- Registered Dependency Links: `{dependency_count}`",
-        "",
-        "`Registered` means Fractal knows and governs the component. `Verified Live` means "
-        "there is evidence that it completed real work. Loading and callability are checked "
-        "separately by `fractal codex inspect`; neither one proves a successful result.",
-        "",
-        "## Components",
-        "",
-        "| Component | Kind | Disposition | Platforms | Execution | Dependencies |",
-        "|---|---|---|---|---|---|",
+        f"- Adapter Build System Version: `{registry['system_version']}`",
+        f"- Adapter Build State: `{registry['candidate_status']}`",
     ]
+    if live_state is None:
+        lines.extend(
+            [
+                "- Current Active System Version: `requires verified live runtime state`",
+                "- Current Version State: `unknown until live verification`",
+            ]
+        )
+    else:
+        current_version = live_state["system_version"]
+        lines.extend(
+            [
+                f"- Current Active System Version: `{current_version['version']}`",
+                f"- Current Version State: `{current_version['status']}`",
+            ]
+        )
+    lines.extend(
+        [
+            f"- Scope: `{platform or 'all-platforms'}`",
+            f"- Registered Components: `{len(components)}`",
+            f"- Active and Managed: `{active_count}`",
+            f"- Inactive or Quarantined: `{quarantined_count}`",
+            f"- Verified Live: `{execution_counts['verified-live']}`",
+            f"- Verified Staged: `{execution_counts['verified-staged']}`",
+            f"- Available, Not Yet Proven: `{execution_counts['available-unverified']}`",
+            f"- Unknown: `{execution_counts['unknown']}`",
+            f"- Unavailable: `{execution_counts['unavailable']}`",
+            f"- Registered Dependency Links: `{dependency_count}`",
+            "",
+            "`Registered` means Fractal knows and governs the component. `Verified Live` means "
+            "there is evidence that it completed real work. Loading and callability are checked "
+            "separately by `fractal codex inspect`; neither one proves a successful result.",
+            "",
+            "## Components",
+            "",
+            "| Component | Kind | Disposition | Platforms | Execution | Dependencies |",
+            "|---|---|---|---|---|---|",
+        ]
+    )
     for item in components:
         lines.append(
             "| `{}` | {} | {} | {} | {} | {} |".format(

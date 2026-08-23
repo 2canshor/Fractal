@@ -75,7 +75,7 @@ Improvement Options evaluates:
 
 The review identifies which existing components can already respond and what prevents them from doing so. Addition is considered when the existing structure is genuinely insufficient. Complexity delta, restore cost, component value history, and the purpose of low-frequency safeguards are part of the comparison.
 
-Repetition Awareness, Fatigue, Curiosity, Greed, experiments, and Capability evidence can add observations, hypotheses, or bounded options to this stage. Their findings continue through the same System Review reasoning and authority path.
+Repetition Awareness, Fatigue, Greed, experiments, and Capability evidence can add observations, hypotheses, or bounded options to this stage. Whenever this stage needs to choose a solution, Curiosity is mandatory: 60% improves the current method, 20% checks dated findings in the same field, and 20% explores a related field with an explicit transferable relationship. Each route records an outcome, `No Finding` remains valid, and the findings never adopt themselves. A preferred `no-change` response instead records why no solution is needed. Missing 60/20/20 evidence stops Improvement Options rather than silently skipping Curiosity.
 
 ## Step 5 contract: real outcome over apparent progress
 

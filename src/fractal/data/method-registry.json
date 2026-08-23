@@ -1,7 +1,7 @@
 {
   "record_type": "method-registry",
   "record_version": 2,
-  "system_version": "0.1.0-alpha.2",
+  "system_version": "0.1.0-alpha.3",
   "core_philosophies": [
     {
       "id": "continuous-improvement",
@@ -82,9 +82,9 @@
       "methodology_kind": "three-value",
       "decision_status": "intent-established-methodology-partially-defined",
       "intent": "Explore current, adjacent, and structurally related ideas that may improve the work.",
-      "operational_mapping": ["research", "analogy-hypothesis", "bounded-experiment"],
+      "operational_mapping": ["research", "solution-needed", "improvement-options", "analogy-hypothesis", "bounded-experiment"],
       "open_questions": ["effort-meter", "source-quality-threshold", "freshness-threshold", "cross-field-relevance-threshold", "exact-tool-budget"],
-      "evidence_requirement": "Execution evidence records routing, source provenance, relevance, and the Project Review or System Review that received the finding."
+      "evidence_requirement": "Whenever a solution is needed, execution evidence records the exact 60/20/20 allocation, one honest outcome per route, source provenance, relevance, no automatic adoption, and the Project Review or System Review that received the finding. Improvement Options fails closed when this evidence is absent."
     },
     {
       "id": "greed",

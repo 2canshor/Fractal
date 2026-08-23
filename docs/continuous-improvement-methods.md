@@ -27,13 +27,15 @@ Structural repetition is classified before action as accidental duplication, pla
 
 ## Curiosity — Value
 
-Curiosity supplies three bounded research paths to Project Review through a Fatigue investigation, or to a pre-work/post-work Success Criteria Challenge:
+Whenever Fractal needs to choose a solution, Curiosity supplies three bounded research paths before Improvement Options can select `delete`, `shorten`, `merge`, `simplify`, `reconfigure`, `modify`, or `add`. It also supplies the same structure to Project Review through a Fatigue investigation and to a pre-work/post-work Success Criteria Challenge:
 
 - 60% Improve Current Method;
 - 20% Research Latest Findings;
 - 20% Explore Related Fields.
 
-The percentages are initial effort shares, not a fabricated Token meter or a quota for findings. A latest finding needs a source and date. A related-field finding needs a concrete relationship. `No Finding` is valid, and research never adopts itself.
+The percentages are initial effort shares, not a fabricated Token meter or a quota for findings. Each route records an honest outcome even when that outcome is `No Finding`. A latest finding needs a source and date. A related-field finding needs a concrete relationship. Research never adopts itself.
+
+The Improvement Options runtime enforces this rule. If the preferred response is anything except `no-change`, missing or malformed 60/20/20 evidence stops the review. A genuine `no-change` result records why no solution is needed. Pure execution of an already approved solution and pure verification do not create a second solution-selection loop.
 
 ## Greed — Value
 
