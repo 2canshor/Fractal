@@ -1,0 +1,6 @@
+interface:
+  display_name: "Edit"
+  short_description: "Change or repair an existing object"
+  default_prompt: "Use $edit to change the object I named and preserve what must stay true."
+policy:
+  allow_implicit_invocation: true

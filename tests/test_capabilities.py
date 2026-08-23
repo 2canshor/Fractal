@@ -65,11 +65,35 @@ def test_design_sources_are_merged_instead_of_competing() -> None:
     )
 
 
-@pytest.mark.parametrize("skill_id", ["assess", "complete", "create", "match", "review", "version"])
-def test_user_job_skills_have_portable_source_and_explicit_ui_examples(
+@pytest.mark.parametrize(
+    "skill_id",
+    [
+        "assess",
+        "automate",
+        "complete",
+        "create",
+        "edit",
+        "match",
+        "publish",
+        "research",
+        "review",
+        "version",
+    ],
+)
+def test_user_entries_have_portable_source_and_explicit_ui_examples(
     skill_id: str,
 ) -> None:
     assert validate_skill_source(SKILLS / skill_id)["valid"] is True
+
+
+@pytest.mark.parametrize(
+    "skill_id", ["automate", "create", "edit", "publish", "research", "review"]
+)
+def test_actions_distinguish_route_match_and_dependency_states(skill_id: str) -> None:
+    source = (SKILLS / skill_id / "SKILL.md").read_text(encoding="utf-8")
+    for state in ("`exact`", "`partial`", "`missing`", "`unavailable`"):
+        assert state in source
+    assert "never claim the dependency worked" in source
 
 
 def test_version_job_requires_activation_before_completion() -> None:

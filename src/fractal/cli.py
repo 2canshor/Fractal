@@ -39,6 +39,13 @@ from fractal.context import RetrievalRequest, assemble_context_package, rebuild_
 from fractal.live_state import LiveRuntimeStateStore
 from fractal.models import ProjectRecord
 from fractal.storage import ProjectStore
+from fractal.user_surface import (
+    audit_codex_skill_path_surface,
+    audit_codex_skill_surface,
+    build_codex_skill_config_edits,
+    build_user_surface,
+    load_user_surface,
+)
 from fractal.views import render_project_summary
 
 
@@ -151,6 +158,13 @@ def build_parser() -> argparse.ArgumentParser:
     component_snapshot.add_argument("--configured-mcp", action="append", default=[])
     component_snapshot.add_argument("--platform-surface", type=Path)
     component_snapshot.add_argument("--output", required=True, type=Path)
+    component_surface = component_actions.add_parser(
+        "surface-build",
+        help="Compile the Action and Command allowlist over reusable internal Skill dots.",
+    )
+    component_surface.add_argument("--policy", required=True, type=Path)
+    component_surface.add_argument("--registry", required=True, type=Path)
+    component_surface.add_argument("--output", required=True, type=Path)
     component_install = component_actions.add_parser(
         "install-candidate", help="Install a verified platform candidate recoverably."
     )
@@ -189,6 +203,23 @@ def build_parser() -> argparse.ArgumentParser:
     codex_config.add_argument("--edits", required=True, type=Path)
     codex_config.add_argument("--recovery", required=True, type=Path)
     codex_config.add_argument("--cwd", type=Path, default=Path.cwd())
+    codex_surface = codex_actions.add_parser(
+        "surface-plan",
+        help="Build a recoverable config batch that leaves only Actions and Commands enabled.",
+    )
+    _add_codex_runtime_arguments(codex_surface)
+    codex_surface.add_argument("--surface", required=True, type=Path)
+    codex_surface.add_argument("--candidate", required=True, type=Path)
+    codex_surface.add_argument("--edits-output", required=True, type=Path)
+    codex_surface.add_argument("--output", type=Path)
+    codex_surface_audit = codex_actions.add_parser(
+        "surface-audit",
+        help="Fail unless the exact candidate Actions and Commands are the only enabled Skills.",
+    )
+    _add_codex_runtime_arguments(codex_surface_audit)
+    codex_surface_audit.add_argument("--surface", required=True, type=Path)
+    codex_surface_audit.add_argument("--candidate", required=True, type=Path)
+    codex_surface_audit.add_argument("--output", type=Path)
     codex_verify = codex_actions.add_parser(
         "verify-turn", help="Run one read-only turn and capture real completion evidence."
     )
@@ -351,6 +382,79 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
                 print(json.dumps(report, ensure_ascii=False, sort_keys=True))
                 return 0
+            if args.codex_action == "surface-plan":
+                registry = load_component_registry(args.registry.expanduser())
+                surface = load_user_surface(args.surface.expanduser(), registry)
+                response = client.request(
+                    "skills/list",
+                    {"cwds": [str(args.cwd.expanduser().resolve())], "forceReload": True},
+                )
+                buckets = response.get("data") or []
+                if len(buckets) != 1:
+                    raise ValueError("Codex returned an unexpected Skill-list scope")
+                listed = buckets[0].get("skills") or []
+                candidate = args.candidate.expanduser().resolve(strict=True)
+                visible_skill_paths = {
+                    item["entry_id"]: str(
+                        (candidate / "skills" / item["entry_id"] / "SKILL.md").resolve(
+                            strict=True
+                        )
+                    )
+                    for item in surface["entries"]
+                }
+                edits = build_codex_skill_config_edits(
+                    surface, listed, visible_skill_paths=visible_skill_paths
+                )
+                edits_path = args.edits_output.expanduser()
+                edits_path.parent.mkdir(parents=True, exist_ok=True)
+                edits_path.write_text(
+                    json.dumps(edits, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+                report = {
+                    "record_type": "codex-user-surface-plan",
+                    "system_version": surface["system_version"],
+                    "audit_before": audit_codex_skill_surface(surface, listed),
+                    "edits_output": str(edits_path),
+                    "disabled_skill_count": len(edits[0]["value"]),
+                    "candidate_visible_skill_paths": visible_skill_paths,
+                    "source_files_deleted": False,
+                    "requires_restart": True,
+                    "automatic_change": False,
+                }
+                _write_optional_json(args.output, report)
+                print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+                return 0
+            if args.codex_action == "surface-audit":
+                registry = load_component_registry(args.registry.expanduser())
+                surface = load_user_surface(args.surface.expanduser(), registry)
+                candidate = args.candidate.expanduser().resolve(strict=True)
+                visible_skill_paths = {
+                    item["entry_id"]: str(
+                        (candidate / "skills" / item["entry_id"] / "SKILL.md").resolve(
+                            strict=True
+                        )
+                    )
+                    for item in surface["entries"]
+                }
+                response = client.request(
+                    "skills/list",
+                    {
+                        "cwds": [str(args.cwd.expanduser().resolve())],
+                        "forceReload": True,
+                    },
+                )
+                buckets = response.get("data") or []
+                if len(buckets) != 1:
+                    raise ValueError("Codex returned an unexpected Skill-list scope")
+                report = audit_codex_skill_path_surface(
+                    surface,
+                    buckets[0].get("skills") or [],
+                    visible_skill_paths=visible_skill_paths,
+                )
+                _write_optional_json(args.output, report)
+                print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+                return 0 if report["clean"] else 2
             if args.codex_action == "verify-turn":
                 report = verify_live_turn_completion(
                     client,
@@ -383,6 +487,22 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "record_type": "component-registry-build",
                         "component_count": len(registry["components"]),
                         "output": str(args.output.expanduser()),
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 0
+        if args.component_action == "surface-build":
+            registry = load_component_registry(args.registry.expanduser())
+            surface = build_user_surface(
+                args.policy.expanduser(), registry, args.output.expanduser()
+            )
+            print(
+                json.dumps(
+                    {
+                        "record_type": "user-surface-build",
+                        "output": str(args.output.expanduser()),
+                        **surface["summary"],
                     },
                     sort_keys=True,
                 )

@@ -34,7 +34,8 @@
       "limitations": [
         {"surface": "hook-trust", "status": "partial", "fallback": "A new or changed command hook remains inactive until its exact hash is trusted in Codex."},
         {"surface": "fractal-mcp", "status": "unavailable", "fallback": "Use the deterministic Fractal Python runtime and canonical files."},
-        {"surface": "server-side-auth", "status": "unknown", "fallback": "Use live MCP status and a real operation before claiming execution."}
+        {"surface": "server-side-auth", "status": "unknown", "fallback": "Use live MCP status and a real operation before claiming execution."},
+        {"surface": "skill-default-deny", "status": "unavailable", "fallback": "Codex Skill overrides are exact-path controls. Keep Plugin versions and paths governed, rebuild the disable plan whenever discovery changes, and block activation unless a fresh exact-path surface audit enables only the registered Actions and Commands."}
       ]
     },
     {

@@ -35,11 +35,28 @@ class CodexComponentInstaller:
         if not registry_path.is_file():
             raise ComponentInstallationError("Candidate lacks a universal component registry")
         registry = load_component_registry(registry_path)
+        surface_path = built / "fractal" / "user-surface.json"
+        visible_skill_ids = None
+        if surface_path.is_file():
+            surface = json.loads(surface_path.read_text(encoding="utf-8"))
+            visible_skill_ids = {item["component_id"] for item in surface["entries"]}
         live_codex_home = Path("~/.codex").expanduser().resolve()
         if home == live_codex_home:
+            candidate_visible_paths = {
+                item["entry_id"]: str(
+                    (built / "skills" / item["entry_id"] / "SKILL.md").resolve(
+                        strict=True
+                    )
+                )
+                for item in surface["entries"]
+            } if surface_path.is_file() else None
             with CodexAppServerClient() as client:
                 config_projection = audit_codex_config_projection(
-                    client, registry, cwd=Path.cwd()
+                    client,
+                    registry,
+                    cwd=Path.cwd(),
+                    user_surface=surface if surface_path.is_file() else None,
+                    visible_skill_paths=candidate_visible_paths,
                 )
             if not config_projection["clean"]:
                 raise ComponentInstallationError(
@@ -73,6 +90,13 @@ class CodexComponentInstaller:
         for component in active_components(registry, "codex"):
             projection = component["projection"]
             if component["kind"] != "skill" or projection["mode"] != "generated-copy":
+                continue
+            if visible_skill_ids is not None and component["component_id"] not in visible_skill_ids:
+                internal = built / "fractal" / "internal-workflows" / component["component_id"]
+                if not internal.is_dir():
+                    raise ComponentInstallationError(
+                        f"Candidate internal workflow is missing: {component['component_id']}"
+                    )
                 continue
             name = Path(projection["target"]).name
             generated_skill_names.add(name)

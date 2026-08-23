@@ -338,6 +338,63 @@ def test_config_projection_audit_exposes_only_activation_flags() -> None:
     assert '"env"' not in serialized
 
 
+def test_config_projection_fails_on_new_plugin_path_and_disabled_action() -> None:
+    surface = {
+        "entries": [
+            {
+                "entry_id": "create",
+                "interface_type": "action",
+                "component_id": "create",
+                "outcome": "Create the requested result.",
+            }
+        ]
+    }
+    registry = {"components": []}
+    client = FakeClient(
+        {
+            "config/read": {
+                "config": {"skills": {"config": []}},
+                "layers": [{"name": {"type": "user"}, "version": "v1"}],
+                "origins": {},
+            },
+            "configRequirements/read": {"requirements": None},
+            "skills/list": {
+                "data": [
+                    {
+                        "skills": [
+                            {
+                                "name": "create",
+                                "path": "/candidate/create/SKILL.md",
+                                "enabled": False,
+                            },
+                            {
+                                "name": "provider:new",
+                                "path": "/plugin/2.0/skills/new/SKILL.md",
+                                "enabled": True,
+                            },
+                        ]
+                    }
+                ]
+            },
+        }
+    )
+
+    report = audit_codex_config_projection(
+        client,  # type: ignore[arg-type]
+        registry,
+        cwd=Path("/candidate"),
+        user_surface=surface,
+        visible_skill_paths={"create": "/candidate/create/SKILL.md"},
+    )
+
+    assert report["clean"] is False
+    assert "skills.visible-disabled:/candidate/create/SKILL.md" in report["mismatched"]
+    assert (
+        "skills.enabled-unexpected:/plugin/2.0/skills/new/SKILL.md"
+        in report["mismatched"]
+    )
+
+
 def test_turn_events_finalize_one_signature_and_run_fatigue(tmp_path: Path) -> None:
     thread_id = "thread-a"
     turn_id = "turn-a"

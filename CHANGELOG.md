@@ -24,6 +24,10 @@ The format follows Keep a Changelog, and system versions follow Semantic Version
 - Exact response-unit coverage, automatic Two-Sided warrants, three-part plain handoff preflight, evidence Claim Gate, and architecture-lineage receipts.
 - Single-use primary-user authority receipts for local System Version build, activation, rejection, and restore actions.
 - Honest Project Plan resource states: provided, unknown at plan time, or not applicable.
+- A governed user surface with `create`, `edit`, `review`, `research`, `automate`, and `publish` Actions plus the four Fractal Commands.
+- `Object-Aware Actions` (`object-aware-workflow-routing`), where the object named after an Action selects its specialised workflow without creating another user-facing Skill.
+- Many-to-many workflow routing so one hidden provider or Tool method can support several Actions without becoming another slash item.
+- Recoverable Codex Skill visibility planning and exhaustive default-hidden validation for every non-surface Skill.
 
 ### Changed
 
@@ -32,7 +36,7 @@ The format follows Keep a Changelog, and system versions follow Semantic Version
 - Persistent activation remains under primary-user authority; candidate builds cannot activate themselves. An explicit `/version` order now completes only after the exact candidate is activated and verified in a fresh session.
 - The product lifecycle now centres Project Review during active work and System Review after primary-user Project Completion; Fatigue, Curiosity, Greed, and other components feed those reviews.
 - Component records now separate user-surface audience from automatic and explicit invocation. Adapter build evidence no longer implies installation, active runtime, callability, or user execution.
-- The development version is `0.1.0-alpha.5`; `/version` binds implementation, recording, activation, live verification, and exact GitHub publication into one primary-user-commanded job without widening any individual authority receipt.
+- The development candidate is `0.1.0-alpha.6`; the active System Version remains unchanged until Carson explicitly invokes `/version`.
 
 ## [0.1.0-alpha.1] - 2026-08-22
 

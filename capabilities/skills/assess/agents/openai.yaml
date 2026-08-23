@@ -2,3 +2,5 @@ interface:
   display_name: "Assess"
   short_description: "Challenge an idea from both sides"
   default_prompt: "Use $assess to decide whether I should continue, change, or stop this idea."
+policy:
+  allow_implicit_invocation: true

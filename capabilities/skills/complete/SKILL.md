@@ -8,7 +8,7 @@ metadata:
 
 # Complete
 
-Use after Carson has completed a formal Project. If the canonical Project is not primary-user-completed, stop and show that exact requirement; this action cannot declare Project Completion.
+Use after Carson has completed a formal Project. If the canonical Project is not primary-user-completed, stop and show that exact requirement; this Command cannot declare Project Completion.
 
 Prepare the complete System Review before Carson sees any Pattern recommendation. Run all five Steps, Curiosity whenever a solution is needed, and automatic Two-Sided Review for every consequential warrant. Map every discovered Pattern to one response unit and disposition. Finish the ordinary-language handoff as: the problem, the proposed solution, and Carson's decision.
 

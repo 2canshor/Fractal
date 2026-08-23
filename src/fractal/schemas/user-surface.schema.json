@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fractal.local/schemas/user-surface.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_type",
+    "record_version",
+    "system_version",
+    "platform",
+    "action_resolution",
+    "entries",
+    "dot_groups",
+    "workflows",
+    "hidden_skill_component_ids",
+    "recovery"
+  ],
+  "properties": {
+    "record_type": {"const": "user-surface"},
+    "record_version": {"const": 1},
+    "system_version": {"type": "string", "minLength": 1},
+    "platform": {"enum": ["claude", "codex", "cowork", "gemini"]},
+    "action_resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feature_name", "technical_id", "selection_rule", "route_states"],
+      "properties": {
+        "feature_name": {"const": "Object-Aware Actions"},
+        "technical_id": {"const": "object-aware-workflow-routing"},
+        "selection_rule": {"type": "string", "minLength": 1},
+        "route_states": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {"enum": ["exact", "partial", "missing", "unavailable"]},
+          "uniqueItems": true
+        }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/entry"}
+    },
+    "dot_groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/dot_group"}
+    },
+    "workflows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/workflow"}
+    },
+    "hidden_skill_component_ids": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/id"},
+      "uniqueItems": true
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_count",
+        "command_count",
+        "hidden_skill_count",
+        "reused_dot_count",
+        "workflow_count"
+      ],
+      "properties": {
+        "action_count": {"type": "integer", "minimum": 1},
+        "command_count": {"type": "integer", "minimum": 0},
+        "hidden_skill_count": {"type": "integer", "minimum": 0},
+        "reused_dot_count": {"type": "integer", "minimum": 0},
+        "workflow_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disable_method", "restore_method"],
+      "properties": {
+        "disable_method": {"type": "string", "minLength": 1},
+        "restore_method": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entry_id", "interface_type", "component_id", "outcome"],
+      "properties": {
+        "entry_id": {"type": "string", "pattern": "^[a-z]+$"},
+        "interface_type": {"enum": ["action", "command"]},
+        "component_id": {"$ref": "#/$defs/id"},
+        "outcome": {"type": "string", "minLength": 1}
+      }
+    },
+    "dot_group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["group_id", "purpose", "component_ids"],
+      "properties": {
+        "group_id": {"$ref": "#/$defs/id"},
+        "purpose": {"type": "string", "minLength": 1},
+        "component_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/id"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workflow_id",
+        "entry_id",
+        "user_job",
+        "positive_examples",
+        "negative_examples",
+        "dot_group_ids",
+        "completion",
+        "authority_boundary"
+      ],
+      "properties": {
+        "workflow_id": {"$ref": "#/$defs/id"},
+        "entry_id": {"type": "string", "pattern": "^[a-z]+$"},
+        "user_job": {"type": "string", "minLength": 1},
+        "positive_examples": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "negative_examples": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "dot_group_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/id"},
+          "uniqueItems": true
+        },
+        "completion": {"type": "string", "minLength": 1},
+        "authority_boundary": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

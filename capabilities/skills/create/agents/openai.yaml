@@ -2,3 +2,5 @@ interface:
   display_name: "Create"
   short_description: "Create one complete requested outcome"
   default_prompt: "Use $create to make the outcome I requested and coordinate the required tools internally."
+policy:
+  allow_implicit_invocation: true

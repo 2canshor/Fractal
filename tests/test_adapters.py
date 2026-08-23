@@ -29,6 +29,7 @@ from fractal.component_installation import (
     GeminiComponentInstaller,
 )
 from fractal.storage import value_sha256
+from fractal.user_surface import build_user_surface
 
 ROOT = Path(__file__).parents[1]
 
@@ -180,6 +181,95 @@ def governed_builder(tmp_path: Path, output: str) -> AdapterBuilder:
                 ],
             }
         )
+    )
+    return AdapterBuilder(
+        public_root=ROOT,
+        private_root=private,
+        output_root=tmp_path / output,
+        public_commit="a" * 40,
+        private_commit="b" * 40,
+        system_version="0.1.0-alpha.2",
+        legacy_root=None,
+        runtime_python=Path("/runtime/bin/python"),
+        runtime_root=tmp_path / "runtime",
+        verify_source_commits=False,
+    )
+
+
+def surface_governed_builder(tmp_path: Path, output: str) -> AdapterBuilder:
+    base = governed_builder(tmp_path, f"{output}-seed")
+    private = base.private_root
+    registry_path = private / "system" / "components" / "registry.json"
+    registry = json.loads(registry_path.read_text())
+    research = registry["components"][0]
+    clarification_source = ROOT / "capabilities" / "skills" / "clarification"
+    clarification = json.loads(json.dumps(research))
+    clarification["component_id"] = "clarification"
+    clarification["human_name"] = "Clarification"
+    clarification["source"]["locator"] = "capabilities/skills/clarification"
+    clarification["source"]["content_sha256"] = component_tree_sha256(
+        clarification_source
+    )
+    clarification["projection"]["target"] = "skills/clarification"
+    clarification["projection"]["expected_sha256"] = value_sha256(
+        tree_manifest(clarification_source)
+    )
+    registry["components"] = [clarification, research]
+    registry_path.write_text(json.dumps(registry))
+    policy_path = private / "system" / "components" / "user-surface-policy.json"
+    policy_path.write_text(
+        json.dumps(
+            {
+                "record_type": "user-surface-policy",
+                "record_version": 1,
+                "platform": "codex",
+                "action_resolution": {
+                    "feature_name": "Object-Aware Actions",
+                    "technical_id": "object-aware-workflow-routing",
+                    "selection_rule": (
+                        "The object named after an Action selects the narrowest "
+                        "matching workflow."
+                    ),
+                    "route_states": ["exact", "partial", "missing", "unavailable"],
+                },
+                "entries": [
+                    {
+                        "entry_id": "research",
+                        "interface_type": "action",
+                        "component_id": "research",
+                        "outcome": "Answer one question with verified evidence.",
+                    }
+                ],
+                "dot_groups": [
+                    {
+                        "group_id": "decision",
+                        "purpose": "Resolve consequential unknowns.",
+                        "component_ids": ["clarification"],
+                    }
+                ],
+                "workflows": [
+                    {
+                        "workflow_id": "research-decision",
+                        "entry_id": "research",
+                        "user_job": "Research a question with a consequential unknown.",
+                        "positive_examples": ["Research the decision."],
+                        "negative_examples": ["Change the decision."],
+                        "dot_group_ids": ["decision"],
+                        "completion": "Evidence and the unknown are resolved.",
+                        "authority_boundary": "Read only.",
+                    }
+                ],
+                "recovery": {
+                    "disable_method": "Disable selector only.",
+                    "restore_method": "Restore selector config.",
+                },
+            }
+        )
+    )
+    build_user_surface(
+        policy_path,
+        json.loads(registry_path.read_text()),
+        private / "system" / "components" / "user-surface.json",
     )
     return AdapterBuilder(
         public_root=ROOT,
@@ -675,6 +765,31 @@ def test_governed_component_install_quarantines_and_restores_extras(
     assert (home / "AGENTS.md").read_text() == "previous entrypoint"
     assert (home / "skills" / "fable-loop" / "SKILL.md").read_text() == "legacy extra"
     assert "skills/fable-loop" in restored["restored_quarantine"]
+
+
+def test_user_surface_projects_only_entries_and_keeps_hidden_methods_internal(
+    tmp_path: Path,
+) -> None:
+    surface_governed_builder(tmp_path, "surface-governed").build("codex")
+    built = tmp_path / "surface-governed" / "codex"
+    assert (built / "skills" / "research" / "SKILL.md").is_file()
+    assert not (built / "skills" / "clarification").exists()
+    assert (
+        built / "fractal" / "internal-workflows" / "clarification" / "SKILL.md"
+    ).is_file()
+    workflow_map = json.loads(
+        (built / "fractal" / "internal-workflow-map.json").read_text()
+    )
+    assert workflow_map["visible_component_ids"] == ["research"]
+    assert workflow_map["workflows"][0]["dots"][0]["component_id"] == "clarification"
+
+    home = tmp_path / "surface-home"
+    installer = CodexComponentInstaller(
+        tmp_path / "surface-installs", tmp_path / "surface-quarantine"
+    )
+    installer.install(built, home)
+    assert (home / "skills" / "research").is_symlink()
+    assert not (home / "skills" / "clarification").exists()
 
 
 def test_claude_component_install_merges_settings_and_restores_extras(

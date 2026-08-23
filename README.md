@@ -25,11 +25,13 @@ Continuous Improvement                         Core Philosophy
 
 The original reasoning and its mapping to modern Nodes are documented in [Architecture Lineage](docs/architecture-lineage.md). [Agentic Element Map](docs/agentic-element-map.md) shows which parts belong to the Main Agent, Skills, Hooks, Subagents, MCP, Plugins, and deterministic programs. [Fractal in One Competition Project](docs/product-introduction.md) shows the complete behaviour through a concrete example. [Architecture Lineage Coverage](docs/architecture-lineage-coverage.md) separates preserved architecture from the runtime work that still needs a new candidate.
 
+[Actions, Commands, Workflows, and Dots](docs/actions-and-commands.md) explains Object-Aware Actions, the small user-facing Skill surface, and how provider methods remain reusable internally.
+
 The public repository contains only reusable architecture, schemas, deterministic programs, tests, and documentation. Personal state, private policies, credentials, conversations, and runtime evidence belong outside this repository.
 
 ## Current Status
 
-Version `0.1.0-alpha.5` preserves live runtime reconciliation and mandatory Curiosity 60/20/20, then adds complete Pattern-response coverage, automatic Two-Sided Review warrants, evidence Claim Gates, user-perspective action Skills, exact single-use version authority, architecture-lineage proof, adapter truth receipts, and honest plan-time resource states. An explicit `/version` job is complete only after the exact candidate is recorded, activated, verified in a fresh session, and published to the bound GitHub ref. The repository does not yet make a stability or compatibility promise.
+Development candidate `0.1.0-alpha.6` adds Object-Aware Actions: the object named after an Action selects the narrowest matching workflow over reusable internal dots. Provider and Tool Skills remain available as maintained methods without becoming separate user jobs, and Codex Skill visibility changes are planned as recoverable config edits rather than source deletion. The currently active System Version remains unchanged until Carson explicitly invokes `/version`. The repository does not yet make a stability or compatibility promise.
 
 Fractal registers every active or discoverable Skill, Hook, agent role, MCP, Plugin, App, Tool, and adapter individually. Use `fractal components show` for the human-readable registered view and `fractal codex inspect` to compare it with the live Codex runtime. Registration, loading, callability, and successful execution are reported separately. A component being installed or present in a cache is not proof that it is active or working.
 

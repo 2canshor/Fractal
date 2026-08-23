@@ -18,6 +18,7 @@ from typing import Any
 from fractal.component_governance import active_components
 from fractal.improvement import WorkSignature, WorkSignatureStore, recognise_repetition
 from fractal.models import utc_now
+from fractal.user_surface import audit_codex_skill_path_surface
 
 
 class CodexAppServerError(RuntimeError):
@@ -27,17 +28,28 @@ class CodexAppServerError(RuntimeError):
 class CodexAppServerClient:
     """Small newline-delimited JSON-RPC client for the installed Codex runtime."""
 
-    def __init__(self, executable: str = "codex", *, timeout: float = 30.0) -> None:
+    def __init__(
+        self,
+        executable: str = "codex",
+        *,
+        timeout: float = 30.0,
+        config_overrides: list[str] | None = None,
+        environment: dict[str, str] | None = None,
+    ) -> None:
         self.timeout = timeout
         self._next_id = 1
         self.notifications: list[dict[str, Any]] = []
+        command = [executable, "app-server", "--stdio"]
+        for override in config_overrides or []:
+            command.extend(["--config", override])
         self.process = subprocess.Popen(
-            [executable, "app-server", "--stdio"],
+            command,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
             bufsize=1,
+            env=environment,
         )
         if self.process.stdin is None or self.process.stdout is None:
             raise CodexAppServerError("Could not open the Codex App Server pipes")
@@ -769,8 +781,10 @@ def audit_codex_config_projection(
     registry: dict[str, Any],
     *,
     cwd: Path,
+    user_surface: dict[str, Any] | None = None,
+    visible_skill_paths: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    """Check config-backed MCP activation without exposing config or secret values."""
+    """Check governed MCP activation and Skill hiding without exposing secrets."""
     response = client.request("config/read", {"cwd": str(cwd), "includeLayers": True})
     requirements = client.request("configRequirements/read", {})
     configured = response["config"].get("mcp_servers") or {}
@@ -787,11 +801,61 @@ def audit_codex_config_projection(
         name: bool(configured.get(name, {}).get("enabled", True)) for name in desired
     }
     mismatched = sorted(name for name in desired if actual[name] != desired[name])
+    desired_disabled_skill_paths: list[str] = []
+    actual_disabled_skill_paths: list[str] = []
+    skill_surface_path_audit: dict[str, Any] | None = None
+    if user_surface is not None:
+        visible = {item["entry_id"] for item in user_surface["entries"]}
+        listed_response = client.request(
+            "skills/list", {"cwds": [str(cwd)], "forceReload": False}
+        )
+        buckets = listed_response.get("data") or []
+        if len(buckets) != 1:
+            raise CodexAppServerError("Codex returned an unexpected Skill-list scope")
+        desired_disabled_skill_paths = sorted(
+            str(item["path"])
+            for item in buckets[0].get("skills") or []
+            if (
+                str(item["path"]) not in set(visible_skill_paths.values())
+                if visible_skill_paths is not None
+                else item["name"] not in visible
+            )
+        )
+        skill_config = response["config"].get("skills") or {}
+        entries = skill_config.get("config") or []
+        actual_disabled_skill_paths = sorted(
+            str(item["path"])
+            for item in entries
+            if item.get("enabled") is False and item.get("path")
+        )
+        missing_paths = sorted(
+            set(desired_disabled_skill_paths).difference(actual_disabled_skill_paths)
+        )
+        mismatched.extend(f"skills.config:{path}" for path in missing_paths)
+        if visible_skill_paths is not None:
+            skill_surface_path_audit = audit_codex_skill_path_surface(
+                user_surface,
+                buckets[0].get("skills") or [],
+                visible_skill_paths=visible_skill_paths,
+                require_visible_paths=False,
+            )
+            mismatched.extend(
+                f"skills.enabled-unexpected:{path}"
+                for path in skill_surface_path_audit["unexpected_enabled_skill_paths"]
+            )
+            mismatched.extend(
+                f"skills.visible-disabled:{path}"
+                for path in skill_surface_path_audit["disabled_visible_skill_paths"]
+            )
+        mismatched.sort()
     return {
         "record_type": "codex-config-projection-audit",
         "clean": not mismatched,
         "desired_mcp_activation": desired,
         "actual_mcp_activation": actual,
+        "desired_disabled_skill_paths": desired_disabled_skill_paths,
+        "actual_disabled_skill_paths": actual_disabled_skill_paths,
+        "skill_surface_path_audit": skill_surface_path_audit,
         "mismatched": mismatched,
         "requirements_present": requirements.get("requirements") is not None,
         "config_version": _user_layer_version(response),

@@ -14,4 +14,4 @@ Freeze the same bounded evidence pack for two independent branches. Case For and
 
 Return one of `continue`, `change`, or `stop`, with confidence, the strongest reason, the strongest objection, and the remaining uncertainty. End at Carson's decision when the next step would change an outcome, authority, persistent state, external system, recipient, or cost.
 
-Selecting this action never turns the recommendation into approval and never performs the proposed idea.
+Selecting this Command never turns the recommendation into approval and never performs the proposed idea.
