@@ -92,6 +92,11 @@ def build_version(store: VersionStore, version: str) -> None:
         decision_batch=batch,
         architecture_lineage={"structural_gate_passed": True},
         claim_gate_audit={"passed": True, "claim_count": 20},
+        adapter_boundary_audit={
+            "passed_for_candidate": True,
+            "live_promotion_eligible": True,
+            "platforms": {"codex": {"staged_smoke_passed": True}},
+        },
         preservation_audits={
             "phase_a_pre_build": {"passed": True, "receipt_sha256": "e" * 64},
             "phase_b_post_build_pre_activation": {

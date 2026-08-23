@@ -62,6 +62,14 @@ def claim_gate_audit() -> dict:
     return {"passed": True, "claim_count": 20, "receipt_id": "claim-gate-a"}
 
 
+def adapter_boundary_audit(*, live_promotion_eligible: bool = True) -> dict:
+    return {
+        "passed_for_candidate": True,
+        "live_promotion_eligible": live_promotion_eligible,
+        "platforms": {"codex": {"staged_smoke_passed": True}},
+    }
+
+
 def preservation_audits() -> dict:
     return {
         "phase_a_pre_build": {"passed": True, "receipt_sha256": "d" * 64},
@@ -105,7 +113,12 @@ def component() -> dict:
     }
 
 
-def build(store: VersionStore, version: str) -> dict:
+def build(
+    store: VersionStore,
+    version: str,
+    *,
+    live_promotion_eligible: bool = True,
+) -> dict:
     batch = decision_batch()
     target, expected_state = store.build_authority_scope(
         version=version,
@@ -135,6 +148,9 @@ def build(store: VersionStore, version: str) -> dict:
         decision_batch=batch,
         architecture_lineage=architecture_lineage(),
         claim_gate_audit=claim_gate_audit(),
+        adapter_boundary_audit=adapter_boundary_audit(
+            live_promotion_eligible=live_promotion_eligible
+        ),
         preservation_audits=preservation_audits(),
         authority_receipt_id=receipt_id,
     )
@@ -217,6 +233,7 @@ def test_candidate_build_fails_closed_when_any_gate_is_missing(tmp_path: Path) -
             decision_batch=decision_batch(),
             architecture_lineage=architecture_lineage(),
             claim_gate_audit=claim_gate_audit(),
+            adapter_boundary_audit=adapter_boundary_audit(),
             preservation_audits=preservation_audits(),
             authority_receipt_id="missing",
         )
@@ -243,6 +260,7 @@ def test_candidate_build_is_idempotent_but_version_content_is_immutable(tmp_path
             decision_batch=decision_batch(),
             architecture_lineage=architecture_lineage(),
             claim_gate_audit=claim_gate_audit(),
+            adapter_boundary_audit=adapter_boundary_audit(),
             preservation_audits=preservation_audits(),
             authority_receipt_id="unused-because-content-diff-fails-first",
         )
@@ -335,6 +353,18 @@ def test_candidate_manifest_is_removed_when_build_event_boundary_fails(
     assert not (store.versions / "0.1.0-alpha.1.json").exists()
     assert store.read_active() is None
     assert store.read_events() == []
+
+
+def test_staged_adapter_evidence_cannot_promote_candidate_live(tmp_path: Path) -> None:
+    store = VersionStore(tmp_path / "staged-only")
+    build(store, "0.1.0-alpha.1", live_promotion_eligible=False)
+    with pytest.raises(VersionError, match="exact live adapter boundary proof"):
+        store.activate(
+            "0.1.0-alpha.1",
+            project_id=PROJECT_ID,
+            project_revision=PROJECT_REVISION,
+            authority_receipt_id="not-consumed",
+        )
 
 
 def test_publication_order_never_infers_scope_or_force(tmp_path: Path) -> None:

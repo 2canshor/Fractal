@@ -62,6 +62,7 @@ class VersionStore:
         decision_batch: dict[str, Any],
         architecture_lineage: dict[str, Any],
         claim_gate_audit: dict[str, Any],
+        adapter_boundary_audit: dict[str, Any],
         preservation_audits: dict[str, Any],
         authority_receipt_id: str,
     ) -> dict[str, Any]:
@@ -79,6 +80,12 @@ class VersionStore:
             raise VersionError("System Version requires a passed architecture-lineage gate")
         if claim_gate_audit.get("passed") is not True:
             raise VersionError("System Version requires a passed Claim Gate audit")
+        if (
+            adapter_boundary_audit.get("passed_for_candidate") is not True
+            or not isinstance(adapter_boundary_audit.get("platforms"), dict)
+            or not adapter_boundary_audit["platforms"]
+        ):
+            raise VersionError("System Version requires a passed staged adapter boundary audit")
         if set(preservation_audits) != {
             "phase_a_pre_build",
             "phase_b_post_build_pre_activation",
@@ -114,6 +121,7 @@ class VersionStore:
             "decision_batch": decision_batch,
             "architecture_lineage": architecture_lineage,
             "claim_gate_audit": claim_gate_audit,
+            "adapter_boundary_audit": adapter_boundary_audit,
             "preservation_audits": preservation_audits,
             "status": "candidate",
         }
@@ -217,6 +225,10 @@ class VersionStore:
             raise VersionError(f"Only a candidate can be activated; current state is {state}")
         if not self._has_build_event(version, manifest["manifest_sha256"]):
             raise VersionError("Candidate has no verified governed build event")
+        if manifest.get("adapter_boundary_audit", {}).get("live_promotion_eligible") is not True:
+            raise VersionError(
+                "Candidate cannot activate until exact live adapter boundary proof passes"
+            )
         target, expected_state = self.action_authority_scope(version, action="activate")
         self._claim_action_receipt(
             authority_receipt_id,
