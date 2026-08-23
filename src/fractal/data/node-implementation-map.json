@@ -1,7 +1,7 @@
 {
   "record_type": "node-implementation-map",
   "record_version": 2,
-  "system_version": "0.1.0-alpha.4",
+  "system_version": "0.1.0-alpha.5",
   "status": "initial-build-mapping",
   "architecture_alignment_status": "hierarchy-and-agentic-element-mapping-recorded",
   "agentic_element_map": "agentic-element-map.json",
@@ -11,8 +11,8 @@
     "active_change_requires_system_version_approval": true
   },
   "lineage_contract": {
-    "canonical_baseline_id": "method-registry-0.1.0-alpha.4",
-    "canonical_baseline_sha256": "8df115e5fcd02f2925fad39bb3b4a8b2e3b406e1a72a24dd5cb5835319327c79",
+    "canonical_baseline_id": "method-registry-0.1.0-alpha.5",
+    "canonical_baseline_sha256": "0627506799573ebb7ad5f0bf39faeceb4bfabf7c7b887dff03e97c5e1d73e315",
     "core_identity": "Protect the whole trajectory of an active Project through Project Review, then improve Fractal between completed Projects through System Review.",
     "required_fields_for_major_nodes": [
       "original_requirement",

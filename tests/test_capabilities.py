@@ -72,6 +72,14 @@ def test_user_job_skills_have_portable_source_and_explicit_ui_examples(
     assert validate_skill_source(SKILLS / skill_id)["valid"] is True
 
 
+def test_version_job_requires_activation_before_completion() -> None:
+    source = (SKILLS / "version" / "SKILL.md").read_text(encoding="utf-8")
+    assert "activate that exact manifest" in source
+    assert "fresh session" in source
+    assert "This action never activates" not in source
+    assert "activation is always excluded" not in source
+
+
 def test_package_and_projection_are_verifiably_derived_from_source(tmp_path: Path) -> None:
     source = SKILLS / "clarification"
     package = tmp_path / "clarification.skill"
