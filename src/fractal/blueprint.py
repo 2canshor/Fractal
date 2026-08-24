@@ -164,30 +164,6 @@ def validate_blueprint(value: dict[str, Any]) -> dict[str, Any]:
         "project-review",
     }:
         raise ValueError("Signature Function Tag members are incomplete or unexpected")
-    if by_id["naming-system"].get("required_steps") != [
-        {
-            "step_id": "select-user-surface-symbol",
-            "human_name": "Select User-Surface Symbol",
-            "trigger": "before registering a capability as a user-facing Action or Command",
-            "completion": (
-                "A unique semantically justified SF Symbol is recorded, rendered, inspected at "
-                "real light and dark sizes, projected, and parsed by the staged platform runtime."
-            ),
-            "reference": (
-                "capabilities/skills/naming-system/references/user-surface-symbols.md"
-            ),
-            "documentation": (
-                "`Select User-Surface Symbol` runs before a capability is registered as a "
-                "user-facing Action or Command. It requires a unique semantically justified "
-                "SF Symbol, canonical selection evidence, deterministic assets, real-size "
-                "light/dark inspection, adapter projection, and staged runtime parsing. The "
-                "maintained procedure is `capabilities/skills/naming-system/references/"
-                "user-surface-symbols.md`. It remains a required step under `^ Naming System`; "
-                "it is not another Blueprint Element or System Review Flow."
-            ),
-        }
-    ]:
-        raise ValueError("Naming System must require user-surface symbol selection")
     if by_id["steal"].get("activation_contract") != {
         "activated_by": "curiosity",
         "route_kind": "implementation-evidence-acquisition",
@@ -340,8 +316,6 @@ def render_blueprint(value: dict[str, Any] | None = None) -> str:
                 " [Signature Function]" if "signature-function" in element.get("tags", []) else ""
             )
             lines.append(f"  {branch} {element['marker']} {element['human_name']}{tags}")
-            for required_step in element.get("required_steps", []):
-                lines.append("      └── Required: " + required_step["human_name"])
     lines.extend(
         [
             "```",
@@ -376,17 +350,6 @@ def render_blueprint(value: dict[str, Any] | None = None) -> str:
             "- Current members: `Fatigue`, `Curiosity`, `Greed`, and `Perspective`.",
         ]
     )
-    for genre in library["genres"]:
-        for element in genre["elements"]:
-            for required_step in element.get("required_steps", []):
-                lines.extend(
-                    [
-                        "",
-                        f"## {element['human_name']} required step",
-                        "",
-                        required_step["documentation"],
-                    ]
-                )
     lines.extend(
         [
             "",

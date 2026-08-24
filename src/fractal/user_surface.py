@@ -10,8 +10,6 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from fractal.surface_symbols import SurfaceSymbolError, validate_surface_symbol_entries
-
 
 class UserSurfaceError(RuntimeError):
     """Raised when a user surface leaks internals or loses a routed capability."""
@@ -34,13 +32,13 @@ def build_user_surface(
     }
     if set(policy) != required:
         raise UserSurfaceError("User surface policy fields are incomplete or unexpected")
-    if policy["record_type"] != "user-surface-policy" or policy["record_version"] != 2:
+    if policy["record_type"] != "user-surface-policy" or policy["record_version"] != 1:
         raise UserSurfaceError("User surface policy identity is invalid")
     active = _active_platform_skills(registry, policy["platform"])
     visible = {item["component_id"] for item in policy["entries"]}
     value = {
         "record_type": "user-surface",
-        "record_version": 2,
+        "record_version": 1,
         "system_version": registry["system_version"],
         "platform": policy["platform"],
         "action_resolution": policy["action_resolution"],
@@ -107,10 +105,6 @@ def validate_user_surface(value: dict[str, Any], registry: dict[str, Any]) -> di
     component_ids = [item["component_id"] for item in entries]
     if len(component_ids) != len(set(component_ids)):
         raise UserSurfaceError("One Skill cannot occupy two user-facing entries")
-    try:
-        validate_surface_symbol_entries(entries)
-    except SurfaceSymbolError as error:
-        raise UserSurfaceError(str(error)) from error
 
     dot_groups = value["dot_groups"]
     group_ids = [item["group_id"] for item in dot_groups]

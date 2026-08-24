@@ -126,34 +126,6 @@ def test_perspective_name_and_experiment_classification_are_confirmed() -> None:
     assert blueprint["open_questions"] == []
 
 
-def test_naming_system_requires_symbol_selection_without_a_new_element() -> None:
-    blueprint = load_blueprint()
-    elements = [
-        element
-        for genre in blueprint["element_library"]["genres"]
-        for element in genre["elements"]
-    ]
-    naming = next(element for element in elements if element["element_id"] == "naming-system")
-    required_step = naming["required_steps"][0]
-
-    assert required_step["step_id"] == "select-user-surface-symbol"
-    assert required_step["human_name"] == "Select User-Surface Symbol"
-    assert required_step["reference"].endswith("references/user-surface-symbols.md")
-    assert "select-user-surface-symbol" not in {item["element_id"] for item in elements}
-    assert "Required: Select User-Surface Symbol" in render_blueprint(blueprint)
-
-    changed = copy.deepcopy(blueprint)
-    changed_naming = next(
-        element
-        for genre in changed["element_library"]["genres"]
-        for element in genre["elements"]
-        if element["element_id"] == "naming-system"
-    )
-    changed_naming.pop("required_steps")
-    with pytest.raises(ValueError, match="Naming System must require"):
-        validate_blueprint(changed)
-
-
 def test_genre_and_role_are_independent_axes() -> None:
     blueprint = load_blueprint()
     methods = next(

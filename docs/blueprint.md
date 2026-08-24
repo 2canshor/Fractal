@@ -29,7 +29,6 @@ Continuous Improvement    Core Philosophy
 * Infrastructure
   ├── ^ Work Signature
   ├── ^ Naming System
-      └── Required: Select User-Surface Symbol
   ├── ^ Capability Check
   ├── ^ Hooks
   ├── ^ Reality Check
@@ -104,10 +103,6 @@ Flows are ordered use rules owned by `System Review`; they are not Genres or Ele
 
 - `Signature Function` is a cross-Genre Tag, not a Genre.
 - Current members: `Fatigue`, `Curiosity`, `Greed`, and `Perspective`.
-
-## Naming System required step
-
-`Select User-Surface Symbol` runs before a capability is registered as a user-facing Action or Command. It requires a unique semantically justified SF Symbol, canonical selection evidence, deterministic assets, real-size light/dark inspection, adapter projection, and staged runtime parsing. The maintained procedure is `capabilities/skills/naming-system/references/user-surface-symbols.md`. It remains a required step under `^ Naming System`; it is not another Blueprint Element or System Review Flow.
 
 ## Section 3 — Blueprint Change Rules
 

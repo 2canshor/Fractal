@@ -42,14 +42,6 @@ Before a route is used, the Action distinguishes four real situations: an exact 
 
 Every active Skill must be classified as either one visible Action or Command, or one hidden reusable dot connected to at least one workflow. A new unclassified Skill fails the candidate build. This default-hidden gate prevents a new Plugin or provider method from silently becoming a new user-facing job.
 
-## Adding an Action or Command
-
-Admitting a capability to the visible surface triggers the Blueprint-required `Select User-Surface Symbol` sub-step under `^ Naming System`. This is part of defining the user-facing identity, not optional visual polish and not a new Blueprint element.
-
-Before registration, the candidate must record one semantically justified and unique SF Symbol. Actions use circle-contained symbols; Commands use square-contained symbols. The canonical selection record includes the exact identifier, rationale, semantic search terms, and valid alternatives considered. Naming System then requires deterministic small and large assets, light/dark inspection at real Skill-list sizes, manifest and adapter agreement, and staged platform parsing. Missing evidence leaves the capability hidden and the candidate incomplete.
-
-The maintained procedure and current worked evidence are in `capabilities/skills/naming-system/references/user-surface-symbols.md`. Component Governance validates the resulting policy, hashes, assets, projection, and recovery path; it does not replace Naming System's semantic decision.
-
 ## Missing workflow
 
 When no maintained workflow fits, the selected Action uses Curiosity to study the current job, adjacent methods, and a genuinely different route. It may test one bounded provisional workflow for the current job. The missing route is recorded for System Review; it does not silently become part of a persistent System Version.

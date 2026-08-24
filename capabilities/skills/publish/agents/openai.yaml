@@ -1,8 +1,6 @@
 interface:
   display_name: "Publish"
   short_description: "Deliver a finished outcome safely"
-  icon_small: "./assets/publish-small.png"
-  icon_large: "./assets/publish-large.png"
   default_prompt: "Use $publish to deliver this exact finished outcome to the destination I named."
 policy:
   allow_implicit_invocation: true

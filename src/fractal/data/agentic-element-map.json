@@ -472,10 +472,10 @@
       "job": "Keep Fractal-controlled identities intelligible and governed in the background.",
       "layer": "infrastructure-extra",
       "node_id": "naming-system",
-      "output": "approved name, required user-surface symbol evidence, or recorded external-identifier exemption",
+      "output": "approved name or recorded external-identifier exemption",
       "permissions": "Read naming context; propose and lint; activation remains governed.",
       "primary_element": "skill",
-      "selection_reason": "Naming needs semantic judgement followed by exact syntax checks. A user-facing Action or Command also requires semantic SF Symbol discovery, real-size rendering evidence and exact platform metadata before the activation guard enforces the recorded result.",
+      "selection_reason": "Naming needs semantic judgement followed by exact syntax checks; the activation guard enforces the recorded result.",
       "status": {
         "execution": "verified-synthetic",
         "projection": "active",
@@ -485,7 +485,7 @@
         "deterministic-program",
         "hook"
       ],
-      "trigger": "new or renamed Skill, Action, Command, Hook, Subagent, MCP, Plugin, Tool, role, registry key, or adapter"
+      "trigger": "new or renamed Skill, Hook, Subagent, MCP, Plugin, Tool, role, registry key, or adapter"
     },
     {
       "job": "Present one fully prepared human-scale decision at a time without hiding the remaining decision set.",

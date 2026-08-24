@@ -48,9 +48,7 @@ Everything an agent can discover, select, or run is a registered component. This
 The supported activation path is:
 
 ```text
-request -> source and overlap check -> Naming System
-        -> required user-surface symbol selection for an Action or Command
-        -> permission and evaluation check
+request -> source and overlap check -> Naming System -> permission and evaluation check
         -> registration -> candidate version -> generated adapter -> live verification
 ```
 

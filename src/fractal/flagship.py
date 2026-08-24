@@ -16,7 +16,7 @@ DECISIONS = {
     "retained-fractal-native-after-comparison",
     "purpose-owner-not-donor-replaceable",
 }
-SPECIAL_SOURCES = {"fractal-native", "apple-sf-symbols-platform"}
+SPECIAL_SOURCES = {"fractal-native"}
 
 
 def _element_ids() -> set[str]:

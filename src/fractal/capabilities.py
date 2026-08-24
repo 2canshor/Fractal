@@ -15,8 +15,6 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from fractal.surface_symbols import SurfaceSymbolError, validate_skill_symbol_assets
-
 
 class CapabilityError(RuntimeError):
     """Raised when capability state or provenance cannot be verified."""
@@ -45,19 +43,9 @@ def validate_skill_source(source: Path) -> dict[str, Any]:
     if "TODO" in content or "[TODO" in content:
         raise CapabilityError(f"Skill source contains unfinished scaffold text: {source.name}")
     openai_metadata = source / "agents" / "openai.yaml"
-    metadata_content = (
-        openai_metadata.read_text(encoding="utf-8") if openai_metadata.is_file() else ""
-    )
-    if not metadata_content or f"${source.name}" not in metadata_content:
+    if not openai_metadata.is_file() or f"${source.name}" not in openai_metadata.read_text():
         raise CapabilityError(f"Skill UI metadata is missing its explicit example: {source.name}")
-    try:
-        symbol_assets = validate_skill_symbol_assets(source, metadata_content)
-    except (OSError, SurfaceSymbolError) as error:
-        raise CapabilityError(f"Skill UI icon validation failed: {source.name}: {error}") from error
-    result = {"skill_id": source.name, "valid": True}
-    if symbol_assets is not None:
-        result["symbol_assets"] = symbol_assets
-    return result
+    return {"skill_id": source.name, "valid": True}
 
 
 def load_capability_registry() -> dict[str, Any]:

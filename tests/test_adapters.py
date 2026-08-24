@@ -31,7 +31,6 @@ from fractal.component_installation import (
 )
 from fractal.models import ProjectRecord
 from fractal.storage import ProjectStore, value_sha256
-from fractal.surface_symbols import surface_symbol_by_entry
 from fractal.user_surface import build_user_surface
 
 ROOT = Path(__file__).parents[1]
@@ -359,7 +358,7 @@ def surface_governed_builder(tmp_path: Path, output: str) -> AdapterBuilder:
         json.dumps(
             {
                 "record_type": "user-surface-policy",
-                "record_version": 2,
+                "record_version": 1,
                 "platform": "codex",
                 "action_resolution": {
                     "feature_name": "Object-Aware Actions",
@@ -375,11 +374,6 @@ def surface_governed_builder(tmp_path: Path, output: str) -> AdapterBuilder:
                         "interface_type": "action",
                         "component_id": "research",
                         "outcome": "Answer one question with verified evidence.",
-                        "symbol": {
-                            "system": "sf-symbols",
-                            "name": "magnifyingglass.circle.fill",
-                            "selection": surface_symbol_by_entry()["research"]["selection"],
-                        },
                     }
                 ],
                 "dot_groups": [
@@ -451,8 +445,6 @@ def test_registry_keeps_platform_limitations_honest() -> None:
     cowork = registry["adapters"][2]
     assert cowork["supported_surfaces"]["mcp"] == "server-side-unknown"
     assert any(item["status"] == "unknown" for item in cowork["limitations"])
-
-
 def test_all_staging_homes_build_reproducibly_and_smoke(tmp_path: Path) -> None:
     first = builder(tmp_path, "first").build_all()
     builder(tmp_path, "second").build_all()
@@ -1066,19 +1058,6 @@ def test_user_surface_projects_only_entries_and_keeps_hidden_methods_internal(
     workflow_map = json.loads((built / "fractal" / "internal-workflow-map.json").read_text())
     assert workflow_map["visible_component_ids"] == ["research"]
     assert workflow_map["workflows"][0]["dots"][0]["component_id"] == "clarification"
-    metadata = json.loads((built / "fractal" / "capability-metadata.json").read_text())
-    research_metadata = next(item for item in metadata if item["capability_id"] == "research")
-    clarification_metadata = next(
-        item for item in metadata if item["capability_id"] == "clarification"
-    )
-    assert research_metadata["symbol"] == {
-        "system": "sf-symbols",
-        "name": "magnifyingglass.circle.fill",
-        "selection": surface_symbol_by_entry()["research"]["selection"],
-    }
-    assert "symbol" not in clarification_metadata
-    assert (built / "skills" / "research" / "assets" / "research-small.png").is_file()
-
     home = tmp_path / "surface-home"
     installer = CodexComponentInstaller(
         tmp_path / "surface-installs", tmp_path / "surface-quarantine"

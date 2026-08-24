@@ -131,22 +131,12 @@
           "marker": "^",
           "core_concept": "Retain compact evidence about completed work without becoming a product promise."
         },
-    {
-      "element_id": "naming-system",
-      "human_name": "Naming System",
-      "marker": "^",
-      "core_concept": "Keep Fractal-controlled identities intelligible and governed in the background.",
-      "required_steps": [
         {
-          "step_id": "select-user-surface-symbol",
-          "human_name": "Select User-Surface Symbol",
-          "trigger": "before registering a capability as a user-facing Action or Command",
-          "completion": "A unique semantically justified SF Symbol is recorded, rendered, inspected at real light and dark sizes, projected, and parsed by the staged platform runtime.",
-          "reference": "capabilities/skills/naming-system/references/user-surface-symbols.md",
-          "documentation": "`Select User-Surface Symbol` runs before a capability is registered as a user-facing Action or Command. It requires a unique semantically justified SF Symbol, canonical selection evidence, deterministic assets, real-size light/dark inspection, adapter projection, and staged runtime parsing. The maintained procedure is `capabilities/skills/naming-system/references/user-surface-symbols.md`. It remains a required step under `^ Naming System`; it is not another Blueprint Element or System Review Flow."
-        }
-      ]
-    },
+          "element_id": "naming-system",
+          "human_name": "Naming System",
+          "marker": "^",
+          "core_concept": "Keep Fractal-controlled identities intelligible and governed in the background."
+        },
         {
           "element_id": "capability-check",
           "human_name": "Capability Check",

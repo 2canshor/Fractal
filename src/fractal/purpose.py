@@ -47,7 +47,7 @@ def build_continuous_improvement_purpose_receipt() -> dict[str, Any]:
             "system-review",
             "continuous-improvement",
         ],
-        "naming_and_symbol_path": [
+        "naming_path": [
             "naming-system",
             "map-implementations-to-blueprint",
             "system-review",
@@ -63,8 +63,8 @@ def build_continuous_improvement_purpose_receipt() -> dict[str, Any]:
                 "purpose": "Make the owned responsibilities execute without donor authority.",
             },
             {
-                "group": "Naming and visible symbols",
-                "purpose": "Keep the governed Human Control surface intelligible and exact.",
+                "group": "Naming",
+                "purpose": "Keep Fractal-controlled identities intelligible and exact.",
             },
             {
                 "group": "Evidence, tests and recovery",

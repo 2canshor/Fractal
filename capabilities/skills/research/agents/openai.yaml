@@ -1,8 +1,6 @@
 interface:
   display_name: "Research"
   short_description: "Find and verify relevant primary evidence"
-  icon_small: "./assets/research-small.png"
-  icon_large: "./assets/research-large.png"
   default_prompt: "Use $research to find and verify the evidence needed for this task."
 policy:
   allow_implicit_invocation: true

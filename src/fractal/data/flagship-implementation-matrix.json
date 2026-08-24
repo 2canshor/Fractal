@@ -128,13 +128,13 @@
       "element_id": "naming-system",
       "local_name": "Naming System",
       "decision": "retained-fractal-native-after-comparison",
-      "adopted_source_ids": ["fractal-native", "apple-sf-symbols-platform"],
+      "adopted_source_ids": ["fractal-native"],
       "evaluated_source_ids": [],
-      "implementation_modules": ["fractal.surface_symbols", "fractal.capabilities"],
-      "comparison_summary": "Fractal owns semantic names; Apple local metadata is the authoritative platform source for the required symbol sub-step, not a donor architecture.",
-      "rejected_behaviour": ["provider branding", "duplicate symbol identity", "hidden dot symbols"],
+      "implementation_modules": ["fractal.component_inventory", "fractal.component_governance"],
+      "comparison_summary": "Fractal retains semantic naming judgement and deterministic registry-key validation without turning a provider label into local architecture authority.",
+      "rejected_behaviour": ["provider branding", "uncontrolled registry identifiers", "replacing semantic judgement with a score"],
       "context_cost_tokens": 0,
-      "recovery": "Restore the prior generated surface and keep the Naming System Element."
+      "recovery": "Restore the prior naming records and deterministic identifier checks while keeping the Naming System Element."
     },
     {
       "element_id": "capability-check",

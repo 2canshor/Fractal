@@ -1,8 +1,6 @@
 interface:
   display_name: "Review"
   short_description: "Review the requested object properly"
-  icon_small: "./assets/review-small.png"
-  icon_large: "./assets/review-large.png"
   default_prompt: "Use $review to review the object I named with its matching review method."
 policy:
   allow_implicit_invocation: true

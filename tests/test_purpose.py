@@ -20,9 +20,9 @@ def test_every_library_element_has_one_path_to_continuous_improvement() -> None:
     assert receipt["unrelated_change_groups"] == []
 
 
-def test_naming_symbol_scope_remains_supporting_infrastructure() -> None:
+def test_naming_scope_remains_supporting_infrastructure() -> None:
     receipt = build_continuous_improvement_purpose_receipt()
-    assert receipt["naming_and_symbol_path"] == [
+    assert receipt["naming_path"] == [
         "naming-system",
         "map-implementations-to-blueprint",
         "system-review",

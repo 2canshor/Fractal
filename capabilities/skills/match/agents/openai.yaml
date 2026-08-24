@@ -1,8 +1,6 @@
 interface:
   display_name: "Match"
   short_description: "Match the Project Plan to reality"
-  icon_small: "./assets/match-small.png"
-  icon_large: "./assets/match-large.png"
   default_prompt: "Use $match to correct mismatches between this Project Plan, its resources, and the remaining work."
 policy:
   allow_implicit_invocation: true

@@ -38,7 +38,7 @@
 
 - **Blueprint and Flow truth:** Define what Fractal owns and how System Review uses it.
 - **Flagship local implementations:** Make the owned responsibilities execute without donor authority.
-- **Naming and visible symbols:** Keep the governed Human Control surface intelligible and exact.
+- **Naming:** Keep Fractal-controlled identities intelligible and exact.
 - **Evidence, tests and recovery:** Distinguish claims from contract, staged and active-live reality.
 
 ## Explicit supporting path

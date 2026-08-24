@@ -15,7 +15,6 @@ from fractal.capabilities import (
     verify_skill_package,
     verify_skill_projection,
 )
-from fractal.surface_symbols import load_surface_symbol_manifest
 
 ROOT = Path(__file__).parents[1]
 SKILLS = ROOT / "capabilities" / "skills"
@@ -84,100 +83,7 @@ def test_design_sources_are_merged_instead_of_competing() -> None:
 def test_user_entries_have_portable_source_and_explicit_ui_examples(
     skill_id: str,
 ) -> None:
-    result = validate_skill_source(SKILLS / skill_id)
-
-    assert result["valid"] is True
-    assert set(result["symbol_assets"]["assets"]) == {"small", "large"}
-
-
-def test_user_surface_symbol_manifest_has_unique_assets_and_exact_match_symbol() -> None:
-    manifest = load_surface_symbol_manifest()
-    symbols = {item["entry_id"]: item for item in manifest["symbols"]}
-    asset_hashes = [
-        item["assets"][size]["sha256"]
-        for item in manifest["symbols"]
-        for size in ("small", "large")
-    ]
-
-    assert symbols["match"]["name"] == "slider.horizontal.2.square"
-    assert symbols["match"]["container_shape"] == "square"
-    assert symbols["match"]["palette"] == "command-outline"
-    assert symbols["match"]["foreground_color"] == "#BF5AF2"
-    assert manifest["summary"] == {
-        "entry_count": 10,
-        "action_count": 6,
-        "command_count": 4,
-    }
-    assert manifest["verification_contract"] == {
-        "required_sizes_px": [16, 20, 24, 32],
-        "required_appearances": ["light", "dark"],
-        "codex_discovery_order": ["plugin/installed", "skills/list:forceReload"],
-        "live_ui_required_after_install": True,
-    }
-    assert symbols["match"]["selection"]["search_terms"] == [
-        "match",
-        "align",
-        "adjust",
-        "slider",
-        "perspective",
-        "reality",
-    ]
-    assert "equal.square.fill" in symbols["match"]["selection"][
-        "alternatives_considered"
-    ]
-    assert len(asset_hashes) == len(set(asset_hashes)) == 20
-
-
-def test_naming_system_owns_the_required_user_surface_symbol_method() -> None:
-    naming = (SKILLS / "naming-system" / "SKILL.md").read_text(encoding="utf-8")
-    capability = (SKILLS / "capability-development" / "SKILL.md").read_text(
-        encoding="utf-8"
-    )
-    reference = (
-        SKILLS / "naming-system" / "references" / "user-surface-symbols.md"
-    ).read_text(encoding="utf-8")
-    renderer = (SKILLS / "render_sf_symbol_assets.swift").read_text(encoding="utf-8")
-
-    assert "Blueprint-required `Select User-Surface Symbol` sub-step" in naming
-    assert "invoke Naming System's Blueprint-required" in capability
-    for required in (
-        "name_availability.plist",
-        "symbol_search.plist",
-        "alternatives_considered",
-        "--contact-sheet-dir",
-        "plugin/installed",
-        "skills/list",
-        "It is not a separate Blueprint element",
-    ):
-        assert required in reference
-    assert "manifestSymbols.count == 10" not in renderer
-    assert '"entry_count": manifestSymbols.count' in renderer
-
-
-def test_user_skill_rejects_an_icon_path_outside_its_manifest(tmp_path: Path) -> None:
-    source = tmp_path / "match"
-    shutil.copytree(SKILLS / "match", source)
-    metadata = source / "agents" / "openai.yaml"
-    metadata.write_text(
-        metadata.read_text(encoding="utf-8").replace(
-            'icon_small: "./assets/match-small.png"',
-            'icon_small: "../match-small.png"',
-        ),
-        encoding="utf-8",
-    )
-
-    with pytest.raises(CapabilityError, match="icon path drifted"):
-        validate_skill_source(source)
-
-
-def test_user_skill_rejects_an_icon_checksum_change(tmp_path: Path) -> None:
-    source = tmp_path / "match"
-    shutil.copytree(SKILLS / "match", source)
-    asset = source / "assets" / "match-small.png"
-    asset.write_bytes(asset.read_bytes() + b"drift")
-
-    with pytest.raises(CapabilityError, match="checksum drifted"):
-        validate_skill_source(source)
+    assert validate_skill_source(SKILLS / skill_id)["valid"] is True
 
 
 @pytest.mark.parametrize(
