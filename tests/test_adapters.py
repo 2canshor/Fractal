@@ -69,6 +69,63 @@ def private_workspace(root: Path) -> Path:
     return root
 
 
+def test_adapter_selects_unique_non_completed_project_without_filesystem_order(
+    tmp_path: Path,
+) -> None:
+    private = private_workspace(tmp_path / "private-project-selection")
+    old = private / "projects" / "active" / "aaa-completed"
+    old.mkdir(parents=True)
+    (old / "record.json").write_text(
+        json.dumps(
+            {
+                "project_id": "aaa-completed",
+                "status": "completed",
+                "revision": 99,
+                "plan": {"current_phase": 11},
+            }
+        )
+    )
+    selected = AdapterBuilder(
+        public_root=ROOT,
+        private_root=private,
+        output_root=tmp_path / "project-selection-output",
+        public_commit="a" * 40,
+        private_commit="b" * 40,
+        system_version="0.1.0-alpha.8-test",
+        legacy_root=None,
+        verify_source_commits=False,
+    )._select_project_snapshot()
+    assert selected["project_id"] == "project-a"
+
+
+def test_adapter_rejects_multiple_non_completed_projects(tmp_path: Path) -> None:
+    private = private_workspace(tmp_path / "private-project-conflict")
+    second = private / "projects" / "active" / "project-b"
+    second.mkdir(parents=True)
+    (second / "record.json").write_text(
+        json.dumps(
+            {
+                "project_id": "project-b",
+                "status": "awaiting_completion",
+                "revision": 4,
+                "plan": {"current_phase": 2},
+            }
+        )
+    )
+    builder = AdapterBuilder(
+        public_root=ROOT,
+        private_root=private,
+        output_root=tmp_path / "project-conflict-output",
+        public_commit="a" * 40,
+        private_commit="b" * 40,
+        system_version="0.1.0-alpha.8-test",
+        legacy_root=None,
+        verify_source_commits=False,
+    )
+    with pytest.raises(AdapterError, match="multiple current Projects"):
+        builder._select_project_snapshot()
+
+
 def add_claude_model_route(root: Path) -> None:
     route = root / "adapters" / "claude" / "model-route.json"
     route.parent.mkdir(parents=True)
@@ -207,9 +264,7 @@ def surface_governed_builder(tmp_path: Path, output: str) -> AdapterBuilder:
     clarification["component_id"] = "clarification"
     clarification["human_name"] = "Clarification"
     clarification["source"]["locator"] = "capabilities/skills/clarification"
-    clarification["source"]["content_sha256"] = component_tree_sha256(
-        clarification_source
-    )
+    clarification["source"]["content_sha256"] = component_tree_sha256(clarification_source)
     clarification["projection"]["target"] = "skills/clarification"
     clarification["projection"]["expected_sha256"] = value_sha256(
         tree_manifest(clarification_source)
@@ -227,8 +282,7 @@ def surface_governed_builder(tmp_path: Path, output: str) -> AdapterBuilder:
                     "feature_name": "Object-Aware Actions",
                     "technical_id": "object-aware-workflow-routing",
                     "selection_rule": (
-                        "The object named after an Action selects the narrowest "
-                        "matching workflow."
+                        "The object named after an Action selects the narrowest matching workflow."
                     ),
                     "route_states": ["exact", "partial", "missing", "unavailable"],
                 },
@@ -342,8 +396,9 @@ def test_all_staging_homes_build_reproducibly_and_smoke(tmp_path: Path) -> None:
             ),
         }
         manifest = json.loads(
-            (tmp_path / "first" / result["platform"] / "fractal" / "adapter-manifest.json")
-            .read_text()
+            (
+                tmp_path / "first" / result["platform"] / "fractal" / "adapter-manifest.json"
+            ).read_text()
         )
         boundary = manifest["boundary_contract"]
         assert boundary["live_promotion_eligible"] is False
@@ -774,12 +829,8 @@ def test_user_surface_projects_only_entries_and_keeps_hidden_methods_internal(
     built = tmp_path / "surface-governed" / "codex"
     assert (built / "skills" / "research" / "SKILL.md").is_file()
     assert not (built / "skills" / "clarification").exists()
-    assert (
-        built / "fractal" / "internal-workflows" / "clarification" / "SKILL.md"
-    ).is_file()
-    workflow_map = json.loads(
-        (built / "fractal" / "internal-workflow-map.json").read_text()
-    )
+    assert (built / "fractal" / "internal-workflows" / "clarification" / "SKILL.md").is_file()
+    workflow_map = json.loads((built / "fractal" / "internal-workflow-map.json").read_text())
     assert workflow_map["visible_component_ids"] == ["research"]
     assert workflow_map["workflows"][0]["dots"][0]["component_id"] == "clarification"
 
@@ -855,13 +906,9 @@ def test_gemini_component_install_switches_and_restores_skills(tmp_path: Path) -
     built = tmp_path / "governed-gemini" / "gemini"
     home = tmp_path / "gemini-home"
     (home / "config" / "skills" / "legacy-extra").mkdir(parents=True)
-    (home / "config" / "skills" / "legacy-extra" / "SKILL.md").write_text(
-        "legacy extra"
-    )
+    (home / "config" / "skills" / "legacy-extra" / "SKILL.md").write_text("legacy extra")
     (home / "GEMINI.md").write_text("previous entrypoint")
-    installer = GeminiComponentInstaller(
-        tmp_path / "component-installs", tmp_path / "quarantine"
-    )
+    installer = GeminiComponentInstaller(tmp_path / "component-installs", tmp_path / "quarantine")
     record = installer.install(built, home)
     assert (home / "GEMINI.md").is_symlink()
     assert (home / "config" / "skills" / "research").is_symlink()
@@ -869,7 +916,5 @@ def test_gemini_component_install_switches_and_restores_skills(tmp_path: Path) -
     assert record["persistent_system_version_activated"] is False
     restored = installer.restore(record["install_id"])
     assert (home / "GEMINI.md").read_text() == "previous entrypoint"
-    assert (
-        home / "config" / "skills" / "legacy-extra" / "SKILL.md"
-    ).read_text() == "legacy extra"
+    assert (home / "config" / "skills" / "legacy-extra" / "SKILL.md").read_text() == "legacy extra"
     assert "config/skills/legacy-extra" in restored["restored_quarantine"]

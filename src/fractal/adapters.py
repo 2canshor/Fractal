@@ -301,8 +301,7 @@ class AdapterBuilder:
     def _build_context(self, platform: str) -> dict[str, Any]:
         profile = json.loads((self.private_root / "profile" / "current.json").read_text())
         policy = json.loads((self.private_root / "policies" / "current.json").read_text())
-        record_path = next((self.private_root / "projects" / "active").glob("*/record.json"))
-        project = json.loads(record_path.read_text())
+        project = self._select_project_snapshot()
         return {
             "record_type": "adapter-context",
             "record_version": 2,
@@ -339,6 +338,27 @@ class AdapterBuilder:
                 "install_route": "fractal components install-candidate",
             },
         }
+
+    def _select_project_snapshot(self) -> dict[str, Any]:
+        """Select the one current Project without depending on filesystem order."""
+        records = [
+            json.loads(path.read_text(encoding="utf-8"))
+            for path in sorted((self.private_root / "projects" / "active").glob("*/record.json"))
+        ]
+        if not records:
+            raise AdapterError("Adapter build requires a canonical Project snapshot")
+        current = [record for record in records if record.get("status") != "completed"]
+        if len(current) == 1:
+            return current[0]
+        if len(current) > 1:
+            ids = sorted(record.get("project_id", "unknown") for record in current)
+            raise AdapterError(f"Adapter build found multiple current Projects: {ids}")
+        if len(records) == 1:
+            return records[0]
+        ids = sorted(record.get("project_id", "unknown") for record in records)
+        raise AdapterError(
+            f"Adapter build cannot infer one current Project from completed records: {ids}"
+        )
 
     def _project_capabilities(self, platform: str, destination: Path) -> list[dict[str, Any]]:
         if self.component_registry is not None:
@@ -409,10 +429,7 @@ class AdapterBuilder:
                     and interface_type is None
                 ):
                     target = (
-                        destination
-                        / "fractal"
-                        / "internal-workflows"
-                        / component["component_id"]
+                        destination / "fractal" / "internal-workflows" / component["component_id"]
                     )
                     shutil.copytree(
                         source,
