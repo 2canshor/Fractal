@@ -236,9 +236,7 @@ class ProjectStore:
                     event_changes.append(event_change)
                     continue
                 current_value = _get_value(candidate, change.path)
-                event_change["observed_value"] = copy.deepcopy(
-                    _get_value(current, change.path)
-                )
+                event_change["observed_value"] = copy.deepcopy(_get_value(current, change.path))
                 if stale and current_value not in (change.base_value, change.value):
                     return self._record_conflict(
                         current,
@@ -389,9 +387,7 @@ class ProjectStore:
                 and isinstance(change.value, dict)
                 and change.value.get("status") in {"approved", "rejected"}
             ):
-                raise AuthorityError(
-                    "Decision approval or rejection requires an authority action"
-                )
+                raise AuthorityError("Decision approval or rejection requires an authority action")
             try:
                 if change.operation == "set":
                     _set_value(authority_candidate, change.path, change.value)

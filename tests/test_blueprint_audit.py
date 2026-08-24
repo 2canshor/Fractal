@@ -27,10 +27,12 @@ def test_gap_audit_covers_every_classified_blueprint_element() -> None:
     assert {item["element_id"] for item in audit["mappings"]} == expected
 
 
-def test_gap_audit_separates_partial_mapping_from_implemented_steal_source() -> None:
+def test_gap_audit_records_mapping_and_steal_as_implemented_sources() -> None:
     audit = load_blueprint_implementation_map()
     by_id = {item["element_id"]: item for item in audit["mappings"]}
-    assert by_id["map-implementations-to-blueprint"]["implementation_assessment"] == "partial"
+    assert by_id["map-implementations-to-blueprint"]["implementation_assessment"] == (
+        "implemented"
+    )
     assert by_id["steal"]["implementation_assessment"] == "implemented"
     assert by_id["work-signature"]["implementation_assessment"] == "implemented"
     assert by_id["reality-check"]["implementation_assessment"] == "partial"

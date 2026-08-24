@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from fractal.blueprint_mapping import validate_candidate_mapping
 from fractal.improvement import (
     TrialBoundary,
     TrialMeasurement,
@@ -37,6 +38,7 @@ SYSTEM_REVIEW_STAGES = [
     "expected-effect",
     "local-effect",
     "global-effect",
+    "blueprint-mapping",
     "two-sided-review",
     "final-assessment",
     "biggest-remaining-concern",
@@ -50,17 +52,18 @@ BACKBONE_STEP_BY_STAGE = {
     "project-patterns": 2,
     "cross-project-patterns": 3,
     "reversal-check": 3,
-    "cause-research": 3,
-    "reconciliation": 3,
-    "improvement-options": 4,
-    "expected-effect": 5,
-    "local-effect": 5,
-    "global-effect": 5,
-    "two-sided-review": 5,
-    "final-assessment": 5,
-    "biggest-remaining-concern": 5,
-    "result": 5,
-    "your-decision": 5,
+    "cause-research": 4,
+    "reconciliation": 4,
+    "improvement-options": 5,
+    "expected-effect": None,
+    "local-effect": None,
+    "global-effect": None,
+    "blueprint-mapping": 6,
+    "two-sided-review": 7,
+    "final-assessment": 7,
+    "biggest-remaining-concern": 8,
+    "result": 8,
+    "your-decision": 8,
 }
 
 ISSUE_SCAN_HISTORY_SECTIONS = {
@@ -198,9 +201,18 @@ def start_system_review(project: ProjectRecord) -> dict[str, Any]:
         "started_at": utc_now(),
         "status": "in_progress",
         "backbone": {
-            "protagonist_mechanism": "system-review",
-            "methodology": "five-steps",
-            "required_steps": [1, 2, 3, 4, 5],
+            "protagonist": "system-review",
+            "workflow": "new-blueprint-eight-steps",
+            "required_steps": [
+                "find-problems",
+                "find-local-patterns",
+                "find-global-patterns",
+                "find-global-pattern-reasons",
+                "find-global-pattern-solutions",
+                "map-implementations-to-blueprint",
+                "debate-global-pattern-solutions",
+                "present-decisions-one-by-one",
+            ],
             "three_values": ["fatigue", "curiosity", "greed"],
         },
         "stages": [],
@@ -231,15 +243,16 @@ def record_system_review_stage(
     _validate_system_review_transition(updated, stage=stage, result=result)
     if stage == "your-decision" and (actor != "primary-user" or not human_action):
         raise AuthorityError("Your Decision requires the primary user")
-    updated["stages"].append(
-        {
-            "stage": stage,
-            "backbone_step": BACKBONE_STEP_BY_STAGE[stage],
-            "result": copy.deepcopy(result),
-            "evidence_ids": list(evidence_ids),
-            "recorded_at": utc_now(),
-        }
-    )
+    stage_record = {
+        "stage": stage,
+        "blueprint_step": BACKBONE_STEP_BY_STAGE[stage],
+        "result": copy.deepcopy(result),
+        "evidence_ids": list(evidence_ids),
+        "recorded_at": utc_now(),
+    }
+    if stage in {"expected-effect", "local-effect", "global-effect"}:
+        stage_record["supporting_infrastructure"] = "reality-check"
+    updated["stages"].append(stage_record)
     if stage == "result":
         try:
             readiness = validate_review_ready(updated)
@@ -272,17 +285,22 @@ def _validate_system_review_stage(stage: str, result: dict[str, Any]) -> None:
                 _validate_delta(delta, field=field)
     elif stage == "issue-scan":
         if result.get("collection_mode") != "quantity-over-quality":
-            raise SystemReviewError(
-                "Issue Scan requires the Quantity over Quality collection mode"
-            )
+            raise SystemReviewError("Issue Scan requires the Quantity over Quality collection mode")
         if result.get("causal_filtering_applied") is not False:
             raise SystemReviewError("Issue Scan must preserve observations before causal filtering")
         if result.get("deduplication_status") != "deferred-to-step-2":
             raise SystemReviewError("Issue Scan must defer deduplication and grouping to Step 2")
         _validate_whole_project_history_manifest(result.get("whole_project_history_manifest"))
         observations = result.get("observations")
-        if not isinstance(observations, list) or not observations:
-            raise SystemReviewError("Issue Scan requires at least one high-recall observation")
+        if not isinstance(observations, list):
+            raise SystemReviewError("Issue Scan requires an observation list")
+        if not observations and (
+            result.get("coverage_complete") is not True
+            or not str(result.get("no_observation_reason", "")).strip()
+        ):
+            raise SystemReviewError(
+                "An empty Issue Scan requires complete coverage and an observed reason"
+            )
         for observation in observations:
             _validate_raw_observation(observation)
     elif stage == "project-patterns":
@@ -335,6 +353,27 @@ def _validate_system_review_stage(stage: str, result: dict[str, Any]) -> None:
         _validate_effect_record(result, effect="local")
     elif stage == "global-effect":
         _validate_effect_record(result, effect="global")
+    elif stage == "blueprint-mapping":
+        status = result.get("status")
+        mappings = result.get("candidate_mappings")
+        if status not in {"completed", "no-candidates"} or not isinstance(mappings, list):
+            raise SystemReviewError(
+                "Blueprint Mapping must be completed or record an honest no-candidates result"
+            )
+        if status == "completed":
+            if not mappings:
+                raise SystemReviewError("Completed Blueprint Mapping requires Candidates")
+            for mapping in mappings:
+                try:
+                    validate_candidate_mapping(mapping)
+                except ValueError as error:
+                    raise SystemReviewError(str(error)) from error
+        elif mappings or not str(result.get("reason", "")).strip():
+            raise SystemReviewError(
+                "No-candidates Blueprint Mapping requires an empty list and reason"
+            )
+        if result.get("unmapped_candidate_ids") != []:
+            raise SystemReviewError("Blueprint Mapping cannot leave Candidates unmapped")
     elif stage == "two-sided-review":
         try:
             validate_two_sided_result(result)
@@ -380,13 +419,27 @@ def _validate_system_review_stage(stage: str, result: dict[str, Any]) -> None:
             raise SystemReviewError("Change Proposal result requires a proposal id")
         if outcome == "experiment" and not result.get("experiment_id"):
             raise SystemReviewError("Experiment result requires an experiment id")
-        if outcome in {"need-more-evidence", "no-change"} and not str(
-            result.get("reason", "")
-        ).strip():
+        if (
+            outcome in {"need-more-evidence", "no-change"}
+            and not str(result.get("reason", "")).strip()
+        ):
             raise SystemReviewError(f"{outcome} result requires a reason")
         response_units = result.get("response_units")
-        if not isinstance(response_units, list) or not response_units:
+        if not isinstance(response_units, list):
             raise SystemReviewError("System Review result requires response-unit coverage")
+        if not response_units:
+            zero = result.get("zero_pattern_coverage_receipt")
+            if outcome != "no-change" or not isinstance(zero, dict):
+                raise SystemReviewError(
+                    "An empty response-unit set requires a No Change zero-pattern receipt"
+                )
+            if (
+                zero.get("coverage_complete") is not True
+                or zero.get("observation_count") != 0
+                or zero.get("pattern_status") != "no-pattern"
+                or not str(zero.get("reason", "")).strip()
+            ):
+                raise SystemReviewError("Zero-pattern coverage receipt is incomplete")
         if result.get("unmapped_pattern_ids") != []:
             raise SystemReviewError("System Review result cannot leave Patterns unmapped")
         if not isinstance(result.get("plain_handoff"), dict):
@@ -445,17 +498,13 @@ def _validate_raw_observation(observation: Any) -> None:
     }
     found = sorted(premature_fields.intersection(observation))
     if found:
-        raise SystemReviewError(
-            f"Issue Scan performed Step 2 or Step 4 work too early: {found}"
-        )
+        raise SystemReviewError(f"Issue Scan performed Step 2 or Step 4 work too early: {found}")
 
 
 def _validate_project_patterns(result: dict[str, Any]) -> None:
     if result.get("status") not in {"completed", "no-pattern"}:
         raise SystemReviewError("Project Patterns must be completed or record no pattern")
-    if not isinstance(result.get("observation_ids_considered"), list) or not result[
-        "observation_ids_considered"
-    ]:
+    if not isinstance(result.get("observation_ids_considered"), list):
         raise SystemReviewError("Project Patterns must identify the observations considered")
     patterns = result.get("patterns")
     if not isinstance(patterns, list):
@@ -464,15 +513,15 @@ def _validate_project_patterns(result: dict[str, Any]) -> None:
         raise SystemReviewError("Completed Project Patterns requires at least one Local Pattern")
     if result["status"] == "no-pattern" and not str(result.get("reason", "")).strip():
         raise SystemReviewError("No-pattern result requires a reason")
+    if result["status"] == "completed" and not result["observation_ids_considered"]:
+        raise SystemReviewError("Completed Project Patterns requires observations")
     for pattern in patterns:
         if not isinstance(pattern, dict):
             raise SystemReviewError("Local Patterns must be typed records")
         for required in ("pattern_id", "symptom_summary", "possible_cause"):
             if not str(pattern.get(required, "")).strip():
                 raise SystemReviewError(f"Local Pattern requires {required}")
-        if not isinstance(pattern.get("observation_ids"), list) or not pattern[
-            "observation_ids"
-        ]:
+        if not isinstance(pattern.get("observation_ids"), list) or not pattern["observation_ids"]:
             raise SystemReviewError("Local Pattern requires linked observations")
         if pattern.get("causal_status") not in {"unknown", "plausible", "confirmed"}:
             raise SystemReviewError("Local Pattern requires a causal status")
@@ -480,9 +529,7 @@ def _validate_project_patterns(result: dict[str, Any]) -> None:
             raise SystemReviewError("Local Pattern requires confidence")
         if not isinstance(pattern.get("counterevidence"), list):
             raise SystemReviewError("Local Pattern requires a counterevidence list")
-        if pattern["causal_status"] == "confirmed" and not pattern.get(
-            "confirmation_evidence_ids"
-        ):
+        if pattern["causal_status"] == "confirmed" and not pattern.get("confirmation_evidence_ids"):
             raise SystemReviewError("A confirmed cause requires confirmation evidence")
 
 
@@ -508,9 +555,7 @@ def _validate_cross_project_patterns(result: dict[str, Any]) -> None:
         raise SystemReviewError("Cross-Project Patterns requires comparison records")
     if result["history_status"] == "sufficient" and not comparisons:
         raise SystemReviewError("Sufficient history requires at least one comparison")
-    if result["history_status"] == "insufficient" and not str(
-        result.get("reason", "")
-    ).strip():
+    if result["history_status"] == "insufficient" and not str(result.get("reason", "")).strip():
         raise SystemReviewError("Insufficient history requires a reason")
 
 
@@ -552,9 +597,7 @@ def _validate_improvement_options(result: dict[str, Any]) -> None:
     if not isinstance(options, list):
         raise SystemReviewError("Improvement Options requires typed options")
     kinds = [option.get("kind") for option in options if isinstance(option, dict)]
-    if len(options) != len(IMPROVEMENT_OPTION_KINDS) or set(kinds) != set(
-        IMPROVEMENT_OPTION_KINDS
-    ):
+    if len(options) != len(IMPROVEMENT_OPTION_KINDS) or set(kinds) != set(IMPROVEMENT_OPTION_KINDS):
         raise SystemReviewError(
             "Improvement Options must cover delete, shorten, merge, simplify, "
             "reconfigure, modify, add, and no-change"
@@ -588,23 +631,15 @@ def _validate_improvement_options(result: dict[str, Any]) -> None:
 def _validate_solution_curiosity(value: Any, *, solution_needed: bool) -> None:
     """Require auditable Curiosity whenever Improvement Options selects a solution."""
     if not isinstance(value, dict):
-        raise SystemReviewError(
-            "Improvement Options requires Curiosity 60/20/20 evidence"
-        )
+        raise SystemReviewError("Improvement Options requires Curiosity 60/20/20 evidence")
     if value.get("automatic_adoption") is not False:
         raise SystemReviewError("Curiosity findings cannot be adopted automatically")
     if not solution_needed:
-        if value.get("status") != "not-needed" or not str(
-            value.get("reason", "")
-        ).strip():
-            raise SystemReviewError(
-                "No-change must explicitly record why Curiosity is not needed"
-            )
+        if value.get("status") != "not-needed" or not str(value.get("reason", "")).strip():
+            raise SystemReviewError("No-change must explicitly record why Curiosity is not needed")
         return
     if value.get("trigger") != "solution-needed":
-        raise SystemReviewError(
-            "Solution selection requires the Curiosity solution-needed trigger"
-        )
+        raise SystemReviewError("Solution selection requires the Curiosity solution-needed trigger")
     expected_allocation = curiosity_routes("solution-needed")
     if value.get("allocation") != expected_allocation:
         raise SystemReviewError(
@@ -625,9 +660,7 @@ def _validate_solution_curiosity(value: Any, *, solution_needed: bool) -> None:
         or [item.get("action_id") for item in route_results if isinstance(item, dict)]
         != expected_actions
     ):
-        raise SystemReviewError(
-            "Curiosity 60/20/20 requires one recorded outcome for every route"
-        )
+        raise SystemReviewError("Curiosity 60/20/20 requires one recorded outcome for every route")
     flattened_findings = []
     for action_id, route_result in zip(expected_actions, route_results, strict=True):
         if route_result.get("status") not in {"candidate-findings", "no-finding"}:
@@ -641,17 +674,16 @@ def _validate_solution_curiosity(value: Any, *, solution_needed: bool) -> None:
         for finding in route_findings:
             if not isinstance(finding, dict) or finding.get("action_id") != action_id:
                 raise SystemReviewError("Curiosity finding is attached to the wrong route")
-            if not str(finding.get("summary", "")).strip() or not str(
-                finding.get("observed_at", "")
-            ).strip():
+            if (
+                not str(finding.get("summary", "")).strip()
+                or not str(finding.get("observed_at", "")).strip()
+            ):
                 raise SystemReviewError("Curiosity finding requires summary and provenance")
             if action_id == "research-latest-findings" and (
                 not str(finding.get("source", "")).strip()
                 or not str(finding.get("source_date", "")).strip()
             ):
-                raise SystemReviewError(
-                    "Curiosity latest finding requires source and source date"
-                )
+                raise SystemReviewError("Curiosity latest finding requires source and source date")
             if action_id == "explore-related-fields" and (
                 not str(finding.get("related_field", "")).strip()
                 or not str(finding.get("relationship", "")).strip()
@@ -661,9 +693,7 @@ def _validate_solution_curiosity(value: Any, *, solution_needed: bool) -> None:
                 )
         flattened_findings.extend(route_findings)
     if flattened_findings != findings:
-        raise SystemReviewError(
-            "Curiosity route outcomes and combined findings do not match"
-        )
+        raise SystemReviewError("Curiosity route outcomes and combined findings do not match")
 
 
 def _validate_effect_record(result: dict[str, Any], *, effect: str) -> None:
@@ -674,9 +704,7 @@ def _validate_effect_record(result: dict[str, Any], *, effect: str) -> None:
     if not isinstance(result.get("evidence_ids"), list):
         raise SystemReviewError(f"{effect.title()} Effect requires evidence ids")
     if result["status"] == "observed":
-        if not isinstance(result.get("before"), dict) or not isinstance(
-            result.get("after"), dict
-        ):
+        if not isinstance(result.get("before"), dict) or not isinstance(result.get("after"), dict):
             raise SystemReviewError(f"Observed {effect} effect requires before and after")
         decision_field = "hypothesis_supported" if effect == "local" else "system_improved"
         if not isinstance(result.get(decision_field), bool):
@@ -707,6 +735,16 @@ def _validate_system_review_transition(
         expected = previous["expected-effect"]["hypothesis_id"]
         if result["hypothesis_id"] != expected:
             raise SystemReviewError("Effect record does not match the Expected Effect hypothesis")
+    elif stage == "blueprint-mapping":
+        preferred = previous["improvement-options"]["preferred_kind"]
+        expected = "no-candidates" if preferred == "no-change" else "completed"
+        if result["status"] != expected:
+            raise SystemReviewError(
+                "Blueprint Mapping status must match whether the selected response changes anything"
+            )
+    elif stage == "two-sided-review":
+        if "blueprint-mapping" not in previous:
+            raise SystemReviewError("Debate cannot begin before Blueprint Mapping")
     elif stage == "final-assessment":
         local = previous["local-effect"]
         global_effect = previous["global-effect"]
@@ -871,9 +909,7 @@ def record_later_outcome_evaluation(
         "recorded_at": utc_now(),
     }
     updated["learning_record"]["later_evaluations"].append(evaluation)
-    updated["learning_record"]["outcome_classification"] = evaluation[
-        "outcome_classification"
-    ]
+    updated["learning_record"]["outcome_classification"] = evaluation["outcome_classification"]
     return updated
 
 

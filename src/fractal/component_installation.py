@@ -42,14 +42,16 @@ class CodexComponentInstaller:
             visible_skill_ids = {item["component_id"] for item in surface["entries"]}
         live_codex_home = Path("~/.codex").expanduser().resolve()
         if home == live_codex_home:
-            candidate_visible_paths = {
-                item["entry_id"]: str(
-                    (built / "skills" / item["entry_id"] / "SKILL.md").resolve(
-                        strict=True
+            candidate_visible_paths = (
+                {
+                    item["entry_id"]: str(
+                        (built / "skills" / item["entry_id"] / "SKILL.md").resolve(strict=True)
                     )
-                )
-                for item in surface["entries"]
-            } if surface_path.is_file() else None
+                    for item in surface["entries"]
+                }
+                if surface_path.is_file()
+                else None
+            )
             with CodexAppServerClient() as client:
                 config_projection = audit_codex_config_projection(
                     client,
@@ -358,8 +360,7 @@ class ClaudeComponentInstaller(CodexComponentInstaller):
                 "platform_version": model_route["platform_version"],
             }
         settings["enabledPlugins"] = {
-            identifier: identifier in active_plugins
-            for identifier in sorted(registered_plugins)
+            identifier: identifier in active_plugins for identifier in sorted(registered_plugins)
         }
         settings_target.write_text(
             json.dumps(settings, ensure_ascii=False, indent=2, sort_keys=True) + "\n",

@@ -16,6 +16,7 @@ ALIGNMENTS = {
     "needs-blueprint-contract",
     "needs-blueprint-projection",
     "needs-donor-specialisation",
+    "needs-live-verification",
     "needs-reclassification",
     "needs-role-redesign",
     "needs-step-extraction",

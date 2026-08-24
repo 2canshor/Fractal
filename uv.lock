@@ -22,7 +22,7 @@ wheels = [
 
 [[package]]
 name = "fractal-system"
-version = "0.1.0a8"
+version = "0.1.0a8.post1"
 source = { editable = "." }
 dependencies = [
     { name = "jsonschema" },

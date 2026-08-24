@@ -52,10 +52,12 @@ def validate_blueprint(value: dict[str, Any]) -> dict[str, Any]:
     if value.get("record_type") != "fractal-blueprint":
         raise ValueError("Blueprint record type is invalid")
     lifecycle = value.get("lifecycle")
-    if not isinstance(lifecycle, dict) or lifecycle.get("status") != "candidate":
-        raise ValueError("The New Blueprint must remain an explicit candidate")
-    if lifecycle.get("active") is not False:
-        raise ValueError("A Blueprint candidate cannot claim active status")
+    if not isinstance(lifecycle, dict) or lifecycle.get("status") != "canonical":
+        raise ValueError("The New Blueprint must be the canonical workflow architecture")
+    if lifecycle.get("active_state_source") != "system-version-pointer":
+        raise ValueError("Blueprint active state must come from the System Version pointer")
+    if lifecycle.get("implementation_status") != "active-workflow-required":
+        raise ValueError("Blueprint implementation status must require active workflow alignment")
     core = value.get("core")
     if not isinstance(core, dict):
         raise ValueError("Blueprint core is missing")
@@ -138,7 +140,7 @@ def validate_blueprint(value: dict[str, Any]) -> dict[str, Any]:
     if by_id["reality-check"].get("implementation_instruction") is not None:
         raise ValueError("Reality Check classification cannot freeze an implementation instruction")
     if protagonist["element_id"] == "project-review":
-        raise ValueError("Project Review cannot become a second Protagonist")
+        raise ValueError("Perspective cannot become a second Protagonist")
     if tag_members["signature-function"] != {
         "curiosity",
         "fatigue",
@@ -209,11 +211,11 @@ def render_blueprint(value: dict[str, Any] | None = None) -> str:
     blueprint = validate_blueprint(value) if value is not None else load_blueprint()
     lifecycle = blueprint["lifecycle"]
     lines = [
-        "# Fractal Blueprint Candidate",
+        "# Fractal Blueprint",
         "",
         f"- Blueprint Version: `{blueprint['blueprint_version']}`",
         f"- Status: `{lifecycle['status']}`",
-        f"- Active: `{str(lifecycle['active']).lower()}`",
+        f"- Active State Source: `{lifecycle['active_state_source']}`",
         f"- Implementation Status: `{lifecycle['implementation_status']}`",
         "",
         f"> {lifecycle['claim_boundary']}",

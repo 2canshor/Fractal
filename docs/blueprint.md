@@ -1,11 +1,11 @@
-# Fractal Blueprint Candidate
+# Fractal Blueprint
 
-- Blueprint Version: `0.1.0-candidate.4`
-- Status: `candidate`
-- Active: `false`
-- Implementation Status: `partial`
+- Blueprint Version: `0.1.0`
+- Status: `canonical`
+- Active State Source: `system-version-pointer`
+- Implementation Status: `active-workflow-required`
 
-> This target Blueprint overrides earlier plans but does not describe the active alpha.7 runtime until a separately verified System Version is activated.
+> This Blueprint is Fractal's only workflow architecture. The immutable System Version pointer identifies which exact implementation commit is active.
 
 ## Architecture
 

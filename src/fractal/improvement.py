@@ -375,9 +375,7 @@ def combine_curiosity_findings(trigger: str, findings: list[ResearchFinding]) ->
     allocation = curiosity_routes(trigger)
     route_results = []
     for route in allocation:
-        matching = [
-            asdict(item) for item in findings if item.action_id == route["action_id"]
-        ]
+        matching = [asdict(item) for item in findings if item.action_id == route["action_id"]]
         route_results.append(
             {
                 "action_id": route["action_id"],

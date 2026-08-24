@@ -136,8 +136,7 @@ def _record(
         if invocation is not None
         else {
             "automatic_matching": active and trigger_mode == "automatic",
-            "explicit_invocation": active
-            and trigger_mode in {"automatic", "explicit", "platform"},
+            "explicit_invocation": active and trigger_mode in {"automatic", "explicit", "platform"},
         }
     )
     if claim_receipt is not None:
@@ -330,9 +329,7 @@ def _surface_hash(platform_version: str, category: str, identifier: str) -> str:
     ).hexdigest()
 
 
-def _projected_names(
-    components: list[dict[str, Any]], *, kind: str, platform: str
-) -> set[str]:
+def _projected_names(components: list[dict[str, Any]], *, kind: str, platform: str) -> set[str]:
     names: set[str] = set()
     for component in components:
         if component["kind"] != kind or platform not in component["platforms"]:

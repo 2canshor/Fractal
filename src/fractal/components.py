@@ -60,26 +60,22 @@ def validate_node_implementation_map(
         raise ValueError("Architecture lineage contract fields are incomplete or unexpected")
     if method_registry_sha256 != lineage["canonical_baseline_sha256"]:
         raise ValueError("Architecture lineage canonical baseline hash mismatch")
-    if lineage["canonical_baseline_id"] != (
-        f"method-registry-{method_registry['system_version']}"
-    ):
+    if lineage["canonical_baseline_id"] != (f"method-registry-{method_registry['system_version']}"):
         raise ValueError("Architecture lineage canonical baseline id mismatch")
     if not str(lineage["core_identity"]).strip():
         raise ValueError("Missing required JSON path: lineage_contract.core_identity")
-    five_steps = sorted(
+    blueprint_steps = sorted(
         (
             item
             for item in method_registry["methodologies"]
-            if item.get("methodology_kind") == "five-step"
+            if item.get("methodology_kind") == "blueprint-step"
         ),
         key=lambda item: item["sequence"],
     )
     backbone = lineage["original_system_review_backbone"]
-    if not isinstance(backbone, list) or len(backbone) != 5:
-        raise ValueError(
-            "Hierarchy inversion at lineage_contract.original_system_review_backbone"
-        )
-    expected_backbone = [(item["sequence"], item["id"]) for item in five_steps]
+    if not isinstance(backbone, list) or len(backbone) != len(blueprint_steps):
+        raise ValueError("Hierarchy inversion at lineage_contract.original_system_review_backbone")
+    expected_backbone = [(item["sequence"], item["id"]) for item in blueprint_steps]
     observed_backbone: list[tuple[Any, Any]] = []
     for index, item in enumerate(backbone):
         for key in ("step", "name", "original_question", "implemented_by"):
@@ -95,13 +91,9 @@ def validate_node_implementation_map(
             )
         observed_backbone.append((item["step"], item["name"]))
     if observed_backbone != expected_backbone:
-        raise ValueError(
-            "Hierarchy inversion at lineage_contract.original_system_review_backbone"
-        )
+        raise ValueError("Hierarchy inversion at lineage_contract.original_system_review_backbone")
     canonical_references = {
-        item["id"]
-        for section in METHOD_REGISTRY_SECTIONS
-        for item in method_registry[section]
+        item["id"] for section in METHOD_REGISTRY_SECTIONS for item in method_registry[section]
     }
     canonical_references.update(
         reference
@@ -118,9 +110,7 @@ def validate_node_implementation_map(
     for index, node in enumerate(value["nodes"]):
         missing = REQUIRED_CONTRACT_FIELDS.difference(node)
         if missing:
-            raise ValueError(
-                f"Missing required JSON path: nodes[{index}].{sorted(missing)[0]}"
-            )
+            raise ValueError(f"Missing required JSON path: nodes[{index}].{sorted(missing)[0]}")
         if node["component_id"] in component_ids:
             raise ValueError(f"Duplicate component id: {node['component_id']}")
         component_ids.add(node["component_id"])
@@ -137,8 +127,7 @@ def validate_node_implementation_map(
             orphaned = sorted(set(node["implemented_by"]).difference(canonical_references))
             if orphaned:
                 raise ValueError(
-                    f"Orphan architecture lineage references for {node['component_id']}: "
-                    f"{orphaned}"
+                    f"Orphan architecture lineage references for {node['component_id']}: {orphaned}"
                 )
             if (
                 node["lineage_class"] == "separately-approved-later-capability"

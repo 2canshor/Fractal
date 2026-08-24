@@ -1,202 +1,536 @@
 {
-  "record_type": "method-registry",
-  "record_version": 2,
-  "system_version": "0.1.0-alpha.8",
+  "blueprint_source": "blueprint.json",
+  "blueprint_version": "0.1.0",
   "core_philosophies": [
     {
-      "id": "continuous-improvement",
+      "blueprint_genre": null,
+      "blueprint_marker": null,
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
       "human_name": "Continuous Improvement",
-      "decision_status": "architecture-baseline",
-      "intent": "Use completed work and real outcomes to make Fractal better at future Projects.",
-      "operational_mapping": ["system-review", "project-review", "system-version-history"]
-    }
-  ],
-  "protagonist_mechanisms": [
-    {
-      "id": "system-review",
-      "human_name": "System Review",
-      "decision_status": "architecture-baseline",
-      "intent": "Run the original five-step reasoning process after the primary user completes a Project.",
-      "operational_mapping": ["find-problems", "find-local-patterns", "compare-history", "choose-system-response", "reality-check"]
-    }
-  ],
-  "methodologies": [
-    {
-      "id": "find-problems",
-      "human_name": "Step 1: Find Problems",
-      "methodology_kind": "five-step",
-      "sequence": 1,
-      "decision_status": "architecture-baseline",
-      "intent": "Review the whole Project history and collect positive and negative observations with high recall.",
-      "operational_mapping": ["project-assessment", "positive-delta", "negative-delta", "issue-scan", "quantity-over-quality"]
-    },
-    {
-      "id": "find-local-patterns",
-      "human_name": "Step 2: Find Local Patterns",
-      "methodology_kind": "five-step",
-      "sequence": 2,
-      "decision_status": "architecture-baseline",
-      "intent": "Separate symptoms from plausible causes and form meaningful local patterns.",
-      "operational_mapping": ["project-patterns", "causal-interpretation", "observation-cause-separation"]
-    },
-    {
-      "id": "compare-history",
-      "human_name": "Step 3: Compare History",
-      "methodology_kind": "five-step",
-      "sequence": 3,
-      "decision_status": "architecture-baseline",
-      "intent": "Compare current findings with previous analyses, interventions, reversals, and outcomes.",
-      "operational_mapping": ["cross-project-patterns", "reversal-check", "cause-research", "reconciliation"]
-    },
-    {
-      "id": "choose-system-response",
-      "human_name": "Step 4: Choose the System Response",
-      "methodology_kind": "five-step",
-      "sequence": 4,
-      "decision_status": "architecture-baseline",
-      "intent": "Decide whether to delete, shorten, merge, simplify, reconfigure, modify, or add an agentic element.",
-      "operational_mapping": ["improvement-options", "subtraction-first", "capability-check", "experiment"]
-    },
-    {
-      "id": "reality-check",
-      "human_name": "Step 5: Reality Check",
-      "methodology_kind": "five-step",
-      "sequence": 5,
-      "decision_status": "architecture-baseline",
-      "intent": "Compare before and after evidence to decide whether Fractal genuinely improved.",
-      "operational_mapping": ["expected-effect", "local-effect", "global-effect", "two-sided-review", "later-outcome-evaluation"]
-    },
-    {
-      "id": "fatigue",
-      "human_name": "Fatigue",
-      "methodology_kind": "three-value",
-      "decision_status": "intent-established-methodology-partially-defined",
-      "intent": "Treat repeated effort and diminishing return as a reason to investigate a better method.",
-      "operational_mapping": ["work-signature", "repetition-awareness", "improvement-investigation"],
-      "open_questions": ["similarity-weights", "semantic-threshold", "retention", "research-budget", "alternative-limit", "overlap-threshold"],
-      "evidence_requirement": "Active status requires a live work-completed event, one compact Work Signature, deterministic repetition evaluation, and a tested evidence route into Project Review or System Review."
-    },
-    {
-      "id": "curiosity",
-      "human_name": "Curiosity",
-      "methodology_kind": "three-value",
-      "decision_status": "intent-established-methodology-partially-defined",
-      "intent": "Explore current, adjacent, and structurally related ideas that may improve the work.",
-      "operational_mapping": ["research", "solution-needed", "improvement-options", "analogy-hypothesis", "bounded-experiment"],
-      "open_questions": ["effort-meter", "source-quality-threshold", "freshness-threshold", "cross-field-relevance-threshold", "exact-tool-budget"],
-      "evidence_requirement": "Whenever a solution is needed, execution evidence records the exact 60/20/20 allocation, one honest outcome per route, source provenance, relevance, no automatic adoption, and the Project Review or System Review that received the finding. Improvement Options fails closed when this evidence is absent."
-    },
-    {
-      "id": "greed",
-      "human_name": "Greed",
-      "methodology_kind": "three-value",
-      "decision_status": "intent-established-methodology-partially-defined",
-      "intent": "After real success, look for a materially better result in quality, time, Tokens, or scope using evidence-backed comparisons.",
-      "operational_mapping": ["performance-baseline", "success-criteria-challenge", "outcome-ratchet"],
-      "open_questions": ["comparison-dimensions", "benchmark-freshness", "research-budget", "materiality-threshold", "representative-trial-rule"],
-      "evidence_requirement": "Execution evidence preserves the achieved baseline, comparison source, stronger target, representative trial, and original Success Criteria result."
-    }
-  ],
-  "secondary_mechanisms": [
-    {
-      "id": "project-review",
-      "human_name": "Project Review",
-      "decision_status": "architecture-baseline",
-      "intent": "During a Project, compare the whole Project with its Plan and correct its trajectory when a milestone or exception calls for review.",
-      "operational_mapping": ["review-point", "whole-project-snapshot", "project-plan-update"]
+      "id": "continuous-improvement",
+      "intent": "Use completed work and real outcomes to improve how future work is handled.",
+      "operational_mapping": [
+        "system-review",
+        "project-review",
+        "system-version-history"
+      ]
     }
   ],
   "mechanisms": [
     {
+      "blueprint_genre": "principles",
+      "blueprint_marker": "%",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Deterministic over Probabilistic",
       "id": "deterministic-over-probabilistic",
-      "human_name": "Deterministic Over Probabilistic",
-      "decision_status": "architecture-baseline",
-      "intent": "Use exact programs and rules for work that can be made repeatable, testable, and unambiguous.",
-      "operational_mapping": ["schema-validation", "state-transition", "hash-check", "authority-check", "routing-check"]
+      "intent": "Move repeatable and unambiguous work toward deterministic, testable execution.",
+      "operational_mapping": [
+        "schema-validation",
+        "state-transition",
+        "hash-check",
+        "authority-check",
+        "routing-check"
+      ]
     },
     {
-      "id": "quantity-over-quality",
+      "blueprint_genre": "principles",
+      "blueprint_marker": "%",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
       "human_name": "Quantity over Quality",
-      "decision_status": "architecture-baseline",
-      "intent": "In Step 1, maximise recall before Step 2 filters, groups, or explains observations.",
-      "operational_mapping": ["whole-project-history", "positive-delta", "negative-delta", "high-recall-issue-scan"]
+      "id": "quantity-over-quality",
+      "intent": "Protect high-recall discovery before later reasoning narrows the evidence.",
+      "operational_mapping": [
+        "whole-project-history",
+        "positive-delta",
+        "negative-delta",
+        "high-recall-issue-scan"
+      ]
     },
     {
-      "id": "subtraction-first",
+      "blueprint_genre": "principles",
+      "blueprint_marker": "%",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
       "human_name": "Subtraction First",
-      "decision_status": "architecture-baseline",
-      "intent": "In Step 4, consider delete, shorten, merge, simplify, reconfigure, and modify before adding complexity.",
-      "operational_mapping": ["improvement-option-order", "capability-value-history"]
+      "id": "subtraction-first",
+      "intent": "Reduce context and system growth by preferring removal, reuse and simplification before addition.",
+      "operational_mapping": [
+        "improvement-option-order",
+        "capability-value-history"
+      ]
     },
     {
+      "blueprint_genre": "principles",
+      "blueprint_marker": "%",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Global Outcome over Local Optimisation",
       "id": "global-outcome-over-local-optimisation",
-      "human_name": "Global Outcome Over Local Optimisation",
-      "decision_status": "architecture-baseline",
-      "intent": "Judge a change by the whole Project and system result as well as its direct local effect.",
-      "operational_mapping": ["local-effect", "global-effect", "later-outcome-evaluation"]
+      "intent": "Judge improvement by its global effect instead of a convenient local win.",
+      "operational_mapping": [
+        "local-effect",
+        "global-effect",
+        "later-outcome-evaluation"
+      ]
     },
     {
-      "id": "work-signature",
+      "blueprint_genre": "infrastructure",
+      "blueprint_marker": "^",
+      "blueprint_tags": [],
+      "decision_status": "approved-technical-decision",
       "human_name": "Work Signature",
-      "decision_status": "approved-technical-decision",
-      "intent": "Capture a compact, privacy-bounded record of completed work for repetition and outcome comparison.",
-      "operational_mapping": ["work-completed-hook", "deterministic-signature", "turn-event-enrichment"]
+      "id": "work-signature",
+      "intent": "Retain compact evidence about completed work without becoming a product promise.",
+      "operational_mapping": [
+        "work-completed-hook",
+        "deterministic-signature",
+        "turn-event-enrichment"
+      ]
     },
     {
-      "id": "naming-system",
+      "blueprint_genre": "infrastructure",
+      "blueprint_marker": "^",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
       "human_name": "Naming System",
-      "decision_status": "architecture-baseline",
-      "intent": "Give every Fractal-controlled component a semantic name that passes deterministic checks before activation.",
-      "operational_mapping": ["naming-skill", "name-linter", "activation-gate"]
+      "id": "naming-system",
+      "intent": "Keep Fractal-controlled identities intelligible and governed in the background.",
+      "operational_mapping": [
+        "naming-skill",
+        "name-linter",
+        "activation-gate"
+      ]
     },
     {
-      "id": "capability-check",
+      "blueprint_genre": "infrastructure",
+      "blueprint_marker": "^",
+      "blueprint_tags": [],
+      "decision_status": "approved-technical-decision",
       "human_name": "Capability Check",
-      "decision_status": "approved-technical-decision",
-      "intent": "Compare requested work with registered, permitted, non-overlapping, and evidenced capabilities.",
-      "operational_mapping": ["component-registry", "overlap-check", "permission-check", "live-reconciliation"]
+      "id": "capability-check",
+      "intent": "Distinguish existence, loading, callability and successful execution of capabilities.",
+      "operational_mapping": [
+        "component-registry",
+        "overlap-check",
+        "permission-check",
+        "live-reconciliation"
+      ]
     },
     {
-      "id": "hooks",
+      "blueprint_genre": "infrastructure",
+      "blueprint_marker": "^",
+      "blueprint_tags": [],
+      "decision_status": "approved-technical-decision",
       "human_name": "Hooks",
-      "decision_status": "approved-technical-decision",
-      "intent": "Run deterministic handling when a known platform event occurs.",
-      "operational_mapping": ["session-start", "pre-tool-use", "work-completed"]
+      "id": "hooks",
+      "intent": "Connect bounded runtime events to existing Fractal responsibilities without owning them.",
+      "operational_mapping": [
+        "session-start",
+        "pre-tool-use",
+        "work-completed"
+      ]
     },
     {
-      "id": "component-governance",
-      "human_name": "Component Governance",
-      "decision_status": "approved-technical-decision",
-      "intent": "Register, project, verify, quarantine, restore, and remove every discoverable agentic component through Fractal.",
-      "operational_mapping": ["component-registry", "adapter-builder", "drift-detection", "restore-path"]
-    },
-    {
-      "id": "two-sided-review",
-      "human_name": "Two-Sided Review",
+      "blueprint_genre": "infrastructure",
+      "blueprint_marker": "^",
+      "blueprint_tags": [],
       "decision_status": "architecture-baseline",
-      "intent": "For a consequential proposal, compare independently formed Case For and Case Against before the Main Agent decides what to recommend.",
-      "operational_mapping": ["case-for", "case-against", "independence-check", "final-assessment"]
+      "human_name": "Reality Check",
+      "id": "reality-check",
+      "intent": "Support Fractal in distinguishing claimed improvement from observed reality.",
+      "operational_mapping": [
+        "expected-effect",
+        "local-effect",
+        "global-effect",
+        "two-sided-review",
+        "later-outcome-evaluation"
+      ]
     },
     {
-      "id": "cause-research",
-      "human_name": "Cause Research",
-      "decision_status": "architecture-baseline",
-      "intent": "Investigate why a problem exists when history or reversal evidence challenges the current causal model.",
-      "operational_mapping": ["external-research", "internal-review", "reconciliation"]
-    },
-    {
-      "id": "experiment",
+      "blueprint_genre": "infrastructure",
+      "blueprint_marker": "^",
+      "blueprint_tags": [],
+      "decision_status": "approved-technical-decision",
       "human_name": "Experiment",
-      "decision_status": "approved-technical-decision",
-      "intent": "Test a reversible hypothesis against a preserved baseline and measurable outcome.",
-      "operational_mapping": ["baseline", "candidate", "evaluation", "restore"]
+      "id": "experiment",
+      "intent": "Run a bounded and recoverable trial when evidence is insufficient to judge a Candidate implementation.",
+      "operational_mapping": [
+        "baseline",
+        "candidate",
+        "evaluation",
+        "restore"
+      ]
     },
     {
-      "id": "human-control",
-      "human_name": "Human Control",
+      "blueprint_genre": "infrastructure",
+      "blueprint_marker": "^",
+      "blueprint_tags": [],
+      "decision_status": "approved-technical-decision",
+      "human_name": "Component Governance",
+      "id": "component-governance",
+      "intent": "Keep every active component identified, classified, permission-bounded, evidenced and recoverable.",
+      "operational_mapping": [
+        "component-registry",
+        "adapter-builder",
+        "drift-detection",
+        "restore-path"
+      ]
+    },
+    {
+      "blueprint_genre": "infrastructure",
+      "blueprint_marker": "^",
+      "blueprint_tags": [],
       "decision_status": "architecture-baseline",
-      "intent": "Show current state, evidence, decisions, risks, and restore routes in ordinary language.",
-      "operational_mapping": ["human-control-view", "typed-decision", "recovery-instructions"]
+      "human_name": "Human Control",
+      "id": "human-control",
+      "intent": "Provide operator-visible control and evidence without becoming a product-facing headline.",
+      "operational_mapping": [
+        "human-control-view",
+        "typed-decision",
+        "recovery-instructions"
+      ]
+    },
+    {
+      "blueprint_genre": "infrastructure",
+      "blueprint_marker": "^",
+      "blueprint_tags": [],
+      "decision_status": "approved-technical-decision",
+      "human_name": "Donor Quarantine",
+      "id": "donor-quarantine",
+      "intent": "Keep unclassified donor capabilities inspectable but unable to become persistent Fractal dependencies.",
+      "operational_mapping": [
+        "component-quarantine",
+        "donor-intake"
+      ]
+    },
+    {
+      "blueprint_genre": "infrastructure",
+      "blueprint_marker": "^",
+      "blueprint_tags": [],
+      "decision_status": "approved-technical-decision",
+      "human_name": "Donor Registry",
+      "id": "donor-registry",
+      "intent": "Retain donor source, licence, provenance, mapping, evidence and recovery metadata.",
+      "operational_mapping": [
+        "donor-provenance",
+        "licence-evidence",
+        "capability-mapping"
+      ]
+    },
+    {
+      "blueprint_genre": "infrastructure",
+      "blueprint_marker": "^",
+      "blueprint_tags": [],
+      "decision_status": "approved-technical-decision",
+      "human_name": "Environment Adapters",
+      "id": "environment-adapters",
+      "intent": "Let replaceable environments execute Fractal without receiving architecture or canonical-state authority.",
+      "operational_mapping": [
+        "adapter-builder",
+        "canonical-state-boundary",
+        "restore-path"
+      ]
+    },
+    {
+      "blueprint_genre": "methods",
+      "blueprint_marker": "¢",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Cause Research",
+      "id": "cause-research",
+      "intent": "Use bounded internal and external evidence to improve causal understanding without becoming its own lifecycle.",
+      "operational_mapping": [
+        "external-research",
+        "internal-review",
+        "reconciliation"
+      ]
+    },
+    {
+      "blueprint_genre": "methods",
+      "blueprint_marker": "¢",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Two-Sided Review",
+      "id": "two-sided-review",
+      "intent": "Challenge a consequential mapped Candidate through genuinely opposing cases before synthesis.",
+      "operational_mapping": [
+        "case-for",
+        "case-against",
+        "independence-check",
+        "final-assessment"
+      ]
+    },
+    {
+      "blueprint_genre": "methods",
+      "blueprint_marker": "¢",
+      "blueprint_tags": [],
+      "decision_status": "approved-technical-decision",
+      "human_name": "Steal",
+      "id": "steal",
+      "intent": "Reuse bounded donor implementations while stripping donor authority and remapping the result to Fractal.",
+      "operational_mapping": [
+        "donor-inventory",
+        "capability-decomposition",
+        "blueprint-mapping",
+        "staged-disposition"
+      ]
     }
-  ]
+  ],
+  "methodologies": [
+    {
+      "blueprint_genre": "steps",
+      "blueprint_marker": "$",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Step 1: Find Problems",
+      "id": "find-problems",
+      "intent": "Collect the broad Project evidence before narrowing or explaining it.",
+      "methodology_kind": "blueprint-step",
+      "operational_mapping": [
+        "project-assessment",
+        "positive-delta",
+        "negative-delta",
+        "issue-scan",
+        "quantity-over-quality"
+      ],
+      "sequence": 1
+    },
+    {
+      "blueprint_genre": "steps",
+      "blueprint_marker": "$",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Step 2: Find Local Patterns",
+      "id": "find-local-patterns",
+      "intent": "Identify meaningful local recurrence without confusing surface similarity with cause.",
+      "methodology_kind": "blueprint-step",
+      "operational_mapping": [
+        "project-patterns",
+        "causal-interpretation",
+        "observation-cause-separation"
+      ],
+      "sequence": 2
+    },
+    {
+      "blueprint_genre": "steps",
+      "blueprint_marker": "$",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Step 3: Find Global Patterns",
+      "id": "find-global-patterns",
+      "intent": "Compare patterns across the relevant Project and improvement history before treating them as isolated.",
+      "methodology_kind": "blueprint-step",
+      "operational_mapping": [
+        "cross-project-patterns",
+        "reversal-check",
+        "history-comparison"
+      ],
+      "sequence": 3
+    },
+    {
+      "blueprint_genre": "steps",
+      "blueprint_marker": "$",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Step 4: Find the Reasons for Every Global Pattern",
+      "id": "find-global-pattern-reasons",
+      "intent": "Make the causal reasoning for every Global Pattern explicit, including uncertainty and counterevidence.",
+      "methodology_kind": "blueprint-step",
+      "operational_mapping": [
+        "cause-research",
+        "reconciliation",
+        "causal-uncertainty"
+      ],
+      "sequence": 4
+    },
+    {
+      "blueprint_genre": "steps",
+      "blueprint_marker": "$",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Step 5: Find Solutions for Every Global Pattern",
+      "id": "find-global-pattern-solutions",
+      "intent": "Search for possible responses to every Global Pattern without allowing one preferred implementation to end the search.",
+      "methodology_kind": "blueprint-step",
+      "operational_mapping": [
+        "curiosity",
+        "improvement-options",
+        "subtraction-first"
+      ],
+      "sequence": 5
+    },
+    {
+      "blueprint_genre": "steps",
+      "blueprint_marker": "$",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Step 6: Map New Implementations into the Blueprint",
+      "id": "map-implementations-to-blueprint",
+      "intent": "Classify every Candidate implementation by its true Blueprint role and apply the rules of its Genre before debate.",
+      "methodology_kind": "blueprint-step",
+      "operational_mapping": [
+        "blueprint-mapping",
+        "addition-priority",
+        "donor-authority-removal"
+      ],
+      "sequence": 6
+    },
+    {
+      "blueprint_genre": "steps",
+      "blueprint_marker": "$",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Step 7: Debate the Solutions for Every Global Pattern",
+      "id": "debate-global-pattern-solutions",
+      "intent": "Challenge the mapped solutions for every Global Pattern before Carson is asked to decide.",
+      "methodology_kind": "blueprint-step",
+      "operational_mapping": [
+        "two-sided-review",
+        "case-for",
+        "case-against",
+        "final-synthesis"
+      ],
+      "sequence": 7
+    },
+    {
+      "blueprint_genre": "steps",
+      "blueprint_marker": "$",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "Step 8: Present Decisions One-by-One",
+      "id": "present-decisions-one-by-one",
+      "intent": "Present one fully prepared human-scale decision at a time without hiding the remaining decision set.",
+      "methodology_kind": "blueprint-step",
+      "operational_mapping": [
+        "human-control",
+        "plain-handoff",
+        "biggest-remaining-concern",
+        "your-decision"
+      ],
+      "sequence": 8
+    },
+    {
+      "blueprint_genre": "values",
+      "blueprint_marker": "$",
+      "blueprint_tags": [
+        "signature-function"
+      ],
+      "decision_status": "intent-established-methodology-partially-defined",
+      "evidence_requirement": "Active status requires a live work-completed event, one compact Work Signature, deterministic repetition evaluation, and a tested evidence route into Perspective or System Review.",
+      "human_name": "Fatigue",
+      "id": "fatigue",
+      "intent": "Treat repeated effort and diminishing return as pressure to investigate a better way.",
+      "methodology_kind": "three-value",
+      "open_questions": [
+        "similarity-weights",
+        "semantic-threshold",
+        "retention",
+        "research-budget",
+        "alternative-limit",
+        "overlap-threshold"
+      ],
+      "operational_mapping": [
+        "work-signature",
+        "repetition-awareness",
+        "improvement-investigation"
+      ]
+    },
+    {
+      "blueprint_genre": "values",
+      "blueprint_marker": "$",
+      "blueprint_tags": [
+        "signature-function"
+      ],
+      "decision_status": "intent-established-methodology-partially-defined",
+      "evidence_requirement": "Whenever a solution is needed, execution evidence records the exact 60/20/20 allocation, one honest outcome per route, source provenance, relevance, no automatic adoption, and the Perspective or System Review that received the finding. Improvement Options fails closed when this evidence is absent.",
+      "human_name": "Curiosity",
+      "id": "curiosity",
+      "intent": "Search beyond the obvious current approach for relevant adjacent and structurally similar ideas.",
+      "methodology_kind": "three-value",
+      "open_questions": [
+        "effort-meter",
+        "source-quality-threshold",
+        "freshness-threshold",
+        "cross-field-relevance-threshold",
+        "exact-tool-budget"
+      ],
+      "operational_mapping": [
+        "research",
+        "solution-needed",
+        "improvement-options",
+        "analogy-hypothesis",
+        "bounded-experiment"
+      ]
+    },
+    {
+      "blueprint_genre": "values",
+      "blueprint_marker": "$",
+      "blueprint_tags": [
+        "signature-function"
+      ],
+      "decision_status": "intent-established-methodology-partially-defined",
+      "evidence_requirement": "Execution evidence preserves the achieved baseline, comparison source, stronger target, representative trial, and original Success Criteria result.",
+      "human_name": "Greed",
+      "id": "greed",
+      "intent": "After genuine success, keep testing whether a materially stronger global outcome is achievable.",
+      "methodology_kind": "three-value",
+      "open_questions": [
+        "comparison-dimensions",
+        "benchmark-freshness",
+        "research-budget",
+        "materiality-threshold",
+        "representative-trial-rule"
+      ],
+      "operational_mapping": [
+        "performance-baseline",
+        "success-criteria-challenge",
+        "outcome-ratchet"
+      ]
+    }
+  ],
+  "protagonist_mechanisms": [
+    {
+      "blueprint_genre": null,
+      "blueprint_marker": "#",
+      "blueprint_tags": [],
+      "decision_status": "architecture-baseline",
+      "human_name": "System Review",
+      "id": "system-review",
+      "intent": "The sole protagonist that turns completed Project evidence into governed improvement of Fractal.",
+      "operational_mapping": [
+        "find-problems",
+        "find-local-patterns",
+        "find-global-patterns",
+        "find-global-pattern-reasons",
+        "find-global-pattern-solutions",
+        "map-implementations-to-blueprint",
+        "debate-global-pattern-solutions",
+        "present-decisions-one-by-one"
+      ]
+    }
+  ],
+  "record_type": "method-registry",
+  "record_version": 3,
+  "secondary_mechanisms": [
+    {
+      "blueprint_genre": "methods",
+      "blueprint_marker": "$",
+      "blueprint_tags": [
+        "signature-function"
+      ],
+      "decision_status": "architecture-baseline",
+      "human_name": "Perspective",
+      "id": "project-review",
+      "intent": "See From The Big Picture: prevent Agent tunnel vision and harmful local over-investment during a Project.",
+      "operational_mapping": [
+        "review-point",
+        "whole-project-snapshot",
+        "project-plan-update"
+      ]
+    }
+  ],
+  "system_version": "0.1.0-alpha.8-r1"
 }

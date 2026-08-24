@@ -33,7 +33,7 @@ def render_project_summary(record: ProjectRecord, *, details: bool = False) -> s
         f"- Direction: `{lifecycle['direction']['status']}`",
         f"- Goal: `{lifecycle['goal']['status']}`",
         f"- Success Criteria: `{achieved_criteria}/{len(criteria['items'])}` achieved",
-        f"- Project Reviews: `{len(lifecycle['reviews'])}`",
+        f"- Perspectives: `{len(lifecycle['reviews'])}`",
         f"- Open Unknowns: `{open_unknowns}`",
         f"- Biggest Remaining Concern: {lifecycle['biggest_remaining_concern']['summary']}",
     ]

@@ -94,13 +94,16 @@ def test_repetition_trigger_and_necessary_repetition_rules() -> None:
         "investigation-required"
     )
     verification = replace(third, purpose_class="verification")
-    assert recognise_repetition(
-        [
-            replace(first, purpose_class="verification"),
-            replace(second, purpose_class="verification"),
-        ],
-        verification,
-    ).status == "necessary-repetition"
+    assert (
+        recognise_repetition(
+            [
+                replace(first, purpose_class="verification"),
+                replace(second, purpose_class="verification"),
+            ],
+            verification,
+        ).status
+        == "necessary-repetition"
+    )
 
 
 def test_uncertain_match_uses_minimal_semantic_payload() -> None:
@@ -279,9 +282,10 @@ def test_safe_trial_is_isolated_quality_first_and_never_auto_adopts() -> None:
     assert blocked["allowed"] is False
     assert blocked["next_route"] == "request-primary-user-decision"
     unknown_measurements = TrialMeasurement(True, 1.0, None, None, None, False)
-    assert compare_trial_results(
-        safe_boundary(), unknown_measurements, unknown_measurements
-    )["status"] == "no-adoption-no-improvement"
+    assert (
+        compare_trial_results(safe_boundary(), unknown_measurements, unknown_measurements)["status"]
+        == "no-adoption-no-improvement"
+    )
 
 
 def test_performance_baseline_and_greed_use_evidence_without_fabrication() -> None:
@@ -315,8 +319,7 @@ def test_performance_baseline_and_greed_use_evidence_without_fabrication() -> No
         ],
     )
     suggestions = {
-        item["dimension"]: item["suggested_threshold"]
-        for item in challenge["ambitious_options"]
+        item["dimension"]: item["suggested_threshold"] for item in challenge["ambitious_options"]
     }
     assert suggestions == {"tokens": 1500, "accuracy": 97}
     assert len(challenge["architecture_options"]) == 1

@@ -1,8 +1,8 @@
 # Fractal Architecture
 
-Fractal helps a person complete one Project well and lets the system learn from that completed Project for the next one. These are two different review loops:
+Fractal helps a person complete one Project well and lets the system learn from that completed Project for the next one. Perspective and System Review operate at different times without becoming parallel protagonists:
 
-1. **Project Review** runs while work is active. A milestone or exception opens the review, and the review checks the whole Project before adjusting its Plan.
+1. **Perspective** runs while work is active. A milestone or exception opens it, and Perspective checks the whole Project before adjusting its Plan.
 2. **System Review** starts after the primary user declares Project Completion. It studies the completed Project, considers how Fractal itself could improve, and returns a result for the primary user's decision.
 
 The human-facing Project path is:
@@ -10,7 +10,7 @@ The human-facing Project path is:
 ```text
 Brief -> Project Direction -> Background Research <-> Clarification
       -> Goal -> Success Criteria + Priorities -> Project Plan
-      -> Project Work <-> Project Review -> Project Completion -> System Review
+      -> Project Work <-> Perspective -> Project Completion -> System Review
 ```
 
 Fatigue, Curiosity, Greed, Work Signatures, registries, Hooks, Skills, MCP servers, Plugins, Tools, agent roles, and adapters support that path. They supply evidence or perform bounded work under it.
@@ -29,7 +29,7 @@ Human-readable Markdown is a view of canonical state, not a second source of tru
 
 ## Core Philosophy
 
-Continuous Improvement is the only Core Philosophy. During a Project it protects the Project trajectory through Project Review. After Project Completion it improves future Projects through System Review. Methods and Supporting Philosophies must have observable behaviour, tests, and evidence.
+Continuous Improvement is the only Core Philosophy and System Review is the sole Protagonist. During active work, the `$ Perspective` Method protects the whole Project trajectory. After Project Completion, System Review runs the eight New Blueprint Steps. Values, Principles, Infrastructure, Methods, roles, and Tags retain distinct meanings and must have observable behaviour, tests, and evidence.
 
 ## State Change Path
 

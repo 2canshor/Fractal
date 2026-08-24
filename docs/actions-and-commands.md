@@ -26,8 +26,8 @@ The object stays in the request. For example, `review this document`, `create an
 A Command controls Fractal itself. There are four:
 
 - `assess`: run Two-Sided Review on one consequential idea;
-- `complete`: finish all five System Review steps after Project Completion;
-- `match`: run Project Review for an active formal Project;
+- `complete`: finish all eight New Blueprint System Review Steps after Project Completion;
+- `match`: run Perspective for an active formal Project;
 - `version`: apply, verify, record, activate, and publish one exact permitted System Version batch.
 
 A slash or dollar sign is invocation syntax. It does not make an Action a Command. Actions and the first three Commands may also match automatically; `version` requires Carson's exact explicit order.

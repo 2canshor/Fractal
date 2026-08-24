@@ -154,9 +154,7 @@ def test_ordinary_create_cannot_claim_completed_state(store: ProjectStore) -> No
         store.create(record, actor="agent-a", platform="platform-a")
 
 
-def test_tampered_record_fails_integrity_check(
-    store: ProjectStore, project: ProjectRecord
-) -> None:
+def test_tampered_record_fails_integrity_check(store: ProjectStore, project: ProjectRecord) -> None:
     record_path = store.project_root / project.project_id / "record.json"
     value = json.loads(record_path.read_text())
     value["title"] = "Tampered"
@@ -185,9 +183,7 @@ def test_missing_event_is_detected(store: ProjectStore, project: ProjectRecord) 
         store.verify(project.project_id)
 
 
-def test_event_captures_storage_observed_value(
-    store: ProjectStore, project: ProjectRecord
-) -> None:
+def test_event_captures_storage_observed_value(store: ProjectStore, project: ProjectRecord) -> None:
     store.apply_changes(
         project.project_id,
         expected_revision=0,

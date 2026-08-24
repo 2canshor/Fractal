@@ -10,30 +10,29 @@ from fractal.methods import (
 
 def test_correct_improvement_hierarchy_is_canonical() -> None:
     registry = load_method_registry()
-    assert [item["id"] for item in registry["core_philosophies"]] == [
-        "continuous-improvement"
-    ]
-    assert [item["id"] for item in registry["protagonist_mechanisms"]] == [
-        "system-review"
-    ]
-    assert [item["id"] for item in registry["secondary_mechanisms"]] == [
-        "project-review"
-    ]
+    assert [item["id"] for item in registry["core_philosophies"]] == ["continuous-improvement"]
+    assert [item["id"] for item in registry["protagonist_mechanisms"]] == ["system-review"]
+    assert [item["id"] for item in registry["secondary_mechanisms"]] == ["project-review"]
+    assert registry["secondary_mechanisms"][0]["human_name"] == "Perspective"
+    assert registry["secondary_mechanisms"][0]["blueprint_genre"] == "methods"
 
 
-def test_methodologies_are_exactly_five_steps_and_three_values() -> None:
+def test_methodologies_are_exactly_eight_blueprint_steps_and_three_values() -> None:
     registry = load_method_registry()
     methodologies = registry["methodologies"]
-    steps = [item for item in methodologies if item["methodology_kind"] == "five-step"]
+    steps = [item for item in methodologies if item["methodology_kind"] == "blueprint-step"]
     values = [item for item in methodologies if item["methodology_kind"] == "three-value"]
     assert [item["id"] for item in steps] == [
         "find-problems",
         "find-local-patterns",
-        "compare-history",
-        "choose-system-response",
-        "reality-check",
+        "find-global-patterns",
+        "find-global-pattern-reasons",
+        "find-global-pattern-solutions",
+        "map-implementations-to-blueprint",
+        "debate-global-pattern-solutions",
+        "present-decisions-one-by-one",
     ]
-    assert [item["sequence"] for item in steps] == [1, 2, 3, 4, 5]
+    assert [item["sequence"] for item in steps] == list(range(1, 9))
     assert [item["id"] for item in values] == ["fatigue", "curiosity", "greed"]
     for value in values:
         assert value["decision_status"] == "intent-established-methodology-partially-defined"
@@ -41,7 +40,7 @@ def test_methodologies_are_exactly_five_steps_and_three_values() -> None:
         assert value["evidence_requirement"]
 
 
-def test_named_operational_concepts_are_mechanisms() -> None:
+def test_blueprint_principles_infrastructure_and_methods_are_projected() -> None:
     registry = load_method_registry()
     mechanism_ids = {item["id"] for item in registry["mechanisms"]}
     assert {
@@ -53,6 +52,16 @@ def test_named_operational_concepts_are_mechanisms() -> None:
         "naming-system",
         "capability-check",
         "hooks",
+        "reality-check",
+        "experiment",
+        "component-governance",
+        "human-control",
+        "donor-quarantine",
+        "donor-registry",
+        "environment-adapters",
+        "cause-research",
+        "two-sided-review",
+        "steal",
     } <= mechanism_ids
 
 
@@ -64,9 +73,7 @@ def test_every_hierarchy_node_has_one_valid_agentic_element_mapping() -> None:
     assert by_id["fatigue"]["primary_element"] == "deterministic-program"
     assert by_id["curiosity"]["primary_element"] == "skill"
     assert by_id["greed"]["primary_element"] == "skill"
-    assert by_id["deterministic-over-probabilistic"]["primary_element"] == (
-        "deterministic-program"
-    )
+    assert by_id["deterministic-over-probabilistic"]["primary_element"] == ("deterministic-program")
 
 
 def test_deterministic_over_probabilistic_selects_the_smallest_exact_executor() -> None:

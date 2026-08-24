@@ -81,19 +81,13 @@ def test_live_reconciliation_keeps_loaded_callable_and_success_separate(
         "system_version": "candidate",
         "components": [
             governed_component("adapter-codex", "adapter", target="AGENTS.md"),
-            governed_component(
-                "app-figma", "app", external="connector-figma", target="app:figma"
-            ),
-            governed_component(
-                "hook-stop", "hook", external="Stop", target="hooks.json"
-            ),
+            governed_component("app-figma", "app", external="connector-figma", target="app:figma"),
+            governed_component("hook-stop", "hook", external="Stop", target="hooks.json"),
             governed_component("mcp-test", "mcp", external="server-a"),
             governed_component(
                 "research", "skill", source="capabilities/research", target="skills/research"
             ),
-            governed_component(
-                "tool-mcp-test-read", "tool", external="mcp__server_a__read"
-            ),
+            governed_component("tool-mcp-test-read", "tool", external="mcp__server_a__read"),
         ],
     }
     client = FakeClient(
@@ -432,7 +426,9 @@ def test_config_projection_audit_exposes_only_activation_flags() -> None:
         }
     )
     report = audit_codex_config_projection(
-        client, registry, cwd=Path("/tmp")  # type: ignore[arg-type]
+        client,
+        registry,
+        cwd=Path("/tmp"),  # type: ignore[arg-type]
     )
     assert report["clean"] is True
     assert report["actual_mcp_activation"] == {"server-a": True, "server-b": False}
@@ -493,10 +489,7 @@ def test_config_projection_fails_on_new_plugin_path_and_disabled_action() -> Non
 
     assert report["clean"] is False
     assert "skills.visible-disabled:/candidate/create/SKILL.md" in report["mismatched"]
-    assert (
-        "skills.enabled-unexpected:/plugin/2.0/skills/new/SKILL.md"
-        in report["mismatched"]
-    )
+    assert "skills.enabled-unexpected:/plugin/2.0/skills/new/SKILL.md" in report["mismatched"]
 
 
 def test_turn_events_finalize_one_signature_and_run_fatigue(tmp_path: Path) -> None:
@@ -594,9 +587,7 @@ def test_turn_events_finalize_one_signature_and_run_fatigue(tmp_path: Path) -> N
     assert len(journal.read_text().splitlines()) == 1
     assert len(evaluations.read_text().splitlines()) == 1
     final_evaluation = json.loads(evaluations.read_text())
-    assert final_evaluation["recognition"]["status"] == (
-        "first-occurrence"
-    )
+    assert final_evaluation["recognition"]["status"] == ("first-occurrence")
     assert final_evaluation["event_evidence"][0] == "turn/completed"
 
 

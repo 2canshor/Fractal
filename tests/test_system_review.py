@@ -219,6 +219,12 @@ def stage_result(stage: str) -> dict:
             "evidence_ids": [],
             "reason": "No system change is proposed",
         },
+        "blueprint-mapping": {
+            "status": "no-candidates",
+            "candidate_mappings": [],
+            "unmapped_candidate_ids": [],
+            "reason": "No-change does not create an implementation Candidate",
+        },
         "two-sided-review": {
             "status": "not-warranted",
             "reason": "No consequential proposal",
@@ -281,24 +287,87 @@ def test_full_system_review_accepts_no_change_as_a_real_result() -> None:
     assert review["status"] == "completed"
     assert review["result"]["outcome"] == "no-change"
     assert len(review["stages"]) == len(SYSTEM_REVIEW_STAGES)
-    assert [item["backbone_step"] for item in review["stages"]] == [
+    assert [item["blueprint_step"] for item in review["stages"]] == [
         1,
         1,
         2,
         3,
         3,
-        3,
-        3,
+        4,
         4,
         5,
-        5,
-        5,
-        5,
-        5,
-        5,
-        5,
-        5,
+        None,
+        None,
+        None,
+        6,
+        7,
+        7,
+        8,
+        8,
+        8,
     ]
+    assert review["backbone"]["workflow"] == "new-blueprint-eight-steps"
+
+
+def test_complete_zero_observation_path_reaches_honest_no_change() -> None:
+    overrides = {
+        "project-assessment": {
+            "comparison_baseline": "The approved Plan",
+            "positive_delta": [],
+            "no_positive_delta_reason": "No material improvement was observed",
+            "negative_delta": [],
+            "no_negative_delta_reason": "No material problem was observed",
+        },
+        "issue-scan": {
+            **stage_result("issue-scan"),
+            "observations": [],
+            "coverage_complete": True,
+            "no_observation_reason": "The complete Project history contained no useful signal",
+        },
+        "project-patterns": {
+            "status": "no-pattern",
+            "observation_ids_considered": [],
+            "patterns": [],
+            "reason": "There are no observations to group",
+        },
+        "blueprint-mapping": {
+            "status": "no-candidates",
+            "candidate_mappings": [],
+            "unmapped_candidate_ids": [],
+            "reason": "No Pattern or solution created a Candidate",
+        },
+        "result": {
+            "outcome": "no-change",
+            "reason": "The complete review found no reason to change Fractal",
+            "response_units": [],
+            "zero_pattern_coverage_receipt": {
+                "coverage_complete": True,
+                "observation_count": 0,
+                "pattern_status": "no-pattern",
+                "reason": "Whole-Project coverage found no observation or Pattern",
+            },
+            "unmapped_pattern_ids": [],
+            "plain_handoff": {
+                "problem": "No material problem was observed.",
+                "solution": "Keep the current system unchanged.",
+                "decision": "Carson decides whether to accept No Change.",
+            },
+            "newcomer_shadow_handoff_number": 1,
+        },
+    }
+    review = start_system_review(completed_project())
+    for stage in SYSTEM_REVIEW_STAGES:
+        review = record_system_review_stage(
+            review,
+            stage=stage,
+            result=overrides.get(stage, stage_result(stage)),
+            evidence_ids=["evidence-zero"],
+            actor="primary-user" if stage == "your-decision" else None,
+            human_action=stage == "your-decision",
+        )
+    assert review["status"] == "completed"
+    assert review["readiness"]["pattern_ids"] == []
+    assert review["result"]["response_units"] == []
 
 
 def test_step_one_requires_deltas_whole_history_and_no_early_cause() -> None:
@@ -478,9 +547,7 @@ def test_solution_needed_rejects_cosmetic_or_misrouted_curiosity() -> None:
             )
         ],
     )
-    result["curiosity"]["route_results"][0]["findings"][0]["action_id"] = (
-        "research-latest-findings"
-    )
+    result["curiosity"]["route_results"][0]["findings"][0]["action_id"] = "research-latest-findings"
     with pytest.raises(SystemReviewError, match="wrong route"):
         _validate_system_review_stage("improvement-options", result)
 
@@ -539,7 +606,7 @@ def test_system_review_stages_cannot_skip_order() -> None:
 
 def test_final_suggestion_and_change_result_fail_closed() -> None:
     review = start_system_review(completed_project())
-    for stage in SYSTEM_REVIEW_STAGES[:12]:
+    for stage in SYSTEM_REVIEW_STAGES[:13]:
         review = record_system_review_stage(
             review,
             stage=stage,
@@ -769,9 +836,7 @@ def test_subtraction_first_reversal_and_change_proposal_authority() -> None:
         },
         evidence_ids=["evidence-local", "evidence-global"],
     )
-    assert later["learning_record"]["outcome_classification"] == (
-        "harmful-local-optimisation"
-    )
+    assert later["learning_record"]["outcome_classification"] == ("harmful-local-optimisation")
     assert proposal["learning_record"]["later_evaluations"] == []
 
 

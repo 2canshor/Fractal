@@ -1,29 +1,29 @@
 # Blueprint Implementation Gap
 
-- Blueprint Version: `0.1.0-candidate.4`
-- Active System Version Compared: `0.1.0-alpha.7-778bab7`
+- Blueprint Version: `0.1.0`
+- Active System Version Compared: `0.1.0-alpha.8-4f13d17`
 - Architecture Only: `0`
-- Partial: `21`
-- Implemented: `11`
+- Partial: `14`
+- Implemented: `18`
 
 > This audit describes source and retained execution evidence. It does not promote the Blueprint candidate or any donor implementation.
 
 | Blueprint Element | Assessment | Target Alignment | Retained Evidence | Gap |
 |---|---|---|---|---|
-| `continuous-improvement` | `partial` | `needs-blueprint-projection` | `continuous-improvement`: partially-implemented / not-applicable / verified-synthetic | The philosophy has existing orchestration evidence, but the active registry still projects the old five-step and Mechanisms hierarchy. |
-| `system-review` | `partial` | `needs-workflow-redesign` | `system-review`: implemented / staged / verified-synthetic | The active implementation enforces the old five-step workflow rather than the explicit Blueprint Steps. |
+| `continuous-improvement` | `partial` | `needs-blueprint-projection` | `continuous-improvement`: partially-implemented / not-applicable / verified-synthetic | The canonical registry now projects the Blueprint; live correction activation and fresh-turn verification remain pending. |
+| `system-review` | `implemented` | `needs-live-verification` | `system-review`: implemented / staged / verified-synthetic | The eight-step engine source is implemented; live correction activation and fresh-turn verification remain pending. |
 | `find-problems` | `implemented` | `aligned-core-concept` | `find-problems`: implemented / staged / verified-synthetic | The core behaviour exists; it still needs projection through the New Blueprint. |
 | `find-local-patterns` | `implemented` | `aligned-core-concept` | `find-local-patterns`: implemented / staged / verified-synthetic | The core behaviour exists; it still needs projection through the New Blueprint. |
-| `find-global-patterns` | `partial` | `needs-step-extraction` | `compare-history`: implemented / staged / verified-synthetic | Cross-Project comparison exists, but Find Global Patterns is not an explicit target Step with its own contract. |
-| `find-global-pattern-reasons` | `partial` | `needs-step-extraction` | `cause-research`: partially-implemented / staged / verified-synthetic | Cause Research exists as a supporting method, but causal reasoning for every Global Pattern is not an explicit enforced Step. |
-| `find-global-pattern-solutions` | `partial` | `needs-step-extraction` | `choose-system-response`: implemented / staged / verified-synthetic<br>`curiosity`: partially-implemented / staged / verified-synthetic | Solution search exists inside older Improvement Options and Curiosity contracts, not as one explicit Step per Global Pattern. |
-| `map-implementations-to-blueprint` | `partial` | `needs-workflow-redesign` | None | A deterministic Candidate Mapping contract and staged donor record now exist, but the active System Review workflow does not invoke them. |
-| `debate-global-pattern-solutions` | `partial` | `needs-step-extraction` | `two-sided-review`: partially-implemented / staged / verified-synthetic | Two-Sided Review exists, but debate is not yet an explicit Step covering every relevant Global Pattern solution. |
-| `present-decisions-one-by-one` | `partial` | `needs-step-extraction` | `system-review`: implemented / staged / verified-synthetic<br>`human-control`: implemented / staged / verified-staged | Plain-language handoff exists, but the target one-prepared-decision-at-a-time Step is not represented or enforced. |
+| `find-global-patterns` | `implemented` | `needs-live-verification` | `find-global-patterns`: implemented / staged / verified-synthetic | Find Global Patterns is an explicit active source Step; correction-version live verification remains pending. |
+| `find-global-pattern-reasons` | `implemented` | `needs-live-verification` | `cause-research`: partially-implemented / staged / verified-synthetic | Global Pattern reasons are an explicit Step with Cause Research as support; correction-version live verification remains pending. |
+| `find-global-pattern-solutions` | `implemented` | `needs-live-verification` | `find-global-pattern-solutions`: implemented / staged / verified-synthetic<br>`curiosity`: partially-implemented / staged / verified-synthetic | Global Pattern solution search is an explicit Step with Curiosity support; correction-version live verification remains pending. |
+| `map-implementations-to-blueprint` | `implemented` | `needs-live-verification` | None | The System Review engine now invokes deterministic Blueprint Mapping before debate; correction-version live verification remains pending. |
+| `debate-global-pattern-solutions` | `implemented` | `needs-live-verification` | `two-sided-review`: partially-implemented / staged / verified-synthetic | Debate is an explicit Step after Mapping with Two-Sided Review support; correction-version live verification remains pending. |
+| `present-decisions-one-by-one` | `implemented` | `needs-live-verification` | `system-review`: implemented / staged / verified-synthetic<br>`human-control`: implemented / staged / verified-staged | One-by-one presentation is an explicit active source Step; correction-version live verification remains pending. |
 | `fatigue` | `partial` | `needs-reclassification` | `fatigue`: partially-implemented / active / verified-live | Work Signature and live repetition evaluation exist, while the full Value remains partially defined. |
 | `curiosity` | `partial` | `needs-reclassification` | `curiosity`: partially-implemented / staged / verified-synthetic | The Value has staged synthetic evidence and open design questions rather than verified live end-to-end behaviour. |
 | `greed` | `partial` | `needs-reclassification` | `greed`: partially-implemented / staged / verified-synthetic | The Value has staged synthetic evidence and open design questions rather than verified live end-to-end behaviour. |
-| `project-review` | `partial` | `needs-reclassification` | `project-review`: partially-implemented / active / verified-synthetic | Whole-Project review exists, but the active system still projects the historical Project Review name and Secondary Mechanism role instead of Perspective. |
+| `project-review` | `partial` | `needs-reclassification` | `project-review`: partially-implemented / active / verified-synthetic | Perspective is the canonical human name; live generated surfaces must still pass the correction acceptance scan. |
 | `component-governance` | `implemented` | `needs-reclassification` | `component-governance`: implemented / active / verified-live | The implementation has verified-live evidence; the active architecture must reclassify Component Governance as Infrastructure Extra. |
 | `deterministic-over-probabilistic` | `implemented` | `needs-reclassification` | `deterministic-over-probabilistic`: implemented / active / verified-live | The implementation has verified-live evidence; the active architecture still calls it a Mechanism instead of a Principle. |
 | `quantity-over-quality` | `partial` | `needs-reclassification` | `quantity-over-quality`: partially-implemented / staged / verified-synthetic | High-recall collection is staged and synthetic rather than verified live as a Principle across the target Step. |
@@ -33,7 +33,7 @@
 | `naming-system` | `implemented` | `needs-reclassification` | `naming-system`: implemented / active / verified-synthetic | The implementation is active with synthetic evidence; live end-to-end outcome proof remains limited. |
 | `capability-check` | `implemented` | `needs-reclassification` | `capability-check`: implemented / active / verified-live | The implementation has verified-live evidence; only its Blueprint role changes to Infrastructure. |
 | `hooks` | `implemented` | `needs-reclassification` | `hooks`: implemented / active / verified-live | The implementation has verified-live evidence; only its Blueprint role changes to Infrastructure. |
-| `reality-check` | `partial` | `needs-role-redesign` | `reality-check`: implemented / staged / verified-synthetic | Reality Check is implemented as old Step 5. The target only classifies the core concept as Infrastructure and deliberately leaves its implementation open. |
+| `reality-check` | `partial` | `needs-role-redesign` | `reality-check`: implemented / staged / verified-synthetic | Reality Check is now mapped as supporting Infrastructure; live generated records must verify it no longer appears as a Step. |
 | `experiment` | `implemented` | `needs-reclassification` | `experiment`: implemented / not-applicable / verified-synthetic | A reversible trial implementation exists with synthetic evidence; the active architecture must reclassify it from Mechanism to Infrastructure Extra. |
 | `human-control` | `implemented` | `needs-reclassification` | `human-control`: implemented / staged / verified-staged | A staged Human Control view exists; it must stop reinforcing the old hierarchy before target alignment is complete. |
 | `donor-quarantine` | `partial` | `needs-donor-specialisation` | `component-governance`: implemented / active / verified-live | General component quarantine exists, but donor capability intake and architecture-authority stripping are not explicit. |

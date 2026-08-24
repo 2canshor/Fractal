@@ -11,13 +11,13 @@ ROOT = Path(__file__).parents[1]
 
 
 def test_system_version_is_initial_prerelease() -> None:
-    assert fractal.SYSTEM_VERSION == "0.1.0-alpha.8"
-    assert fractal.__version__ == "0.1.0a8"
+    assert fractal.SYSTEM_VERSION == "0.1.0-alpha.8-r1"
+    assert fractal.__version__ == "0.1.0a8.post1"
 
 
 def test_version_command_reports_system_version(capsys) -> None:
     assert main(["version"]) == 0
-    assert capsys.readouterr().out.strip() == "0.1.0-alpha.8"
+    assert capsys.readouterr().out.strip() == "0.1.0-alpha.8-r1"
 
 
 def test_technical_decisions_are_machine_readable() -> None:

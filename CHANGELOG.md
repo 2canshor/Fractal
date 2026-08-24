@@ -35,6 +35,7 @@ The format follows Keep a Changelog, and system versions follow Semantic Version
 
 ### Changed
 
+- Correction candidate `0.1.0-alpha.8-r1` makes Blueprint `0.1.0` the canonical active workflow source, replaces user-facing Project Review with Perspective, and replaces the legacy five-step System Review with the eight Blueprint Steps.
 - The corrective development candidate is now `0.1.0-alpha.8`; the New Blueprint and Steal remain explicit staged foundations and do not claim that the active workflow already implements the target hierarchy.
 
 - Codex user-surface planning now loads installed Plugins before Skill discovery and waits for the Plugin/Skill catalogue to reach a fixed point. Lazy Google Drive, template, Figma, history, or future Plugin Skills can no longer be omitted from the deny-list audit and then appear in the user menu after a false pass.

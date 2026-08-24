@@ -133,9 +133,7 @@ class CodexAppServerClient:
         while True:
             message = self.read_message(max(0.0, deadline - time.monotonic()))
             if message is None:
-                raise CodexAppServerError(
-                    "Timed out waiting for " + ", ".join(sorted(methods))
-                )
+                raise CodexAppServerError("Timed out waiting for " + ", ".join(sorted(methods)))
             if message.get("method") in methods:
                 return message
             self.notifications.append(message)
@@ -296,9 +294,7 @@ def reconcile_codex_components(
     hooks_response = client.request("hooks/list", {"cwds": [str(cwd)]})
     mcp_statuses = _all_mcp_status(client)
     apps = client.request("app/installed", {"forceRefresh": False}).get("apps", [])
-    config = client.request("config/read", {"cwd": str(cwd), "includeLayers": False})[
-        "config"
-    ]
+    config = client.request("config/read", {"cwd": str(cwd), "includeLayers": False})["config"]
     thread = client.request(
         "thread/start",
         {
@@ -489,9 +485,7 @@ def reconcile_codex_components(
             }
         ],
         "apps": [item["id"] for item in apps if item["id"] not in matched_apps],
-        "plugins": [
-            item["id"] for item in installed_plugins if item["id"] not in matched_plugins
-        ],
+        "plugins": [item["id"] for item in installed_plugins if item["id"] not in matched_plugins],
     }
     registered_skill_paths = {
         path
@@ -574,8 +568,7 @@ def render_codex_inspection(report: dict[str, Any]) -> str:
         "",
         f"AGENTS hierarchy matches the live Codex thread: "
         f"`{report['agents_hierarchy']['sources_match']}`",
-        f"External material waiting for review: "
-        f"`{len(report['legacy_review']['items'])}`",
+        f"External material waiting for review: `{len(report['legacy_review']['items'])}`",
     ]
     if unmanaged_count:
         lines.extend(
@@ -597,9 +590,7 @@ def resolve_agents_hierarchy(
     selected: list[Path] = []
     override = codex_home / "AGENTS.override.md"
     global_file = (
-        override
-        if override.is_file() and override.stat().st_size
-        else codex_home / "AGENTS.md"
+        override if override.is_file() and override.stat().st_size else codex_home / "AGENTS.md"
     )
     if global_file.is_file() and global_file.stat().st_size:
         selected.append(global_file)
@@ -673,9 +664,7 @@ def audit_agents_hierarchy(
         },
     )
     actual = [_normalise_path(path) for path in response.get("instructionSources", [])]
-    expected_paths = [
-        _normalise_path(item["path"]) for item in expected["selected_sources"]
-    ]
+    expected_paths = [_normalise_path(item["path"]) for item in expected["selected_sources"]]
     expected.update(
         actual_instruction_sources=actual,
         sources_match=expected_paths == actual,
@@ -761,9 +750,7 @@ def watch_codex_drift(
         response = client.request("fs/watch", {"path": str(path), "watchId": watch_id})
         watches.append({"watch_id": watch_id, "path": response["path"]})
     try:
-        message = client.wait_for_notification(
-            {"fs/changed", "skills/changed"}, timeout=timeout
-        )
+        message = client.wait_for_notification({"fs/changed", "skills/changed"}, timeout=timeout)
         return {
             "record_type": "codex-live-drift-event",
             "observed_at": utc_now(),
@@ -841,9 +828,7 @@ def audit_codex_config_projection(
             and locator.startswith("~/.codex/config.toml#mcp_servers.")
         ):
             desired[locator.rsplit(".", 1)[-1]] = component["status"]["active"]
-    actual = {
-        name: bool(configured.get(name, {}).get("enabled", True)) for name in desired
-    }
+    actual = {name: bool(configured.get(name, {}).get("enabled", True)) for name in desired}
     mismatched = sorted(name for name in desired if actual[name] != desired[name])
     desired_disabled_skill_paths: list[str] = []
     actual_disabled_skill_paths: list[str] = []
@@ -1028,14 +1013,10 @@ def trust_registered_codex_hooks(
         and _normalise_hook_event(hook["eventName"]) in expected_events
     ]
     untrusted = sorted(
-        hook["key"]
-        for hook in verified_hooks
-        if hook["trustStatus"] not in {"trusted", "managed"}
+        hook["key"] for hook in verified_hooks if hook["trustStatus"] not in {"trusted", "managed"}
     )
     if untrusted:
-        raise CodexAppServerError(
-            "Hook trust read-back failed for: " + ", ".join(untrusted)
-        )
+        raise CodexAppServerError("Hook trust read-back failed for: " + ", ".join(untrusted))
     return {
         "record_type": "codex-hook-trust-evidence",
         "status": "verified",
@@ -1077,19 +1058,14 @@ def _finalize_work_signature_evaluation(
                     for line in evaluations_path.read_text(encoding="utf-8").splitlines()
                     if line.strip()
                 ]
-            retained = [
-                item
-                for item in records
-                if item.get("work_id") != evaluation["work_id"]
-            ]
+            retained = [item for item in records if item.get("work_id") != evaluation["work_id"]]
             retained.append(evaluation)
             temporary = evaluations_path.with_name(
                 f".{evaluations_path.name}.{uuid.uuid4().hex}.tmp"
             )
             temporary.write_text(
                 "".join(
-                    json.dumps(item, ensure_ascii=False, sort_keys=True) + "\n"
-                    for item in retained
+                    json.dumps(item, ensure_ascii=False, sort_keys=True) + "\n" for item in retained
                 ),
                 encoding="utf-8",
             )
@@ -1178,9 +1154,7 @@ def verify_live_turn_completion(
         if captured is None:
             time.sleep(0.05)
     if captured is None:
-        raise CodexAppServerError(
-            "The live Stop Hook did not capture this thread_id and turn_id"
-        )
+        raise CodexAppServerError("The live Stop Hook did not capture this thread_id and turn_id")
     lightweight = WorkSignature(
         work_id=captured["work_id"],
         project_id=captured["project_id"],

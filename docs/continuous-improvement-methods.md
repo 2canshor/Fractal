@@ -1,54 +1,30 @@
-# Continuous Improvement Methodologies and Mechanisms
+# Continuous Improvement
 
-Continuous Improvement is Fractal's only Core Philosophy. System Review is its Protagonist Mechanism. The original five Steps and the three Values—Fatigue, Curiosity, and Greed—are its Methodologies. Project Review is its Secondary Mechanism. Deterministic Over Probabilistic and the operational Nodes described below are Mechanisms.
+Continuous Improvement is Fractal's Core Philosophy. System Review is its sole Protagonist and follows the eight Steps in the [Blueprint](blueprint.md).
 
-## Deterministic Over Probabilistic
+## Values
 
-Fractal uses deterministic programs for work with an exact answer: schema validation, state transitions, hashes, authority checks, routing, Work Signature capture, capability reconciliation, drift detection, and restore. Main Agent judgement begins where evidence needs interpretation, causal reasoning, trade-offs, or synthesis. The runtime records one of three routes for every bounded unit: `deterministic-program`, `deterministic-first-then-main-agent`, or `main-agent`.
+Fatigue, Curiosity, and Greed are `$` Deuteragonists in the Values Genre and carry the Signature Function Tag.
 
-For example, checking that all Project Review dimensions are present is a deterministic program. Deciding why a neglected area matters is Main Agent judgement. A mixed task first validates the complete evidence set, then gives that verified set to the Main Agent for interpretation.
+- **Fatigue** creates pressure to investigate repeated effort and diminishing return.
+- **Curiosity** explores a better current method, dated same-field findings, and a structurally related field.
+- **Greed** starts after genuine success and tests whether a materially stronger global outcome is possible.
 
-## Fatigue — Value
+Values contribute evidence; they do not own Steps or persistent authority.
 
-The live completion Hook captures one compact `Work Signature` per `thread_id + turn_id`. The Stop event creates the immediate lightweight record. When Codex App Server events are available, `turn/completed`, `thread/tokenUsage/updated`, and `item/completed` enrich that same record with completed, failed, or interrupted outcome, elapsed time, Token use, and compact Tool evidence. The enrichment cannot create a second record for the same turn or rewrite a final record. It does not copy prompts, conversations, Tool output, or raw work.
+## Principles
 
-Deterministic comparison handles clear matches first:
+- **Deterministic over Probabilistic**
+- **Quantity over Quality**
+- **Subtraction First**
+- **Global Outcome over Local Optimisation**
 
-- first occurrence: record only;
-- second substantially similar occurrence: possible repetition;
-- third: lightweight Improvement Investigation;
-- second may trigger early only when avoidable cost is already high;
-- testing, verification, and safety repetition is retained instead of labelled waste;
-- ambiguous shape uses a bounded semantic comparison payload containing only compact fields.
+A Principle is a direction Fractal keeps approaching, not a checkbox it can claim complete.
 
-An Improvement Investigation is read-only supporting analysis. Its result goes to Project Review, which decides what the active Project should do. If the finding concerns Fractal itself, it is also preserved for System Review after Project Completion.
+## Methods and Infrastructure
 
-Structural repetition is classified before action as accidental duplication, platform projection, independent guardrail, deliberate high-risk reinforcement, drift, or distinct. Only accidental duplication and drift may become removal candidates, and they still need an isolated trial and normal approval.
+Perspective is a `$` Method that sees the whole active Project. Cause Research, Two-Sided Review, and Steal are reusable `¢` Methods.
 
-## Curiosity — Value
+Reality Check, Experiment, Component Governance, Work Signature, Naming System, Capability Check, Hooks, Human Control, Donor Quarantine, Donor Registry, and Environment Adapters are `^` Infrastructure.
 
-Whenever Fractal needs to choose a solution, Curiosity supplies three bounded research paths before Improvement Options can select `delete`, `shorten`, `merge`, `simplify`, `reconfigure`, `modify`, or `add`. It also supplies the same structure to Project Review through a Fatigue investigation and to a pre-work/post-work Success Criteria Challenge:
-
-- 60% Improve Current Method;
-- 20% Research Latest Findings;
-- 20% Explore Related Fields.
-
-The percentages are initial effort shares, not a fabricated Token meter or a quota for findings. Each route records an honest outcome even when that outcome is `No Finding`. A latest finding needs a source and date. A related-field finding needs a concrete relationship. Research never adopts itself.
-
-The Improvement Options runtime enforces this rule. If the preferred response is anything except `no-change`, missing or malformed 60/20/20 evidence stops the review. A genuine `no-change` result records why no solution is needed. Pure execution of an already approved solution and pure verification do not create a second solution-selection loop.
-
-## Greed — Value
-
-A `Performance Baseline` is derived only from completed, independently verified, representative Project outcomes. Missing dimensions remain unknown. The Success Criteria Challenge may propose a stronger threshold only when the baseline supports it; unsupported numerical targets are not created.
-
-Pre-work and post-work are triggers of one Challenge, not two Methods. It cannot move the completion line during ordinary Project Work. A post-work higher-target failure cannot erase the original achievement, and every criteria version has a one-run loop guard in the lifecycle layer.
-
-## Trial Before Adoption
-
-An autonomous trial requires every safety fact: small, reversible, isolated, restore-tested, no real-data change, no external action, no new recipient, no cost, no Goal change, no scope expansion, no persistent change, and the same representative work. Missing any fact routes to a primary-user decision.
-
-Quality and outcome equivalence are checked before time or Token savings. A positive Project trial returns evidence to Project Review. A persistent system candidate is considered after Project Completion in System Review and keeps its System Version history.
-
-## Honest Status
-
-The exact effort meter, similarity weights, semantic threshold, retention, research budget, source-quality threshold, benchmark freshness, materiality threshold, and representative-trial rule remain Open Design. Version 0.1 has deterministic completion capture and repetition evaluation, but it does not run an autonomous background self-improvement loop. Investigation and adoption still follow Project and System authority.
+A Tool, Skill, Hook, Agent, Plugin, MCP, or donor package is implementation. It receives no architecture status merely because it is installed.

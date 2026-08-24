@@ -660,7 +660,7 @@ class AdapterBuilder:
                 'developer_instructions = """\n'
                 "Use only the compact Work Signatures and bounded evidence supplied.\n"
                 "Compare alternatives without changing Project or System state.\n"
-                "Return candidate findings to Project Review; mark system observations "
+                "Return candidate findings to Perspective; mark system observations "
                 "for later System Review.\n"
                 '"""\n',
             )
@@ -753,7 +753,7 @@ class AdapterBuilder:
                 "# Improvement Researcher\n\n"
                 "Use only the compact Work Signatures and bounded evidence supplied.\n"
                 "Compare alternatives without changing Project or System state.\n"
-                "Return candidate findings to Project Review; mark system observations "
+                "Return candidate findings to Perspective; mark system observations "
                 "for later System Review.\n",
             )
 

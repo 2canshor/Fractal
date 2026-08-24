@@ -129,9 +129,7 @@ def test_consequential_two_sided_review_cannot_be_skipped() -> None:
         "primary_user_requested": False,
     }
     with pytest.raises(ReviewContractError, match="requires Two-Sided Review"):
-        validate_two_sided_result(
-            {"status": "not-warranted", "reason": "skip", "warrant": warrant}
-        )
+        validate_two_sided_result({"status": "not-warranted", "reason": "skip", "warrant": warrant})
     result = validate_two_sided_result(
         {
             "status": "completed",

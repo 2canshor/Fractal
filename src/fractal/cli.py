@@ -61,9 +61,7 @@ def build_parser() -> argparse.ArgumentParser:
     live_state_parser = subparsers.add_parser(
         "live-state", help="Rebuild or verify the mutable runtime read model."
     )
-    live_state_actions = live_state_parser.add_subparsers(
-        dest="live_state_action", required=True
-    )
+    live_state_actions = live_state_parser.add_subparsers(dest="live_state_action", required=True)
     live_state_reconcile = live_state_actions.add_parser(
         "reconcile", help="Rebuild live state from canonical sources."
     )
@@ -134,9 +132,7 @@ def build_parser() -> argparse.ArgumentParser:
     component_show.add_argument(
         "--live-state",
         type=Path,
-        default=Path(
-            "~/Library/Application Support/Fractal/runtime/live-state/current.json"
-        ),
+        default=Path("~/Library/Application Support/Fractal/runtime/live-state/current.json"),
     )
     component_audit = component_actions.add_parser(
         "audit", help="Compare observed components with the registered active set."
@@ -394,9 +390,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 candidate = args.candidate.expanduser().resolve(strict=True)
                 visible_skill_paths = {
                     item["entry_id"]: str(
-                        (candidate / "skills" / item["entry_id"] / "SKILL.md").resolve(
-                            strict=True
-                        )
+                        (candidate / "skills" / item["entry_id"] / "SKILL.md").resolve(strict=True)
                     )
                     for item in surface["entries"]
                 }
@@ -429,9 +423,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 candidate = args.candidate.expanduser().resolve(strict=True)
                 visible_skill_paths = {
                     item["entry_id"]: str(
-                        (candidate / "skills" / item["entry_id"] / "SKILL.md").resolve(
-                            strict=True
-                        )
+                        (candidate / "skills" / item["entry_id"] / "SKILL.md").resolve(strict=True)
                     )
                     for item in surface["entries"]
                 }

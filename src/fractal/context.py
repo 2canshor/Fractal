@@ -107,8 +107,8 @@ def rebuild_context_index(
                 source_id = f"{source['root_id']}:{relative.as_posix()}"
                 locator = f"{source['root_id']}://{relative.as_posix()}"
                 title = _extract_title(path, text)
-                modified_at = datetime.fromtimestamp(stat.st_mtime, UTC).isoformat().replace(
-                    "+00:00", "Z"
+                modified_at = (
+                    datetime.fromtimestamp(stat.st_mtime, UTC).isoformat().replace("+00:00", "Z")
                 )
                 cursor = connection.execute(
                     """
@@ -212,9 +212,7 @@ def assemble_context_package(
         "record_type": "context-package",
         "record_version": 1,
         "package_id": f"context-{uuid.uuid4()}",
-        "retrieved_at": datetime.now(UTC).isoformat(timespec="microseconds").replace(
-            "+00:00", "Z"
-        ),
+        "retrieved_at": datetime.now(UTC).isoformat(timespec="microseconds").replace("+00:00", "Z"),
         "request": {
             "query": request.query,
             "purpose": request.purpose,

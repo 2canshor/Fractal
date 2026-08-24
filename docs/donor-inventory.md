@@ -1,7 +1,7 @@
 # Donor Inventory
 
 - Observed At: `2026-08-24`
-- Blueprint Version: `0.1.0-candidate.4`
+- Blueprint Version: `0.1.0`
 
 > Repository contents were inspected at exact commits. Inventory status does not install, approve or activate donor code.
 

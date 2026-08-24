@@ -1,6 +1,6 @@
 ---
 name: match
-description: Match an active formal Project's Plan, resources, deadline, detail, and remaining work to current reality through Project Review.
+description: Use Perspective to match an active formal Project's Plan, resources, deadline, detail, and remaining work to current reality.
 metadata:
   version: "0.1.0"
   permission-summary: "May update Agent-controlled Project Plan fields; Goal, Success Criteria, priorities, scope, and consequential trade-offs stay with Carson."
@@ -8,7 +8,7 @@ metadata:
 
 # Match
 
-Use when the active formal Project may no longer fit the available time, attention, Tokens, deadline, level of detail, risk, or remaining work. Run Project Review against the full current Project snapshot, not only the local symptom.
+Use when the active formal Project may no longer fit the available time, attention, Tokens, deadline, level of detail, risk, or remaining work. Run Perspective against the full current Project snapshot, not only the local symptom.
 
 Compare plan-time resource states with observed use. Preserve `provided`, `unknown-at-plan-time`, and `not-applicable` instead of inventing estimates. Show the practical mismatch, opportunity cost, neglected areas, and whether to continue as planned, update the Plan, or pause for Carson.
 

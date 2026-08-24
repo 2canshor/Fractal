@@ -64,18 +64,18 @@ def validate_plan_resources(resources: list[dict[str, Any]]) -> None:
 
 def _validate_project_review_resources(resources: list[dict[str, Any]]) -> None:
     if not isinstance(resources, list):
-        raise LifecycleError("Project Review requires planned-versus-actual resource records")
+        raise LifecycleError("Perspective requires planned-versus-actual resource records")
     dimensions = {item.get("dimension") for item in resources if isinstance(item, dict)}
     if not dimensions >= PROJECT_RESOURCE_DIMENSIONS:
         missing = sorted(PROJECT_RESOURCE_DIMENSIONS.difference(dimensions))
-        raise LifecycleError(f"Project Review resource comparison is missing: {missing}")
+        raise LifecycleError(f"Perspective resource comparison is missing: {missing}")
     for item in resources:
         if not isinstance(item, dict):
-            raise LifecycleError("Project Review resource entries must be typed records")
+            raise LifecycleError("Perspective resource entries must be typed records")
         if item.get("status") not in {"within-plan", "over-plan", "under-plan", "unknown"}:
-            raise LifecycleError("Project Review resource entry requires a comparison status")
+            raise LifecycleError("Perspective resource entry requires a comparison status")
         if not str(item.get("unit", "")).strip() or not str(item.get("reason", "")).strip():
-            raise LifecycleError("Project Review resource entry requires unit and reason")
+            raise LifecycleError("Perspective resource entry requires unit and reason")
         planned = item.get("planned")
         actual = item.get("actual")
         if item["status"] == "unknown":
@@ -87,7 +87,7 @@ def _validate_project_review_resources(resources: list[dict[str, Any]]) -> None:
 
 def _validate_neglected_areas(areas: list[dict[str, Any]]) -> None:
     if not isinstance(areas, list):
-        raise LifecycleError("Project Review requires a neglected-area assessment")
+        raise LifecycleError("Perspective requires a neglected-area assessment")
     for item in areas:
         if not isinstance(item, dict) or not str(item.get("area", "")).strip():
             raise LifecycleError("Neglected-area records require an area")
@@ -270,10 +270,10 @@ class LifecycleController:
     ) -> WriteResult:
         """Record a checkpoint that requires a whole-Project review."""
         if trigger not in {"checkpoint", "risk", "deviation", "failure", "human_request"}:
-            raise LifecycleError(f"Unsupported Project Review trigger: {trigger}")
+            raise LifecycleError(f"Unsupported Perspective trigger: {trigger}")
         inferred_kind = "milestone" if trigger == "checkpoint" else "exception"
         if review_kind is not None and review_kind != inferred_kind:
-            raise LifecycleError(f"Trigger {trigger} requires a {inferred_kind} Project Review")
+            raise LifecycleError(f"Trigger {trigger} requires a {inferred_kind} Perspective")
         point = {
             "id": f"review-point-{uuid.uuid4()}",
             "trigger": trigger,
@@ -431,13 +431,13 @@ class LifecycleController:
         extra = sorted(set(whole_project_assessment).difference(PROJECT_REVIEW_DIMENSIONS))
         if missing or extra:
             raise LifecycleError(
-                "Project Review must assess every whole-Project dimension; "
+                "Perspective must assess every whole-Project dimension; "
                 f"missing={missing}, extra={extra}"
             )
         _validate_project_review_resources(planned_vs_actual_resources)
         _validate_neglected_areas(neglected_areas)
         if not opportunity_cost.strip():
-            raise LifecycleError("Project Review requires an explicit opportunity cost")
+            raise LifecycleError("Perspective requires an explicit opportunity cost")
         if (
             continuation_decision.get("decision")
             not in {
@@ -447,13 +447,11 @@ class LifecycleController:
             }
             or not continuation_decision.get("justification", "").strip()
         ):
-            raise LifecycleError(
-                "Project Review requires a continuation decision and justification"
-            )
+            raise LifecycleError("Perspective requires a continuation decision and justification")
         points = copy.deepcopy(lifecycle["review_points"])
         open_points = [point for point in points if point["status"] == "open"]
         if not open_points:
-            raise LifecycleError("Project Review requires an open Review Point")
+            raise LifecycleError("Perspective requires an open Review Point")
         for point in points:
             if point["status"] == "open":
                 point["status"] = "reviewed"

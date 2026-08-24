@@ -70,9 +70,10 @@ class VersionStore:
         self._validate_version(version)
         if set(verification) != self.REQUIRED_VERIFICATIONS or not all(verification.values()):
             raise VersionError("Every build, test, adapter, migration, and restore gate must pass")
-        if re.fullmatch(r"[a-f0-9]{40}", public_commit) is None or re.fullmatch(
-            r"[a-f0-9]{40}", private_commit
-        ) is None:
+        if (
+            re.fullmatch(r"[a-f0-9]{40}", public_commit) is None
+            or re.fullmatch(r"[a-f0-9]{40}", private_commit) is None
+        ):
             raise VersionError("System Version commits must be full Git object ids")
         if not restore_point:
             raise VersionError("System Version requires a restore point")

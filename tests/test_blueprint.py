@@ -9,13 +9,32 @@ from fractal.blueprint import load_blueprint, render_blueprint, validate_bluepri
 
 ROOT = Path(__file__).resolve().parents[1]
 
+ACTIVE_WORKFLOW_SOURCES = [
+    "README.md",
+    "ARCHITECTURE.md",
+    "capabilities/skills/complete/SKILL.md",
+    "capabilities/skills/match/SKILL.md",
+    "capabilities/skills/project-review/SKILL.md",
+    "capabilities/skills/system-review/SKILL.md",
+    "docs/agentic-element-map.md",
+    "docs/architecture-lineage.md",
+    "docs/continuous-improvement-methods.md",
+    "docs/product-introduction.md",
+    "docs/project-lifecycle.md",
+    "docs/system-review-and-versioning.md",
+    "src/fractal/data/agentic-element-map.json",
+    "src/fractal/data/method-registry.json",
+    "src/fractal/data/node-implementation-map.json",
+    "src/fractal/system_review.py",
+]
 
-def test_candidate_blueprint_is_valid_and_not_active() -> None:
+
+def test_blueprint_is_canonical_and_pointer_activated() -> None:
     blueprint = load_blueprint()
-    assert blueprint["lifecycle"]["status"] == "candidate"
-    assert blueprint["lifecycle"]["active"] is False
+    assert blueprint["lifecycle"]["status"] == "canonical"
+    assert blueprint["lifecycle"]["active_state_source"] == "system-version-pointer"
     assert blueprint["core"]["protagonist"]["element_id"] == "system-review"
-    assert blueprint["blueprint_version"] == "0.1.0-candidate.4"
+    assert blueprint["blueprint_version"] == "0.1.0"
 
 
 def test_new_steps_are_explicit_and_reality_check_is_infrastructure() -> None:
@@ -130,11 +149,29 @@ def test_blueprint_rejects_donor_authority_and_false_activation() -> None:
         validate_blueprint(blueprint)
 
     blueprint = copy.deepcopy(load_blueprint())
-    blueprint["lifecycle"]["active"] = True
-    with pytest.raises(ValueError, match="cannot claim active"):
+    blueprint["lifecycle"]["active_state_source"] = "blueprint-file"
+    with pytest.raises(ValueError, match="System Version pointer"):
         validate_blueprint(blueprint)
 
 
 def test_rendered_blueprint_document_matches_the_validated_source() -> None:
     expected = render_blueprint()
     assert (ROOT / "docs" / "blueprint.md").read_text(encoding="utf-8") == expected
+
+
+def test_active_workflow_sources_cannot_regress_to_the_old_architecture() -> None:
+    forbidden = {
+        "five-step",
+        "Five Steps",
+        "Secondary Mechanism",
+        "Choose the System Response",
+        "Step 5: Reality Check",
+        "Project Review",
+    }
+    findings = []
+    for relative in ACTIVE_WORKFLOW_SOURCES:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        for phrase in forbidden:
+            if phrase in text:
+                findings.append(f"{relative}: {phrase}")
+    assert findings == []

@@ -87,9 +87,7 @@ class LiveRuntimeStateStore:
     ) -> dict[str, Any]:
         """Refresh the System Version half after activation or restore only."""
         active_pointer_path = Path(active_pointer_path).resolve()
-        system_version = self._system_version_state(
-            active_pointer_path, supplied_pointer=pointer
-        )
+        system_version = self._system_version_state(active_pointer_path, supplied_pointer=pointer)
         return self._merge_and_write(system_version=system_version)
 
     def reconcile(
@@ -241,9 +239,7 @@ class LiveRuntimeStateStore:
     @staticmethod
     def _atomic_json_write(path: Path, value: dict[str, Any]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        descriptor, temporary_name = tempfile.mkstemp(
-            prefix=f".{path.name}.", dir=path.parent
-        )
+        descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
         temporary_path = Path(temporary_name)
         try:
             with os.fdopen(descriptor, "w", encoding="utf-8") as stream:

@@ -6,6 +6,8 @@ import json
 from importlib.resources import files
 from typing import Any
 
+from fractal.blueprint import load_blueprint
+
 VALID_STATUSES = {
     "architecture-baseline",
     "approved-technical-decision",
@@ -94,42 +96,56 @@ def load_method_registry() -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if [item["id"] for item in value["core_philosophies"]] != ["continuous-improvement"]:
         raise ValueError("Continuous Improvement must be the only Core Philosophy")
+    blueprint = load_blueprint()
+    if value.get("blueprint_version") != blueprint["blueprint_version"]:
+        raise ValueError("Method registry and Blueprint versions disagree")
     if [item["id"] for item in value["protagonist_mechanisms"]] != ["system-review"]:
-        raise ValueError("System Review must be the Protagonist Mechanism")
+        raise ValueError("System Review must be the sole Protagonist")
     if [item["id"] for item in value["secondary_mechanisms"]] != ["project-review"]:
-        raise ValueError("Project Review must be the Secondary Mechanism")
+        raise ValueError("Perspective compatibility identity is missing")
+    perspective = value["secondary_mechanisms"][0]
+    if (
+        perspective["human_name"] != "Perspective"
+        or perspective.get("blueprint_genre") != "methods"
+        or perspective.get("blueprint_marker") != "$"
+    ):
+        raise ValueError("Perspective must be a Methods Deuteragonist")
 
     methodologies = value["methodologies"]
-    five_steps = [item for item in methodologies if item.get("methodology_kind") == "five-step"]
+    steps = [item for item in methodologies if item.get("methodology_kind") == "blueprint-step"]
     three_values = [item for item in methodologies if item.get("methodology_kind") == "three-value"]
-    if [item["sequence"] for item in five_steps] != [1, 2, 3, 4, 5]:
-        raise ValueError("The five-step Methodology must preserve Steps 1 to 5")
+    blueprint_steps = next(
+        genre["elements"] for genre in blueprint["genres"] if genre["genre_id"] == "steps"
+    )
+    if [item["id"] for item in steps] != [item["element_id"] for item in blueprint_steps]:
+        raise ValueError("Method registry Steps do not match the Blueprint")
+    if [item["sequence"] for item in steps] != list(range(1, 9)):
+        raise ValueError("The active System Review must preserve Blueprint Steps 1 to 8")
+    if [item["human_name"] for item in steps] != [
+        f"Step {item['sequence']}: {item['human_name']}" for item in blueprint_steps
+    ]:
+        raise ValueError("Method registry Step names do not match the Blueprint")
     if [item["id"] for item in three_values] != ["fatigue", "curiosity", "greed"]:
         raise ValueError("The three Values must be Fatigue, Curiosity, and Greed")
-    if len(methodologies) != 8:
-        raise ValueError("Methodologies must contain exactly the five Steps and three Values")
+    if len(methodologies) != 11:
+        raise ValueError("Methodologies must contain exactly eight Steps and three Values")
     for methodology in three_values:
         if (
-            methodology["decision_status"]
-            != "intent-established-methodology-partially-defined"
+            methodology["decision_status"] != "intent-established-methodology-partially-defined"
             or not methodology.get("open_questions")
             or not methodology.get("evidence_requirement")
         ):
             raise ValueError(
-                "Three-Value Methodology lacks its open design record: "
-                f"{methodology['id']}"
+                f"Three-Value Methodology lacks its open design record: {methodology['id']}"
             )
 
     mechanism_ids = {item["id"] for item in value["mechanisms"]}
     required_mechanisms = {
-        "deterministic-over-probabilistic",
-        "quantity-over-quality",
-        "subtraction-first",
-        "global-outcome-over-local-optimisation",
-        "work-signature",
-        "naming-system",
-        "capability-check",
-        "hooks",
+        element["element_id"]
+        for genre in blueprint["genres"]
+        if genre["genre_id"] in {"principles", "infrastructure", "methods"}
+        for element in genre["elements"]
+        if element["element_id"] != "project-review"
     }
     if not required_mechanisms <= mechanism_ids:
         missing = sorted(required_mechanisms - mechanism_ids)
@@ -145,6 +161,11 @@ def load_method_registry() -> dict[str, Any]:
             raise ValueError(f"Invalid Decision Status: {item['decision_status']}")
         if not item.get("operational_mapping"):
             raise ValueError(f"Missing operational mapping: {item['id']}")
+        if item["id"] not in {
+            "continuous-improvement",
+            "system-review",
+        } and (not item.get("blueprint_genre") or not item.get("blueprint_marker")):
+            raise ValueError(f"Missing Blueprint classification: {item['id']}")
     return value
 
 
@@ -154,9 +175,7 @@ def load_agentic_element_map() -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     registry = load_method_registry()
     expected_ids = {
-        item["id"]
-        for section in METHOD_REGISTRY_SECTIONS
-        for item in registry[section]
+        item["id"] for section in METHOD_REGISTRY_SECTIONS for item in registry[section]
     }
     mappings = value["mappings"]
     mapped_ids = [item["node_id"] for item in mappings]

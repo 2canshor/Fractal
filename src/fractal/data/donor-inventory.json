@@ -2,7 +2,7 @@
   "record_type": "donor-inventory",
   "record_version": 1,
   "observed_at": "2026-08-24",
-  "blueprint_version": "0.1.0-candidate.4",
+  "blueprint_version": "0.1.0",
   "claim_boundary": "Repository contents were inspected at exact commits. Inventory status does not install, approve or activate donor code.",
   "donors": [
     {

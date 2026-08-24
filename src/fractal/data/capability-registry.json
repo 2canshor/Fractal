@@ -106,7 +106,7 @@
     },
     {
       "capability_id": "project-review",
-      "human_name": "Project Review",
+      "human_name": "Perspective",
       "owner": "fractal",
       "source": "capabilities/skills/project-review",
       "version": "0.1.0",

@@ -1,11 +1,11 @@
-# Project Lifecycle and Project Review
+# Project Lifecycle and Perspective
 
 Fractal turns an initial request into a formal Project through this visible path:
 
 ```text
 Brief -> Project Direction -> Background Research <-> Clarification
       -> Goal -> Success Criteria + Priorities -> Project Plan
-      -> Project Work <-> Project Review -> Project Completion
+      -> Project Work <-> Perspective -> Project Completion
 ```
 
 The Project record is versioned, so its current position and earlier Plans remain readable.
@@ -40,7 +40,7 @@ The trigger identifies why the review starts. The review then checks the whole P
 8. resources and deadline;
 9. remaining work.
 
-The result records the Project snapshot, Review Points, conclusion, confidence, Plan delta, evidence, and Biggest Remaining Concern. It also proves which whole-Project snapshot and dimensions were assessed, compares planned and actual time and attention, marks neglected areas, states the opportunity cost, and records whether the Project continues as planned, continues with a Plan update, or pauses for Carson's decision. Supporting signals from Fatigue, Curiosity, Greed, Work Signatures, research, or tests enter as evidence. Project Review makes the current-Project decision.
+The result records the Project snapshot, Review Points, conclusion, confidence, Plan delta, evidence, and Biggest Remaining Concern. It also proves which whole-Project snapshot and dimensions were assessed, compares planned and actual time and attention, marks neglected areas, states the opportunity cost, and records whether the Project continues as planned, continues with a Plan update, or pauses for Carson's decision. Supporting signals from Fatigue, Curiosity, Greed, Work Signatures, research, or tests enter as evidence. Perspective makes the current-Project decision.
 
 ## Plan History
 

@@ -200,9 +200,7 @@ def test_platform_runtime_observes_live_projection_not_source_artifact(tmp_path:
         "target": str(live),
         "expected_sha256": tree_sha256(live),
     }
-    registry = load_component_registry(
-        write_registry(tmp_path / "registry.json", [runtime])
-    )
+    registry = load_component_registry(write_registry(tmp_path / "registry.json", [runtime]))
     tools = tmp_path / "tools.json"
     tools.write_text(json.dumps({"platform_version": "test", "tools": []}))
     observed = observe_platform_components(
@@ -265,9 +263,9 @@ def test_live_platform_surface_is_registered_and_extra_item_drifts(tmp_path: Pat
         configured_mcp=[],
         platform_surface_path=surface,
     )
-    assert audit_component_drift(registry, observed["components"], platform="claude")[
-        "clean"
-    ] is True
+    assert (
+        audit_component_drift(registry, observed["components"], platform="claude")["clean"] is True
+    )
 
     live_surface["tools"].append("Write")
     surface.write_text(json.dumps(live_surface))
@@ -290,9 +288,7 @@ def test_gemini_observes_generated_skills_in_config_directory(tmp_path: Path) ->
     research = component("research")
     research["platforms"] = ["gemini"]
     research["projection"]["expected_sha256"] = tree_sha256(live)
-    registry = load_component_registry(
-        write_registry(tmp_path / "registry.json", [research])
-    )
+    registry = load_component_registry(write_registry(tmp_path / "registry.json", [research]))
     tools = tmp_path / "tools.json"
     tools.write_text(json.dumps({"platform_version": "test", "tools": []}))
     observed = observe_platform_components(

@@ -39,6 +39,5 @@ def search_project_index(database_path: Path, query: str) -> list[dict[str, Any]
             (query,),
         ).fetchall()
     return [
-        {"project_id": row[0], "title": row[1], "status": row[2], "rank": row[3]}
-        for row in rows
+        {"project_id": row[0], "title": row[1], "status": row[2], "rank": row[3]} for row in rows
     ]

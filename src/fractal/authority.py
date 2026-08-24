@@ -53,9 +53,7 @@ def verify_primary_user_turn(evidence: dict[str, str]) -> dict[str, str]:
     if payload.get("role") != "user" or metadata.get("turn_id") != evidence["turn_id"]:
         raise ReceiptError("Authority message does not belong to the stated primary-user turn")
     texts = [
-        block["text"]
-        for block in payload.get("content", [])
-        if block.get("type") == "input_text"
+        block["text"] for block in payload.get("content", []) if block.get("type") == "input_text"
     ]
     # Matches `jq -r ... .text | shasum -a 256`: jq adds one output newline.
     digest = hashlib.sha256(("\n".join(texts) + "\n").encode()).hexdigest()

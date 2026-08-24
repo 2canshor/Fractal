@@ -1,4 +1,6 @@
-# Architecture Alignment: Build Impact
+# Historical Architecture Alignment: Build Impact
+
+> Historical implementation evidence only. The canonical current workflow architecture is [Fractal Blueprint](blueprint.md). Legacy names below do not control active runtime behaviour.
 
 This document records the runtime work created by the Architecture Lineage correction. The hierarchy and agentic-element mapping are now built in the public candidate. The current live candidate still represents the earlier runtime.
 

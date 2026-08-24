@@ -1,350 +1,881 @@
 {
-  "record_type": "node-implementation-map",
-  "record_version": 2,
-  "system_version": "0.1.0-alpha.8",
-  "status": "initial-build-mapping",
-  "architecture_alignment_status": "hierarchy-and-agentic-element-mapping-recorded",
   "agentic_element_map": "agentic-element-map.json",
+  "architecture_alignment_status": "hierarchy-and-agentic-element-mapping-recorded",
+  "blueprint_version": "0.1.0",
   "change_policy": {
-    "evidence_required": true,
-    "allowed_proposals": ["add", "remove", "replace", "merge", "split"],
-    "active_change_requires_system_version_approval": true
+    "active_change_requires_system_version_approval": true,
+    "allowed_proposals": [
+      "add",
+      "remove",
+      "replace",
+      "merge",
+      "split"
+    ],
+    "evidence_required": true
   },
   "lineage_contract": {
-    "canonical_baseline_id": "method-registry-0.1.0-alpha.8",
-    "canonical_baseline_sha256": "61c72b4490dcbc309cceee4d2ce8be7849a010d118ca9a3ead62e0dcd180b13d",
-    "core_identity": "Protect the whole trajectory of an active Project through Project Review, then improve Fractal between completed Projects through System Review.",
+    "allowed_lineage_classes": [
+      "original-backbone",
+      "supporting-infrastructure",
+      "separately-approved-later-capability"
+    ],
+    "canonical_baseline_id": "method-registry-0.1.0-alpha.8-r1",
+    "canonical_baseline_sha256": "baa82a5fcab711a064b3902f84a0584762c00fd09a5d9190a49d1ccdb366589f",
+    "core_identity": "Use Perspective while a Project is active, then run the eight-step System Review after primary-user Project Completion.",
+    "original_system_review_backbone": [
+      {
+        "implemented_by": [
+          "project-assessment",
+          "positive-delta",
+          "negative-delta",
+          "issue-scan",
+          "quantity-over-quality"
+        ],
+        "name": "find-problems",
+        "original_question": "Collect the broad Project evidence before narrowing or explaining it.",
+        "step": 1
+      },
+      {
+        "implemented_by": [
+          "project-patterns",
+          "causal-interpretation",
+          "observation-cause-separation"
+        ],
+        "name": "find-local-patterns",
+        "original_question": "Identify meaningful local recurrence without confusing surface similarity with cause.",
+        "step": 2
+      },
+      {
+        "implemented_by": [
+          "cross-project-patterns",
+          "reversal-check",
+          "history-comparison"
+        ],
+        "name": "find-global-patterns",
+        "original_question": "Compare patterns across the relevant Project and improvement history before treating them as isolated.",
+        "step": 3
+      },
+      {
+        "implemented_by": [
+          "cause-research",
+          "reconciliation",
+          "causal-uncertainty"
+        ],
+        "name": "find-global-pattern-reasons",
+        "original_question": "Make the causal reasoning for every Global Pattern explicit, including uncertainty and counterevidence.",
+        "step": 4
+      },
+      {
+        "implemented_by": [
+          "curiosity",
+          "improvement-options",
+          "subtraction-first"
+        ],
+        "name": "find-global-pattern-solutions",
+        "original_question": "Search for possible responses to every Global Pattern without allowing one preferred implementation to end the search.",
+        "step": 5
+      },
+      {
+        "implemented_by": [
+          "blueprint-mapping",
+          "addition-priority",
+          "donor-authority-removal"
+        ],
+        "name": "map-implementations-to-blueprint",
+        "original_question": "Classify every Candidate implementation by its true Blueprint role and apply the rules of its Genre before debate.",
+        "step": 6
+      },
+      {
+        "implemented_by": [
+          "two-sided-review",
+          "case-for",
+          "case-against",
+          "final-synthesis"
+        ],
+        "name": "debate-global-pattern-solutions",
+        "original_question": "Challenge the mapped solutions for every Global Pattern before Carson is asked to decide.",
+        "step": 7
+      },
+      {
+        "implemented_by": [
+          "human-control",
+          "plain-handoff",
+          "biggest-remaining-concern",
+          "your-decision"
+        ],
+        "name": "present-decisions-one-by-one",
+        "original_question": "Present one fully prepared human-scale decision at a time without hiding the remaining decision set.",
+        "step": 8
+      }
+    ],
     "required_fields_for_major_nodes": [
       "original_requirement",
       "original_failure_mode",
       "later_refinements",
       "implemented_by",
       "lineage_class"
-    ],
-    "allowed_lineage_classes": [
-      "original-backbone",
-      "supporting-infrastructure",
-      "separately-approved-later-capability"
-    ],
-    "original_system_review_backbone": [
-      {
-        "step": 1,
-        "name": "find-problems",
-        "original_question": "What can we learn from the whole Project before filtering or explaining it?",
-        "principle": "Quantity over Quality",
-        "implemented_by": ["project-assessment", "positive-delta", "negative-delta", "issue-scan"]
-      },
-      {
-        "step": 2,
-        "name": "find-local-patterns",
-        "original_question": "Why may these observations have happened, and which ones express the same system behaviour?",
-        "implemented_by": ["project-patterns", "causal-interpretation"]
-      },
-      {
-        "step": 3,
-        "name": "compare-history",
-        "original_question": "What did Fractal previously believe, change, and observe afterward?",
-        "implemented_by": ["cross-project-patterns", "reversal-check", "cause-research", "external-research", "internal-review", "reconciliation"]
-      },
-      {
-        "step": 4,
-        "name": "choose-system-response",
-        "original_question": "Can the current system solve this through deletion, simplification, reconfiguration, or modification?",
-        "implemented_by": ["improvement-options", "subtraction-first", "three-value-evidence", "experiments", "capability-evidence"]
-      },
-      {
-        "step": 5,
-        "name": "reality-check",
-        "original_question": "Did Fractal actually improve, or did it merely change?",
-        "implemented_by": ["expected-effect", "local-effect", "global-effect", "two-sided-review", "final-assessment", "biggest-remaining-concern", "result", "your-decision", "later-outcome-evaluation"]
-      }
     ]
   },
   "nodes": [
     {
-      "component_id": "project-direction",
-      "human_name": "Project Direction",
-      "class": "lifecycle",
-      "implementation_status": "implemented",
-      "decision_status": "approved-technical-decision",
-      "purpose": "Keep outcome, deliverable, completion standard, and exclusions explicit before formal work.",
-      "trigger": ["formal-project-start", "material-direction-change"],
-      "non_trigger": ["small-clear-reversible-task", "wording-only-change"],
-      "preconditions": ["project-record-exists", "authority-source-is-known"],
-      "stop_condition": ["four-summaries-confirmed", "human-authority-missing"],
-      "fallback": ["keep-direction-provisional", "request-primary-user-decision"],
-      "inputs": ["brief", "research", "clarification", "approved-build-scope"],
-      "outputs": ["versioned-direction", "confirmation-event", "summary-hash"],
       "authority": "Main Agent may draft; only the primary user confirms or materially reconfirms.",
-      "executor": ["main-agent", "python-schema-and-authority-check"],
-      "checks": ["four-fields-present", "material-change-reason", "summary-hash"],
-      "evidence": ["canonical-direction", "event-journal", "authority-source"],
+      "change_failure_path": "Keep the last confirmed direction and create a Request Decision.",
+      "checks": [
+        "four-fields-present",
+        "material-change-reason",
+        "summary-hash"
+      ],
+      "class": "lifecycle",
+      "component_id": "project-direction",
+      "decision_status": "approved-technical-decision",
+      "evaluation": {
+        "boundary": [
+          "same-summary-idempotence",
+          "material-reconfirmation"
+        ],
+        "false_positive": [
+          "wording-change-treated-as-material"
+        ],
+        "missed_trigger": [
+          "material-outcome-change-without-reconfirmation"
+        ],
+        "negative": [
+          "agent-self-confirmation"
+        ],
+        "positive": [
+          "valid-human-confirmation"
+        ]
+      },
+      "evidence": [
+        "canonical-direction",
+        "event-journal",
+        "authority-source"
+      ],
+      "executor": [
+        "main-agent",
+        "python-schema-and-authority-check"
+      ],
+      "fallback": [
+        "keep-direction-provisional",
+        "request-primary-user-decision"
+      ],
+      "human_name": "Project Direction",
       "human_view": "Shows confirmation status and four short summaries.",
-      "evaluation": {
-        "positive": ["valid-human-confirmation"],
-        "negative": ["agent-self-confirmation"],
-        "boundary": ["same-summary-idempotence", "material-reconfirmation"],
-        "false_positive": ["wording-change-treated-as-material"],
-        "missed_trigger": ["material-outcome-change-without-reconfirmation"]
-      },
-      "version": "1.0.0",
-      "change_failure_path": "Keep the last confirmed direction and create a Request Decision."
+      "implementation_status": "implemented",
+      "inputs": [
+        "brief",
+        "research",
+        "clarification",
+        "approved-build-scope"
+      ],
+      "non_trigger": [
+        "small-clear-reversible-task",
+        "wording-only-change"
+      ],
+      "outputs": [
+        "versioned-direction",
+        "confirmation-event",
+        "summary-hash"
+      ],
+      "preconditions": [
+        "project-record-exists",
+        "authority-source-is-known"
+      ],
+      "purpose": "Keep outcome, deliverable, completion standard, and exclusions explicit before formal work.",
+      "stop_condition": [
+        "four-summaries-confirmed",
+        "human-authority-missing"
+      ],
+      "trigger": [
+        "formal-project-start",
+        "material-direction-change"
+      ],
+      "version": "1.0.0"
     },
     {
-      "component_id": "success-criteria",
-      "human_name": "Success Criteria",
-      "class": "lifecycle",
-      "implementation_status": "implemented",
-      "decision_status": "approved-technical-decision",
-      "purpose": "Store observable completion conditions separately from work activity.",
-      "trigger": ["outcome-confirmation", "approved-criteria-change"],
-      "non_trigger": ["ordinary-progress-update", "higher-target-suggestion"],
-      "preconditions": ["goal-defined", "human-authority-present"],
-      "stop_condition": ["criteria-approved", "evidence-contract-missing"],
-      "fallback": ["keep-candidate-status", "request-primary-user-decision"],
-      "inputs": ["goal", "candidate-criteria", "pre-work-challenge", "priorities"],
-      "outputs": ["approved-criteria-version", "evidence-contracts"],
       "authority": "The primary user approves definitions; evidence may update achievement only.",
-      "executor": ["python-validator", "main-agent", "typed-human-action"],
-      "checks": ["stable-ids", "evidence-required", "definition-authority"],
-      "evidence": ["approval-event", "criterion-evidence-links"],
+      "change_failure_path": "Preserve the approved criteria version and reject the update.",
+      "checks": [
+        "stable-ids",
+        "evidence-required",
+        "definition-authority"
+      ],
+      "class": "lifecycle",
+      "component_id": "success-criteria",
+      "decision_status": "approved-technical-decision",
+      "evaluation": {
+        "boundary": [
+          "achievement-update-without-definition-change"
+        ],
+        "false_positive": [
+          "unsupported-achievement"
+        ],
+        "missed_trigger": [
+          "criterion-met-but-not-recorded"
+        ],
+        "negative": [
+          "activity-masquerades-as-outcome"
+        ],
+        "positive": [
+          "evidence-backed-achievement"
+        ]
+      },
+      "evidence": [
+        "approval-event",
+        "criterion-evidence-links"
+      ],
+      "executor": [
+        "python-validator",
+        "main-agent",
+        "typed-human-action"
+      ],
+      "fallback": [
+        "keep-candidate-status",
+        "request-primary-user-decision"
+      ],
+      "human_name": "Success Criteria",
       "human_view": "Shows achieved and total approved criteria without moving the threshold.",
-      "evaluation": {
-        "positive": ["evidence-backed-achievement"],
-        "negative": ["activity-masquerades-as-outcome"],
-        "boundary": ["achievement-update-without-definition-change"],
-        "false_positive": ["unsupported-achievement"],
-        "missed_trigger": ["criterion-met-but-not-recorded"]
-      },
-      "version": "1.0.0",
-      "change_failure_path": "Preserve the approved criteria version and reject the update."
+      "implementation_status": "implemented",
+      "inputs": [
+        "goal",
+        "candidate-criteria",
+        "pre-work-challenge",
+        "priorities"
+      ],
+      "non_trigger": [
+        "ordinary-progress-update",
+        "higher-target-suggestion"
+      ],
+      "outputs": [
+        "approved-criteria-version",
+        "evidence-contracts"
+      ],
+      "preconditions": [
+        "goal-defined",
+        "human-authority-present"
+      ],
+      "purpose": "Store observable completion conditions separately from work activity.",
+      "stop_condition": [
+        "criteria-approved",
+        "evidence-contract-missing"
+      ],
+      "trigger": [
+        "outcome-confirmation",
+        "approved-criteria-change"
+      ],
+      "version": "1.0.0"
     },
     {
-      "component_id": "project-plan-update",
-      "human_name": "Project Plan Update",
-      "class": "lifecycle",
-      "implementation_status": "implemented",
-      "decision_status": "approved-technical-decision",
-      "purpose": "Version Project Plan changes with a human-readable reason and immutable digests.",
-      "trigger": ["verified-step-change", "project-review-plan-delta"],
-      "non_trigger": ["goal-change", "silent-scope-expansion"],
-      "preconditions": ["current-plan-read", "expected-revision-present"],
-      "stop_condition": ["new-plan-read-back", "stale-write-conflict"],
-      "fallback": ["retain-current-plan", "request-decision-for-material-change"],
-      "inputs": ["current-plan", "candidate-plan", "reason", "materiality"],
-      "outputs": ["new-plan", "plan-history-entry", "before-and-after-hashes"],
       "authority": "Routine execution details may update automatically; material changes need the primary user.",
-      "executor": ["python-version-builder", "conflict-safe-store"],
-      "checks": ["schema", "revision", "materiality", "authority"],
-      "evidence": ["plan-history", "event-journal", "read-back"],
+      "change_failure_path": "Keep the last verified Plan and preserve the rejected attempt.",
+      "checks": [
+        "schema",
+        "revision",
+        "materiality",
+        "authority"
+      ],
+      "class": "lifecycle",
+      "component_id": "project-plan-update",
+      "decision_status": "approved-technical-decision",
+      "evaluation": {
+        "boundary": [
+          "stale-compatible-update"
+        ],
+        "false_positive": [
+          "minor-update-escalated"
+        ],
+        "missed_trigger": [
+          "material-change-not-versioned"
+        ],
+        "negative": [
+          "material-change-without-authority"
+        ],
+        "positive": [
+          "routine-step-update"
+        ]
+      },
+      "evidence": [
+        "plan-history",
+        "event-journal",
+        "read-back"
+      ],
+      "executor": [
+        "python-version-builder",
+        "conflict-safe-store"
+      ],
+      "fallback": [
+        "retain-current-plan",
+        "request-decision-for-material-change"
+      ],
+      "human_name": "Project Plan Update",
       "human_view": "Shows Plan version, reason, materiality, and hashes.",
-      "evaluation": {
-        "positive": ["routine-step-update"],
-        "negative": ["material-change-without-authority"],
-        "boundary": ["stale-compatible-update"],
-        "false_positive": ["minor-update-escalated"],
-        "missed_trigger": ["material-change-not-versioned"]
-      },
-      "version": "1.0.0",
-      "change_failure_path": "Keep the last verified Plan and preserve the rejected attempt."
+      "implementation_status": "implemented",
+      "inputs": [
+        "current-plan",
+        "candidate-plan",
+        "reason",
+        "materiality"
+      ],
+      "non_trigger": [
+        "goal-change",
+        "silent-scope-expansion"
+      ],
+      "outputs": [
+        "new-plan",
+        "plan-history-entry",
+        "before-and-after-hashes"
+      ],
+      "preconditions": [
+        "current-plan-read",
+        "expected-revision-present"
+      ],
+      "purpose": "Version Project Plan changes with a human-readable reason and immutable digests.",
+      "stop_condition": [
+        "new-plan-read-back",
+        "stale-write-conflict"
+      ],
+      "trigger": [
+        "verified-step-change",
+        "project-review-plan-delta"
+      ],
+      "version": "1.0.0"
     },
     {
-      "component_id": "review-point",
-      "human_name": "Review Point",
-      "class": "lifecycle",
-      "implementation_status": "implemented",
-      "decision_status": "approved-technical-decision",
-      "purpose": "Open a milestone or exception trigger for a whole-Project check; a time or resource threshold requests review rather than automatically stopping work.",
-      "trigger": ["milestone-checkpoint", "exception-risk", "time-or-resource-threshold-reached", "material-deviation", "failure", "human-request"],
-      "non_trigger": ["deferred-philosophy", "minor-implementation-detail"],
-      "preconditions": ["reason-present", "project-record-exists"],
-      "stop_condition": ["project-review-recorded", "point-dismissed-with-evidence"],
-      "fallback": ["keep-point-open", "surface-in-human-view"],
-      "inputs": ["trigger", "review-kind", "reason", "evidence-ids"],
-      "outputs": ["review-point-record", "milestone-or-exception-classification", "continuation-decision-required-when-threshold-triggered"],
       "authority": "The system may open a Review Point; it cannot approve a material direction change.",
-      "executor": ["python-trigger-checker", "future-hook"],
-      "checks": ["valid-trigger", "stable-id", "status-transition"],
-      "evidence": ["review-point", "linked-evidence", "subsequent-review"],
+      "change_failure_path": "Leave the point open and continue only inside the safe current scope.",
+      "checks": [
+        "valid-trigger",
+        "stable-id",
+        "status-transition"
+      ],
+      "class": "lifecycle",
+      "component_id": "review-point",
+      "decision_status": "approved-technical-decision",
+      "evaluation": {
+        "boundary": [
+          "semantic-materiality-uncertain"
+        ],
+        "false_positive": [
+          "unnecessary-review"
+        ],
+        "missed_trigger": [
+          "failure-without-review-point"
+        ],
+        "negative": [
+          "minor-detail-opens-point"
+        ],
+        "positive": [
+          "failure-opens-point"
+        ]
+      },
+      "evidence": [
+        "review-point",
+        "linked-evidence",
+        "subsequent-review"
+      ],
+      "executor": [
+        "python-trigger-checker",
+        "future-hook"
+      ],
+      "fallback": [
+        "keep-point-open",
+        "surface-in-human-view"
+      ],
+      "human_name": "Review Point",
       "human_view": "Shows why a review is open and whether it was reviewed.",
-      "evaluation": {
-        "positive": ["failure-opens-point"],
-        "negative": ["minor-detail-opens-point"],
-        "boundary": ["semantic-materiality-uncertain"],
-        "false_positive": ["unnecessary-review"],
-        "missed_trigger": ["failure-without-review-point"]
-      },
-      "version": "1.0.0",
-      "change_failure_path": "Leave the point open and continue only inside the safe current scope."
+      "implementation_status": "implemented",
+      "inputs": [
+        "trigger",
+        "review-kind",
+        "reason",
+        "evidence-ids"
+      ],
+      "non_trigger": [
+        "deferred-philosophy",
+        "minor-implementation-detail"
+      ],
+      "outputs": [
+        "review-point-record",
+        "milestone-or-exception-classification",
+        "continuation-decision-required-when-threshold-triggered"
+      ],
+      "preconditions": [
+        "reason-present",
+        "project-record-exists"
+      ],
+      "purpose": "Open a milestone or exception trigger for a whole-Project check; a time or resource threshold requests review rather than automatically stopping work.",
+      "stop_condition": [
+        "project-review-recorded",
+        "point-dismissed-with-evidence"
+      ],
+      "trigger": [
+        "milestone-checkpoint",
+        "exception-risk",
+        "time-or-resource-threshold-reached",
+        "material-deviation",
+        "failure",
+        "human-request"
+      ],
+      "version": "1.0.0"
     },
     {
-      "component_id": "material-deviation",
-      "human_name": "Material Deviation",
-      "class": "lifecycle",
-      "implementation_status": "implemented",
-      "decision_status": "approved-technical-decision",
-      "purpose": "Separate implementation detail changes from changes to outcome, criteria, priority, scope, risk, or delivery.",
-      "trigger": ["plan-assumption-changed", "new-risk-observed"],
-      "non_trigger": ["no-observed-difference"],
-      "preconditions": ["actual-difference-recorded"],
-      "stop_condition": ["materiality-classified", "insufficient-evidence"],
-      "fallback": ["record-unknown", "open-review-point-when-risk-cannot-be-bounded"],
-      "inputs": ["difference-summary", "affected-dimensions", "evidence"],
-      "outputs": ["deviation-record", "conditional-review-point"],
       "authority": "The system classifies explicit dimensions; semantic Goal changes remain human-controlled.",
-      "executor": ["python-dimension-check", "bounded-judgement-when-needed"],
-      "checks": ["dimension-enum", "evidence-links", "conditional-trigger"],
-      "evidence": ["deviation-record", "review-point-if-material"],
+      "change_failure_path": "Record uncertainty and route to Perspective.",
+      "checks": [
+        "dimension-enum",
+        "evidence-links",
+        "conditional-trigger"
+      ],
+      "class": "lifecycle",
+      "component_id": "material-deviation",
+      "decision_status": "approved-technical-decision",
+      "evaluation": {
+        "boundary": [
+          "delivery-timing-without-goal-change"
+        ],
+        "false_positive": [
+          "minor-change-blocks-work"
+        ],
+        "missed_trigger": [
+          "scope-change-continues-silently"
+        ],
+        "negative": [
+          "implementation-detail-is-not-material"
+        ],
+        "positive": [
+          "risk-change-is-material"
+        ]
+      },
+      "evidence": [
+        "deviation-record",
+        "review-point-if-material"
+      ],
+      "executor": [
+        "python-dimension-check",
+        "bounded-judgement-when-needed"
+      ],
+      "fallback": [
+        "record-unknown",
+        "open-review-point-when-risk-cannot-be-bounded"
+      ],
+      "human_name": "Material Deviation",
       "human_view": "Shows the difference, affected dimensions, and materiality result.",
-      "evaluation": {
-        "positive": ["risk-change-is-material"],
-        "negative": ["implementation-detail-is-not-material"],
-        "boundary": ["delivery-timing-without-goal-change"],
-        "false_positive": ["minor-change-blocks-work"],
-        "missed_trigger": ["scope-change-continues-silently"]
-      },
-      "version": "1.0.0",
-      "change_failure_path": "Record uncertainty and route to Project Review."
+      "implementation_status": "implemented",
+      "inputs": [
+        "difference-summary",
+        "affected-dimensions",
+        "evidence"
+      ],
+      "non_trigger": [
+        "no-observed-difference"
+      ],
+      "outputs": [
+        "deviation-record",
+        "conditional-review-point"
+      ],
+      "preconditions": [
+        "actual-difference-recorded"
+      ],
+      "purpose": "Separate implementation detail changes from changes to outcome, criteria, priority, scope, risk, or delivery.",
+      "stop_condition": [
+        "materiality-classified",
+        "insufficient-evidence"
+      ],
+      "trigger": [
+        "plan-assumption-changed",
+        "new-risk-observed"
+      ],
+      "version": "1.0.0"
     },
     {
-      "component_id": "project-review",
-      "human_name": "Project Review",
-      "class": "lifecycle",
-      "implementation_status": "implemented",
-      "decision_status": "approved-technical-decision",
-      "lineage_class": "original-backbone",
-      "original_requirement": "Original Project Review requirement",
-      "original_failure_mode": "An agent can make one local area excellent while neglecting the Goal, other Success Criteria, remaining work, deadline, or the Project as a whole.",
-      "later_refinements": ["milestone-and-exception-trigger-families", "nine-dimension-assessment", "versioned-plan-history", "supporting-signal-evidence"],
-      "implemented_by": ["review-point", "project-review", "project-plan-update"],
       "architecture_alignment_status": "build-required",
-      "purpose": "Prevent local excellence from damaging the active Project by comparing the whole trajectory, attention, time, and resources with the Project Plan at a milestone or exception.",
-      "trigger": ["open-milestone-review-point", "open-exception-review-point", "human-request"],
-      "non_trigger": ["local-code-comment-only"],
-      "preconditions": ["canonical-project-readable", "evidence-links-known"],
-      "stop_condition": ["conclusion-recorded", "confidence-recorded", "concern-recorded"],
-      "fallback": ["state-evidence-gap", "keep-review-point-open"],
-      "inputs": ["whole-project-snapshot", "nine-dimension-assessment", "planned-versus-actual-resources", "neglected-areas", "supporting-evidence", "open-review-points"],
-      "outputs": ["review", "versioned-plan-delta", "system-observations-for-later-review", "biggest-remaining-concern"],
       "authority": "The Main Agent reviews; material outcome changes still require the primary user.",
-      "executor": ["main-agent", "python-snapshot-and-hash"],
-      "checks": ["whole-project-hash", "all-nine-dimensions", "planned-versus-actual-resources", "local-trigger-whole-project-scope", "confidence", "plan-delta", "open-point-closure"],
-      "evidence": ["review-record", "project-snapshot-hash", "readable-plan-before-and-after"],
-      "human_view": "Shows conclusion, confidence, Plan delta, and biggest remaining concern.",
-      "evaluation": {
-        "positive": ["multiple-whole-project-reviews"],
-        "negative": ["local-issue-only-review"],
-        "boundary": ["evidence-gap-lowers-confidence", "time-threshold-opens-review-without-automatic-stop"],
-        "false_positive": ["review-claims-complete-context-without-hash"],
-        "missed_trigger": ["open-point-never-reviewed"]
-      },
-      "version": "1.0.0",
-      "change_failure_path": "Keep the Review Point open and do not change the approved direction."
-    },
-    {
-      "component_id": "awaiting-completion",
-      "human_name": "Awaiting Completion",
+      "change_failure_path": "Keep the Review Point open and do not change the approved direction.",
+      "checks": [
+        "whole-project-hash",
+        "all-nine-dimensions",
+        "planned-versus-actual-resources",
+        "local-trigger-whole-project-scope",
+        "confidence",
+        "plan-delta",
+        "open-point-closure"
+      ],
       "class": "lifecycle",
-      "implementation_status": "implemented",
+      "component_id": "project-review",
       "decision_status": "approved-technical-decision",
-      "purpose": "Show readiness without letting evidence or an agent declare completion.",
-      "trigger": ["all-approved-criteria-achieved", "post-work-challenge-recorded"],
-      "non_trigger": ["work-activity-finished", "higher-target-failed"],
-      "preconditions": ["approved-criteria", "achievement-evidence", "one-post-work-challenge"],
-      "stop_condition": ["awaiting-completion-state", "readiness-check-failed"],
-      "fallback": ["remain-in-progress", "show-missing-gate"],
-      "inputs": ["criteria", "achievement-evidence", "post-work-challenge"],
-      "outputs": ["awaiting-completion-state", "requested-at"],
-      "authority": "The system may mark readiness; only the primary user completes the Project.",
-      "executor": ["python-readiness-check", "human-control-renderer"],
-      "checks": ["criteria-version", "all-achieved", "challenge-loop-guard"],
-      "evidence": ["criteria-links", "challenge-record", "state-event"],
-      "human_view": "Separates original achievement, higher-target result, gaps, and the completion decision.",
       "evaluation": {
-        "positive": ["ready-project-awaits-human"],
-        "negative": ["missing-evidence-stays-in-progress"],
-        "boundary": ["higher-target-not-achieved-original-remains-valid"],
-        "false_positive": ["activity-counted-as-criterion"],
-        "missed_trigger": ["all-gates-pass-but-state-not-offered"]
+        "boundary": [
+          "evidence-gap-lowers-confidence",
+          "time-threshold-opens-review-without-automatic-stop"
+        ],
+        "false_positive": [
+          "review-claims-complete-context-without-hash"
+        ],
+        "missed_trigger": [
+          "open-point-never-reviewed"
+        ],
+        "negative": [
+          "local-issue-only-review"
+        ],
+        "positive": [
+          "multiple-whole-project-reviews"
+        ]
       },
-      "version": "1.0.0",
-      "change_failure_path": "Remain in progress and show the exact missing readiness gate."
+      "evidence": [
+        "review-record",
+        "project-snapshot-hash",
+        "readable-plan-before-and-after"
+      ],
+      "executor": [
+        "main-agent",
+        "python-snapshot-and-hash"
+      ],
+      "fallback": [
+        "state-evidence-gap",
+        "keep-review-point-open"
+      ],
+      "human_name": "Perspective",
+      "human_view": "Shows conclusion, confidence, Plan delta, and biggest remaining concern.",
+      "implementation_status": "implemented",
+      "implemented_by": [
+        "review-point",
+        "project-review",
+        "project-plan-update"
+      ],
+      "inputs": [
+        "whole-project-snapshot",
+        "nine-dimension-assessment",
+        "planned-versus-actual-resources",
+        "neglected-areas",
+        "supporting-evidence",
+        "open-review-points"
+      ],
+      "later_refinements": [
+        "milestone-and-exception-trigger-families",
+        "nine-dimension-assessment",
+        "versioned-plan-history",
+        "supporting-signal-evidence"
+      ],
+      "lineage_class": "original-backbone",
+      "non_trigger": [
+        "local-code-comment-only"
+      ],
+      "original_failure_mode": "An agent can make one local area excellent while neglecting the Goal, other Success Criteria, remaining work, deadline, or the Project as a whole.",
+      "original_requirement": "Original whole-Project Perspective requirement (historical technical id: project-review)",
+      "outputs": [
+        "review",
+        "versioned-plan-delta",
+        "system-observations-for-later-review",
+        "biggest-remaining-concern"
+      ],
+      "preconditions": [
+        "canonical-project-readable",
+        "evidence-links-known"
+      ],
+      "purpose": "See From The Big Picture during active work by comparing the whole Project with its Plan when a milestone or exception appears.",
+      "stop_condition": [
+        "conclusion-recorded",
+        "confidence-recorded",
+        "concern-recorded"
+      ],
+      "trigger": [
+        "open-milestone-review-point",
+        "open-exception-review-point",
+        "human-request"
+      ],
+      "version": "1.0.0"
     },
     {
-      "component_id": "project-completion",
-      "human_name": "Project Completion",
+      "authority": "The system may mark readiness; only the primary user completes the Project.",
+      "change_failure_path": "Remain in progress and show the exact missing readiness gate.",
+      "checks": [
+        "criteria-version",
+        "all-achieved",
+        "challenge-loop-guard"
+      ],
       "class": "lifecycle",
+      "component_id": "awaiting-completion",
+      "decision_status": "approved-technical-decision",
+      "evaluation": {
+        "boundary": [
+          "higher-target-not-achieved-original-remains-valid"
+        ],
+        "false_positive": [
+          "activity-counted-as-criterion"
+        ],
+        "missed_trigger": [
+          "all-gates-pass-but-state-not-offered"
+        ],
+        "negative": [
+          "missing-evidence-stays-in-progress"
+        ],
+        "positive": [
+          "ready-project-awaits-human"
+        ]
+      },
+      "evidence": [
+        "criteria-links",
+        "challenge-record",
+        "state-event"
+      ],
+      "executor": [
+        "python-readiness-check",
+        "human-control-renderer"
+      ],
+      "fallback": [
+        "remain-in-progress",
+        "show-missing-gate"
+      ],
+      "human_name": "Awaiting Completion",
+      "human_view": "Separates original achievement, higher-target result, gaps, and the completion decision.",
       "implementation_status": "implemented",
+      "inputs": [
+        "criteria",
+        "achievement-evidence",
+        "post-work-challenge"
+      ],
+      "non_trigger": [
+        "work-activity-finished",
+        "higher-target-failed"
+      ],
+      "outputs": [
+        "awaiting-completion-state",
+        "requested-at"
+      ],
+      "preconditions": [
+        "approved-criteria",
+        "achievement-evidence",
+        "one-post-work-challenge"
+      ],
+      "purpose": "Show readiness without letting evidence or an agent declare completion.",
+      "stop_condition": [
+        "awaiting-completion-state",
+        "readiness-check-failed"
+      ],
+      "trigger": [
+        "all-approved-criteria-achieved",
+        "post-work-challenge-recorded"
+      ],
+      "version": "1.0.0"
+    },
+    {
+      "authority": "Only the primary user can declare Project Completion.",
+      "change_failure_path": "Keep Awaiting Completion and preserve all evidence.",
+      "checks": [
+        "actor",
+        "human-action",
+        "current-state",
+        "event-read-back"
+      ],
+      "class": "lifecycle",
+      "component_id": "project-completion",
       "decision_status": "architecture-baseline",
-      "original_requirement": "Only the primary user may declare a Project complete after the readiness evidence is visible.",
-      "original_failure_mode": "An agent, a passing test or free text could otherwise be mistaken for Project Completion authority.",
+      "evaluation": {
+        "boundary": [
+          "human-action-before-readiness-is-rejected"
+        ],
+        "false_positive": [
+          "free-text-treated-as-authority"
+        ],
+        "missed_trigger": [
+          "valid-typed-action-not-recorded"
+        ],
+        "negative": [
+          "agent-cannot-complete"
+        ],
+        "positive": [
+          "primary-user-completes-ready-project"
+        ]
+      },
+      "evidence": [
+        "completion-event",
+        "canonical-state",
+        "event-chain"
+      ],
+      "executor": [
+        "typed-human-action",
+        "python-state-transition"
+      ],
+      "fallback": [
+        "remain-awaiting-completion",
+        "show-decision-context"
+      ],
+      "human_name": "Project Completion",
+      "human_view": "Shows the decision and never presents an agent claim as completion.",
+      "implementation_status": "implemented",
+      "implemented_by": [
+        "human-control",
+        "project-review"
+      ],
+      "inputs": [
+        "typed-human-action",
+        "readiness-state"
+      ],
       "later_refinements": [
         "typed human action",
         "event-chain read-back",
         "conflict-safe canonical transition"
       ],
-      "implemented_by": [
-        "human-control",
-        "project-review"
-      ],
       "lineage_class": "original-backbone",
+      "non_trigger": [
+        "agent-claim",
+        "test-passed",
+        "installed-capability",
+        "free-text-inference"
+      ],
+      "original_failure_mode": "An agent, a passing test or free text could otherwise be mistaken for Project Completion authority.",
+      "original_requirement": "Only the primary user may declare a Project complete after the readiness evidence is visible.",
+      "outputs": [
+        "completion-event",
+        "completed-at",
+        "completed-by"
+      ],
+      "preconditions": [
+        "awaiting-completion",
+        "primary-user-actor",
+        "human-action-flag"
+      ],
       "purpose": "Let only the primary user end a Project after readiness is visible.",
-      "trigger": ["typed-primary-user-action-while-awaiting-completion"],
-      "non_trigger": ["agent-claim", "test-passed", "installed-capability", "free-text-inference"],
-      "preconditions": ["awaiting-completion", "primary-user-actor", "human-action-flag"],
-      "stop_condition": ["completed-state-recorded", "authority-check-failed"],
-      "fallback": ["remain-awaiting-completion", "show-decision-context"],
-      "inputs": ["typed-human-action", "readiness-state"],
-      "outputs": ["completion-event", "completed-at", "completed-by"],
-      "authority": "Only the primary user can declare Project Completion.",
-      "executor": ["typed-human-action", "python-state-transition"],
-      "checks": ["actor", "human-action", "current-state", "event-read-back"],
-      "evidence": ["completion-event", "canonical-state", "event-chain"],
-      "human_view": "Shows the decision and never presents an agent claim as completion.",
-      "evaluation": {
-        "positive": ["primary-user-completes-ready-project"],
-        "negative": ["agent-cannot-complete"],
-        "boundary": ["human-action-before-readiness-is-rejected"],
-        "false_positive": ["free-text-treated-as-authority"],
-        "missed_trigger": ["valid-typed-action-not-recorded"]
-      },
-      "version": "1.0.0",
-      "change_failure_path": "Keep Awaiting Completion and preserve all evidence."
+      "stop_condition": [
+        "completed-state-recorded",
+        "authority-check-failed"
+      ],
+      "trigger": [
+        "typed-primary-user-action-while-awaiting-completion"
+      ],
+      "version": "1.0.0"
     },
     {
-      "component_id": "system-review",
-      "human_name": "System Review",
-      "class": "continuous-improvement",
-      "implementation_status": "implemented",
-      "decision_status": "approved-technical-decision",
-      "lineage_class": "original-backbone",
-      "original_requirement": "Original System Review Steps 1 to 5",
-      "original_failure_mode": "Fractal can miss weak evidence, create one fix per symptom, forget earlier analyses and reversals, add complexity automatically, or mistake local change for genuine system improvement.",
-      "later_refinements": ["positive-and-negative-delta", "cause-research", "subtraction-first", "supporting-capability-evidence", "two-sided-review", "typed-human-decision", "later-outcome-evaluation"],
-      "implemented_by": ["project-assessment", "issue-scan", "project-patterns", "cross-project-patterns", "reversal-check", "cause-research", "reconciliation", "improvement-options", "expected-effect", "local-effect", "global-effect", "two-sided-review", "final-assessment", "biggest-remaining-concern", "result", "your-decision"],
       "architecture_alignment_status": "build-required",
-      "purpose": "Run the original five-step reasoning backbone over a primary-user-completed Project and prepare an evidence-backed result and later learning record for the primary user's decision.",
-      "trigger": ["primary-user-project-completion"],
-      "non_trigger": ["active-project", "awaiting-completion", "agent-finished-claim"],
-      "preconditions": ["completed-project-snapshot", "completion-authority-verified"],
-      "stop_condition": ["your-decision-recorded", "required-stage-evidence-missing"],
-      "fallback": ["need-more-evidence", "no-change", "wait-for-primary-user-decision"],
-      "inputs": ["completed-project-whole-history", "project-review-history", "previous-analysis-and-intervention-history", "three-value-observations", "component-history", "feedback"],
-      "outputs": ["positive-delta", "negative-delta", "quantity-over-quality-observations", "causal-local-patterns", "historical-patterns", "system-response-assessment", "effect-and-later-evaluation-record", "final-assessment", "biggest-remaining-concern", "change-proposal-or-experiment-or-need-more-evidence-or-no-change", "your-decision"],
       "authority": "The Main Agent synthesises the assessment; only the primary user records Your Decision and approves persistent activation.",
-      "executor": ["main-agent", "independent-research-branches-when-needed", "python-stage-and-authority-check"],
-      "checks": ["original-five-step-lineage", "required-stage-order", "positive-delta", "negative-delta", "quantity-over-quality-whole-history-scan", "step-one-before-causal-synthesis", "symptom-and-cause-separation", "historical-analysis-and-intervention-chain", "recurrence-contradiction-overcorrection-patterns-of-patterns", "wrong-dimension-challenge", "branch-independence", "existing-system-before-addition", "subtraction-first", "hypothesis-versus-improvement-status", "local-and-global-effect", "later-outcome-evaluation", "biggest-remaining-concern", "primary-user-decision"],
-      "evidence": ["completed-project-snapshot", "stage-records", "independent-branch-provenance", "typed-human-decision"],
-      "human_view": "Shows the original five questions beside the modern Nodes, Positive and Negative Delta, raw Issue Scan coverage, causal and historical reasoning, the system-response choice, Local and Global Effect, the biggest remaining concern, the result, and the user's available decision.",
+      "change_failure_path": "Keep the current System Version and return the evidence gap to the primary user.",
+      "checks": [
+        "eight-step-blueprint-lineage",
+        "required-stage-order",
+        "positive-delta",
+        "negative-delta",
+        "quantity-over-quality-whole-history-scan",
+        "local-patterns",
+        "global-patterns",
+        "global-pattern-reasons",
+        "global-pattern-solutions",
+        "blueprint-mapping-before-debate",
+        "two-sided-review",
+        "one-by-one-decision-presentation",
+        "biggest-remaining-concern",
+        "primary-user-decision"
+      ],
+      "class": "continuous-improvement",
+      "component_id": "system-review",
+      "decision_status": "approved-technical-decision",
       "evaluation": {
-        "positive": ["full-five-step-review-reaches-your-decision", "later-outcome-evaluation-updates-learning-record"],
-        "negative": ["active-project-cannot-start-system-review"],
-        "boundary": ["insufficient-cross-project-history-is-explicit", "local-effect-succeeds-global-effect-fails", "local-effect-fails-global-effect-succeeds"],
-        "false_positive": ["registration-or-test-pass-treated-as-project-completion"],
-        "missed_trigger": ["completed-project-never-offers-system-review"]
+        "negative": [
+          "old-workflow-or-unmapped-candidate-is-rejected"
+        ],
+        "positive": [
+          "full-eight-step-review-reaches-one-by-one-decisions"
+        ]
       },
-      "version": "1.0.0",
-      "change_failure_path": "Keep the current System Version and return the evidence gap to the primary user."
+      "evidence": [
+        "completed-project-snapshot",
+        "stage-records",
+        "independent-branch-provenance",
+        "typed-human-decision"
+      ],
+      "executor": [
+        "main-agent",
+        "independent-research-branches-when-needed",
+        "python-stage-and-authority-check"
+      ],
+      "fallback": [
+        "need-more-evidence",
+        "no-change",
+        "wait-for-primary-user-decision"
+      ],
+      "human_name": "System Review",
+      "human_view": "Shows the original five questions beside the modern Nodes, Positive and Negative Delta, raw Issue Scan coverage, causal and historical reasoning, the system-response choice, Local and Global Effect, the biggest remaining concern, the result, and the user's available decision.",
+      "implementation_status": "implemented",
+      "implemented_by": [
+        "project-assessment",
+        "positive-delta",
+        "negative-delta",
+        "issue-scan",
+        "quantity-over-quality",
+        "project-patterns",
+        "causal-interpretation",
+        "observation-cause-separation",
+        "cross-project-patterns",
+        "reversal-check",
+        "history-comparison",
+        "cause-research",
+        "reconciliation",
+        "causal-uncertainty",
+        "curiosity",
+        "improvement-options",
+        "subtraction-first",
+        "blueprint-mapping",
+        "addition-priority",
+        "donor-authority-removal",
+        "two-sided-review",
+        "case-for",
+        "case-against",
+        "final-synthesis",
+        "human-control",
+        "plain-handoff",
+        "biggest-remaining-concern",
+        "your-decision"
+      ],
+      "inputs": [
+        "completed-project-whole-history",
+        "project-review-history",
+        "previous-analysis-and-intervention-history",
+        "three-value-observations",
+        "component-history",
+        "feedback"
+      ],
+      "later_refinements": [
+        "positive-and-negative-delta",
+        "cause-research",
+        "subtraction-first",
+        "supporting-capability-evidence",
+        "two-sided-review",
+        "typed-human-decision",
+        "later-outcome-evaluation"
+      ],
+      "lineage_class": "original-backbone",
+      "non_trigger": [
+        "active-project",
+        "awaiting-completion",
+        "agent-finished-claim"
+      ],
+      "original_failure_mode": "Fractal can miss weak evidence, create one fix per symptom, forget earlier analyses and reversals, add complexity automatically, or mistake local change for genuine system improvement.",
+      "original_requirement": "Primary-user-confirmed eight-step New Blueprint System Review",
+      "outputs": [
+        "positive-delta",
+        "negative-delta",
+        "quantity-over-quality-observations",
+        "causal-local-patterns",
+        "historical-patterns",
+        "system-response-assessment",
+        "effect-and-later-evaluation-record",
+        "final-assessment",
+        "biggest-remaining-concern",
+        "change-proposal-or-experiment-or-need-more-evidence-or-no-change",
+        "your-decision"
+      ],
+      "preconditions": [
+        "completed-project-snapshot",
+        "completion-authority-verified"
+      ],
+      "purpose": "Run the eight-step New Blueprint workflow over a primary-user-completed Project and prepare one mapped decision at a time.",
+      "stop_condition": [
+        "your-decision-recorded",
+        "required-stage-evidence-missing"
+      ],
+      "trigger": [
+        "primary-user-project-completion"
+      ],
+      "version": "1.0.0"
     }
   ],
   "planned_nodes": [
@@ -357,5 +888,9 @@
     "priorities",
     "project-plan",
     "project-work"
-  ]
+  ],
+  "record_type": "node-implementation-map",
+  "record_version": 3,
+  "status": "initial-build-mapping",
+  "system_version": "0.1.0-alpha.8-r1"
 }

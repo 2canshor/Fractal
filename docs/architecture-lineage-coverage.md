@@ -1,4 +1,6 @@
-# Architecture Lineage Coverage
+# Historical Architecture Lineage Coverage
+
+> Historical evidence only. The canonical current workflow architecture is [Fractal Blueprint](blueprint.md). Names and step counts below describe the superseded pre-Blueprint design and must not be used for active routing.
 
 This audit checks the follow-up correction against the current public architecture. It covers the current README, Revision 8 Implementation Plan, Product Introduction, Node Implementation Map, System Review design, and Project Review design. The legacy Architecture Draft is no longer a live canonical file; its retained requirement mapping is Revision 8 Appendix A.
 

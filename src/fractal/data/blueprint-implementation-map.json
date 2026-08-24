@@ -1,8 +1,8 @@
 {
   "record_type": "blueprint-implementation-map",
   "record_version": 1,
-  "blueprint_version": "0.1.0-candidate.4",
-  "active_system_version": "0.1.0-alpha.7-778bab7",
+  "blueprint_version": "0.1.0",
+  "active_system_version": "0.1.0-alpha.8-4f13d17",
   "claim_boundary": "This audit describes source and retained execution evidence. It does not promote the Blueprint candidate or any donor implementation.",
   "mappings": [
     {
@@ -10,14 +10,14 @@
       "current_node_ids": ["continuous-improvement"],
       "implementation_assessment": "partial",
       "target_alignment": "needs-blueprint-projection",
-      "gap": "The philosophy has existing orchestration evidence, but the active registry still projects the old five-step and Mechanisms hierarchy."
+      "gap": "The canonical registry now projects the Blueprint; live correction activation and fresh-turn verification remain pending."
     },
     {
       "element_id": "system-review",
       "current_node_ids": ["system-review"],
-      "implementation_assessment": "partial",
-      "target_alignment": "needs-workflow-redesign",
-      "gap": "The active implementation enforces the old five-step workflow rather than the explicit Blueprint Steps."
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-live-verification",
+      "gap": "The eight-step engine source is implemented; live correction activation and fresh-turn verification remain pending."
     },
     {
       "element_id": "find-problems",
@@ -35,45 +35,45 @@
     },
     {
       "element_id": "find-global-patterns",
-      "current_node_ids": ["compare-history"],
-      "implementation_assessment": "partial",
-      "target_alignment": "needs-step-extraction",
-      "gap": "Cross-Project comparison exists, but Find Global Patterns is not an explicit target Step with its own contract."
+      "current_node_ids": ["find-global-patterns"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-live-verification",
+      "gap": "Find Global Patterns is an explicit active source Step; correction-version live verification remains pending."
     },
     {
       "element_id": "find-global-pattern-reasons",
       "current_node_ids": ["cause-research"],
-      "implementation_assessment": "partial",
-      "target_alignment": "needs-step-extraction",
-      "gap": "Cause Research exists as a supporting method, but causal reasoning for every Global Pattern is not an explicit enforced Step."
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-live-verification",
+      "gap": "Global Pattern reasons are an explicit Step with Cause Research as support; correction-version live verification remains pending."
     },
     {
       "element_id": "find-global-pattern-solutions",
-      "current_node_ids": ["choose-system-response", "curiosity"],
-      "implementation_assessment": "partial",
-      "target_alignment": "needs-step-extraction",
-      "gap": "Solution search exists inside older Improvement Options and Curiosity contracts, not as one explicit Step per Global Pattern."
+      "current_node_ids": ["find-global-pattern-solutions", "curiosity"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-live-verification",
+      "gap": "Global Pattern solution search is an explicit Step with Curiosity support; correction-version live verification remains pending."
     },
     {
       "element_id": "map-implementations-to-blueprint",
       "current_node_ids": [],
-      "implementation_assessment": "partial",
-      "target_alignment": "needs-workflow-redesign",
-      "gap": "A deterministic Candidate Mapping contract and staged donor record now exist, but the active System Review workflow does not invoke them."
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-live-verification",
+      "gap": "The System Review engine now invokes deterministic Blueprint Mapping before debate; correction-version live verification remains pending."
     },
     {
       "element_id": "debate-global-pattern-solutions",
       "current_node_ids": ["two-sided-review"],
-      "implementation_assessment": "partial",
-      "target_alignment": "needs-step-extraction",
-      "gap": "Two-Sided Review exists, but debate is not yet an explicit Step covering every relevant Global Pattern solution."
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-live-verification",
+      "gap": "Debate is an explicit Step after Mapping with Two-Sided Review support; correction-version live verification remains pending."
     },
     {
       "element_id": "present-decisions-one-by-one",
       "current_node_ids": ["system-review", "human-control"],
-      "implementation_assessment": "partial",
-      "target_alignment": "needs-step-extraction",
-      "gap": "Plain-language handoff exists, but the target one-prepared-decision-at-a-time Step is not represented or enforced."
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-live-verification",
+      "gap": "One-by-one presentation is an explicit active source Step; correction-version live verification remains pending."
     },
     {
       "element_id": "fatigue",
@@ -101,7 +101,7 @@
       "current_node_ids": ["project-review"],
       "implementation_assessment": "partial",
       "target_alignment": "needs-reclassification",
-      "gap": "Whole-Project review exists, but the active system still projects the historical Project Review name and Secondary Mechanism role instead of Perspective."
+      "gap": "Perspective is the canonical human name; live generated surfaces must still pass the correction acceptance scan."
     },
     {
       "element_id": "component-governance",
@@ -171,7 +171,7 @@
       "current_node_ids": ["reality-check"],
       "implementation_assessment": "partial",
       "target_alignment": "needs-role-redesign",
-      "gap": "Reality Check is implemented as old Step 5. The target only classifies the core concept as Infrastructure and deliberately leaves its implementation open."
+      "gap": "Reality Check is now mapped as supporting Infrastructure; live generated records must verify it no longer appears as a Step."
     },
     {
       "element_id": "experiment",

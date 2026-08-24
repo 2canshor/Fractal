@@ -1,7 +1,7 @@
 {
   "record_type": "blueprint-candidate-mapping-set",
   "record_version": 1,
-  "blueprint_version": "0.1.0-candidate.4",
+  "blueprint_version": "0.1.0",
   "mappings": [
     {
       "record_type": "blueprint-candidate-mapping",

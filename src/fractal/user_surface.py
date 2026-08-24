@@ -58,9 +58,7 @@ def build_user_surface(
     return validated
 
 
-def _active_platform_skills(
-    registry: dict[str, Any], platform: str
-) -> dict[str, dict[str, Any]]:
+def _active_platform_skills(registry: dict[str, Any], platform: str) -> dict[str, dict[str, Any]]:
     return {
         component["component_id"]: component
         for component in registry["components"]
@@ -76,14 +74,10 @@ def load_user_surface(path: Path, registry: dict[str, Any]) -> dict[str, Any]:
     return validate_user_surface(value, registry)
 
 
-def validate_user_surface(
-    value: dict[str, Any], registry: dict[str, Any]
-) -> dict[str, Any]:
+def validate_user_surface(value: dict[str, Any], registry: dict[str, Any]) -> dict[str, Any]:
     """Require an exhaustive allowlist and many-to-many workflow-to-dot routing."""
     schema = json.loads(
-        files("fractal.schemas")
-        .joinpath("user-surface.schema.json")
-        .read_text(encoding="utf-8")
+        files("fractal.schemas").joinpath("user-surface.schema.json").read_text(encoding="utf-8")
     )
     errors = sorted(
         Draft202012Validator(schema).iter_errors(value),
@@ -187,9 +181,7 @@ def validate_user_surface(
     return result
 
 
-def resolve_workflow_dots(
-    surface: dict[str, Any], workflow: dict[str, Any]
-) -> list[str]:
+def resolve_workflow_dots(surface: dict[str, Any], workflow: dict[str, Any]) -> list[str]:
     """Expand reusable dot groups for one workflow without assigning dot ownership."""
     groups = {item["group_id"]: item["component_ids"] for item in surface["dot_groups"]}
     return sorted(
@@ -215,9 +207,7 @@ def build_codex_skill_config_edits(
         if missing:
             raise UserSurfaceError(f"Codex Skill list is missing visible entries: {missing}")
         visible_skill_paths = {
-            item["name"]: str(item["path"])
-            for item in listed_skills
-            if item["name"] in visible
+            item["name"]: str(item["path"]) for item in listed_skills if item["name"] in visible
         }
     elif set(visible_skill_paths) != visible:
         raise UserSurfaceError("Candidate visible Skill paths do not match the user entries")
@@ -279,9 +269,7 @@ def audit_codex_skill_path_surface(
         str(Path(str(item["path"])).expanduser().resolve(strict=False)): item
         for item in listed_skills
     }
-    enabled_paths = {
-        path for path, item in listed_by_path.items() if item.get("enabled") is True
-    }
+    enabled_paths = {path for path, item in listed_by_path.items() if item.get("enabled") is True}
     desired_paths = set(desired_by_path)
     unexpected = sorted(enabled_paths.difference(desired_paths))
     missing = sorted(desired_paths.difference(listed_by_path)) if require_visible_paths else []

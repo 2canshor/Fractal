@@ -60,9 +60,7 @@ def test_lineage_gate_reports_deleted_field_path_and_hierarchy_inversion() -> No
         validate_mutation(missing)
 
     inverted = copy.deepcopy(mapping)
-    inverted["lineage_contract"]["original_system_review_backbone"][0]["name"] = (
-        "reality-check"
-    )
+    inverted["lineage_contract"]["original_system_review_backbone"][0]["name"] = "reality-check"
     with pytest.raises(ValueError, match="Hierarchy inversion"):
         validate_mutation(inverted)
 
@@ -76,6 +74,4 @@ def test_lineage_shadow_accepts_rename_and_approved_later_capability() -> None:
     later["lineage_class"] = "separately-approved-later-capability"
     later["primary_user_decision_id"] = "decision-q9-primary-user"
     mapping["nodes"].append(later)
-    assert validate_mutation(mapping)["nodes"][-1]["component_id"] == (
-        "approved-later-capability"
-    )
+    assert validate_mutation(mapping)["nodes"][-1]["component_id"] == ("approved-later-capability")

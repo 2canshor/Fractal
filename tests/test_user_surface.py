@@ -71,7 +71,7 @@ def surface() -> dict:
                 "entry_id": "complete",
                 "interface_type": "command",
                 "component_id": "complete",
-                "outcome": "Finish the five-step System Review.",
+                "outcome": "Finish the eight-step New Blueprint System Review.",
             },
             {
                 "entry_id": "create",
@@ -281,13 +281,10 @@ def test_codex_config_edits_disable_a_duplicate_visible_name_from_an_old_source(
         for item in surface()["entries"]
     ]
     expected = {
-        item["entry_id"]: f"/candidate/{item['entry_id']}/SKILL.md"
-        for item in surface()["entries"]
+        item["entry_id"]: f"/candidate/{item['entry_id']}/SKILL.md" for item in surface()["entries"]
     }
 
-    edits = build_codex_skill_config_edits(
-        surface(), listed, visible_skill_paths=expected
-    )
+    edits = build_codex_skill_config_edits(surface(), listed, visible_skill_paths=expected)
 
     assert len(edits[0]["value"]) == 6
     assert {item["path"] for item in edits[0]["value"]} == {
@@ -303,9 +300,7 @@ def test_codex_surface_audit_distinguishes_hidden_files_from_enabled_entries() -
     listed.append(
         {"name": "provider:browser", "path": "/provider/browser/SKILL.md", "enabled": False}
     )
-    listed.append(
-        {"name": "create", "path": "/old/create/SKILL.md", "enabled": False}
-    )
+    listed.append({"name": "create", "path": "/old/create/SKILL.md", "enabled": False})
 
     report = audit_codex_skill_surface(surface(), listed)
 
@@ -316,13 +311,9 @@ def test_codex_surface_audit_distinguishes_hidden_files_from_enabled_entries() -
 
 def test_exact_path_audit_rejects_duplicate_names_and_plugin_path_drift() -> None:
     visible_paths = {
-        item["entry_id"]: f"/candidate/{item['entry_id']}/SKILL.md"
-        for item in surface()["entries"]
+        item["entry_id"]: f"/candidate/{item['entry_id']}/SKILL.md" for item in surface()["entries"]
     }
-    listed = [
-        {"name": name, "path": path, "enabled": True}
-        for name, path in visible_paths.items()
-    ]
+    listed = [{"name": name, "path": path, "enabled": True} for name, path in visible_paths.items()]
     listed.extend(
         [
             {
@@ -338,9 +329,7 @@ def test_exact_path_audit_rejects_duplicate_names_and_plugin_path_drift() -> Non
         ]
     )
 
-    report = audit_codex_skill_path_surface(
-        surface(), listed, visible_skill_paths=visible_paths
-    )
+    report = audit_codex_skill_path_surface(surface(), listed, visible_skill_paths=visible_paths)
 
     assert report["clean"] is False
     assert report["unexpected_enabled_skill_paths"] == [
@@ -351,8 +340,7 @@ def test_exact_path_audit_rejects_duplicate_names_and_plugin_path_drift() -> Non
 
 def test_exact_path_audit_requires_every_candidate_entry() -> None:
     visible_paths = {
-        item["entry_id"]: f"/candidate/{item['entry_id']}/SKILL.md"
-        for item in surface()["entries"]
+        item["entry_id"]: f"/candidate/{item['entry_id']}/SKILL.md" for item in surface()["entries"]
     }
     listed = [
         {"name": name, "path": path, "enabled": True}
@@ -360,11 +348,7 @@ def test_exact_path_audit_requires_every_candidate_entry() -> None:
         if name != "create"
     ]
 
-    report = audit_codex_skill_path_surface(
-        surface(), listed, visible_skill_paths=visible_paths
-    )
+    report = audit_codex_skill_path_surface(surface(), listed, visible_skill_paths=visible_paths)
 
     assert report["clean"] is False
-    assert report["missing_visible_skill_paths"] == [
-        "/candidate/create/SKILL.md"
-    ]
+    assert report["missing_visible_skill_paths"] == ["/candidate/create/SKILL.md"]

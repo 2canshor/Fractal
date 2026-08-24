@@ -280,9 +280,7 @@ def capture_work_completion(
             signature = _signature_from_dict(refreshed)
             captured = False
     history_values = store.read_all()
-    history = [
-        _signature_from_dict(item) for item in history_values if item["work_id"] != work_id
-    ]
+    history = [_signature_from_dict(item) for item in history_values if item["work_id"] != work_id]
     recognition = recognise_repetition(history, signature)
     evaluation = {
         "record_type": "work-signature-evaluation",

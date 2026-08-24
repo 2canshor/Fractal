@@ -136,10 +136,7 @@ def validate_claim_receipt(
         raise ReviewContractError("Claim receipt is for a different surface")
     if expected_scope is not None and scope != expected_scope:
         raise ReviewContractError("Claim receipt is for a different scope")
-    if (
-        expected_version_dependencies is not None
-        and versions != expected_version_dependencies
-    ):
+    if expected_version_dependencies is not None and versions != expected_version_dependencies:
         raise ReviewContractError("Claim receipt has stale or different version dependencies")
     validated = {
         **copy.deepcopy(receipt),
@@ -175,7 +172,7 @@ def audit_claim_set(receipts: list[dict[str, Any]]) -> dict[str, Any]:
 def build_response_units(patterns: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Group every discovered Pattern into one explicit, decision-ready response unit."""
     if not patterns:
-        raise ReviewContractError("Response coverage requires discovered Patterns")
+        return []
     seen: set[str] = set()
     grouped: dict[str, list[dict[str, Any]]] = {}
     for pattern in patterns:
@@ -276,6 +273,7 @@ def validate_review_ready(review: dict[str, Any]) -> dict[str, Any]:
         "expected-effect",
         "local-effect",
         "global-effect",
+        "blueprint-mapping",
         "two-sided-review",
         "final-assessment",
         "biggest-remaining-concern",
@@ -287,15 +285,24 @@ def validate_review_ready(review: dict[str, Any]) -> dict[str, Any]:
     two_sided = validate_two_sided_result(stages["two-sided-review"])
     result = stages["result"]
     response_units = result.get("response_units")
-    if not isinstance(response_units, list) or not response_units:
+    if not isinstance(response_units, list):
         raise ReviewContractError("review_incomplete: response coverage is missing")
+    if not response_units:
+        zero = result.get("zero_pattern_coverage_receipt")
+        if (
+            result.get("outcome") != "no-change"
+            or not isinstance(zero, dict)
+            or zero.get("coverage_complete") is not True
+            or zero.get("observation_count") != 0
+            or zero.get("pattern_status") != "no-pattern"
+            or not str(zero.get("reason", "")).strip()
+        ):
+            raise ReviewContractError("review_incomplete: zero-pattern coverage is invalid")
     pattern_ids = [
-        pattern_id
-        for unit in response_units
-        for pattern_id in unit.get("pattern_ids", [])
+        pattern_id for unit in response_units for pattern_id in unit.get("pattern_ids", [])
     ]
-    if not pattern_ids or len(pattern_ids) != len(set(pattern_ids)):
-        raise ReviewContractError("review_incomplete: Pattern coverage is empty or duplicated")
+    if len(pattern_ids) != len(set(pattern_ids)):
+        raise ReviewContractError("review_incomplete: Pattern coverage is duplicated")
     if result.get("unmapped_pattern_ids") != []:
         raise ReviewContractError("review_incomplete: an observed Pattern has no disposition")
     handoff_receipt = validate_plain_handoff(

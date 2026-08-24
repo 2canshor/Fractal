@@ -172,17 +172,18 @@ def test_session_start_reconciles_canonical_sources_not_stale_adapter_snapshot(
         active_pointer_path=pointer_path,
     )
     live_state = resolve_session_state(context)
-    result = handle_hook(
-        "session-start", context, {"source": "startup"}, live_state=live_state
-    )
+    result = handle_hook("session-start", context, {"source": "startup"}, live_state=live_state)
     summary = result["hookSpecificOutput"]["additionalContext"]
     assert "Fractal 0.1.0-alpha.1" in summary
     assert "current-project" in summary
     assert "revision 0" in summary
     assert "old-project" not in summary
-    assert json.loads(
-        (tmp_path / "runtime" / "live-state" / "current.json").read_text()
-    )["project"]["revision"] == 0
+    assert (
+        json.loads((tmp_path / "runtime" / "live-state" / "current.json").read_text())["project"][
+            "revision"
+        ]
+        == 0
+    )
 
 
 def test_session_start_fails_closed_when_canonical_project_digest_is_invalid(
@@ -223,9 +224,7 @@ def test_hook_cli_surfaces_live_state_failure_without_repeating_stale_snapshot(
                     "current_phase": 10,
                 },
                 "live_runtime": {
-                    "state_path": str(
-                        tmp_path / "runtime" / "live-state" / "current.json"
-                    )
+                    "state_path": str(tmp_path / "runtime" / "live-state" / "current.json")
                 },
             }
         )
@@ -235,9 +234,7 @@ def test_hook_cli_surfaces_live_state_failure_without_repeating_stale_snapshot(
     record_path.write_text(json.dumps(tampered))
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"source": "startup"})))
     assert hook_main(["--event", "session-start", "--context", str(context_path)]) == 0
-    output = json.loads(capsys.readouterr().out)["hookSpecificOutput"][
-        "additionalContext"
-    ]
+    output = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["additionalContext"]
     assert "FRACTAL LIVE STATE ERROR" in output
     assert "Stop Project-state-dependent routing" in output
     assert "stale-project" not in output
@@ -257,9 +254,9 @@ def test_canonical_writes_refresh_live_state_but_candidate_build_does_not(
     assert live_store.read()["system_version"]["version"] == "0.1.0-alpha.1"
 
     project_store.migrate("current-project", actor="main-agent", platform="codex")
-    assert live_store.read()["project"]["revision"] == project_store.read(
-        "current-project"
-    ).revision
+    assert (
+        live_store.read()["project"]["revision"] == project_store.read("current-project").revision
+    )
 
 
 def test_live_state_cli_reconciles_and_verifies_current_sources(

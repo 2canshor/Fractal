@@ -2,13 +2,13 @@
   "record_type": "fractal-blueprint",
   "record_version": 1,
   "blueprint_id": "new-architecture",
-  "blueprint_version": "0.1.0-candidate.4",
+  "blueprint_version": "0.1.0",
   "lifecycle": {
-    "status": "candidate",
-    "active": false,
+    "status": "canonical",
+    "active_state_source": "system-version-pointer",
     "authority": "primary-user",
-    "implementation_status": "partial",
-    "claim_boundary": "This target Blueprint overrides earlier plans but does not describe the active alpha.7 runtime until a separately verified System Version is activated."
+    "implementation_status": "active-workflow-required",
+    "claim_boundary": "This Blueprint is Fractal's only workflow architecture. The immutable System Version pointer identifies which exact implementation commit is active."
   },
   "core": {
     "philosophy": {
