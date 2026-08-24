@@ -12,6 +12,7 @@ from fractal.codex_app_server import (
     audit_agents_hierarchy,
     audit_codex_config_projection,
     detect_legacy_review_inputs,
+    load_codex_skill_catalog,
     reconcile_codex_components,
     resolve_agents_hierarchy,
     verify_live_turn_completion,
@@ -174,6 +175,108 @@ def test_live_reconciliation_keeps_loaded_callable_and_success_separate(
         "not_observable_by_current_api": 0,
     }
     assert "does not prove" in report["claim_boundary"]
+
+
+def test_skill_catalog_discovers_lazy_plugin_skills_before_listing(
+    tmp_path: Path,
+) -> None:
+    plugin_skill = tmp_path / "plugin" / "skills" / "hidden" / "SKILL.md"
+
+    class LazyPluginClient:
+        def __init__(self) -> None:
+            self.catalogue_pass = 0
+            self.calls: list[str] = []
+
+        def request(self, method: str, params: dict[str, Any]) -> dict[str, Any]:
+            del params
+            self.calls.append(method)
+            if method == "plugin/installed":
+                self.catalogue_pass += 1
+                return {
+                    "marketplaces": [
+                        {
+                            "plugins": [
+                                {
+                                    "id": "provider@example",
+                                    "installed": True,
+                                    "enabled": True,
+                                }
+                            ]
+                        }
+                    ],
+                    "marketplaceLoadErrors": [],
+                }
+            if method == "skills/list":
+                return {
+                    "data": [
+                        {
+                            "skills": (
+                                [
+                                    {
+                                        "name": "provider:hidden",
+                                        "path": str(plugin_skill),
+                                        "enabled": True,
+                                    }
+                                ]
+                                if self.catalogue_pass >= 2
+                                else []
+                            )
+                        }
+                    ]
+                }
+            raise AssertionError(method)
+
+    client = LazyPluginClient()
+    skills, _ = load_codex_skill_catalog(
+        client,  # type: ignore[arg-type]
+        cwd=tmp_path,
+    )
+
+    assert client.calls == [
+        "plugin/installed",
+        "skills/list",
+        "plugin/installed",
+        "skills/list",
+        "plugin/installed",
+        "skills/list",
+    ]
+    assert [item["path"] for item in skills] == [str(plugin_skill)]
+
+
+def test_skill_catalog_fails_closed_when_plugin_skills_never_converge(
+    tmp_path: Path,
+) -> None:
+    class ChangingClient:
+        def __init__(self) -> None:
+            self.pass_number = 0
+
+        def request(self, method: str, params: dict[str, Any]) -> dict[str, Any]:
+            del params
+            if method == "plugin/installed":
+                self.pass_number += 1
+                return {"marketplaces": [], "marketplaceLoadErrors": []}
+            if method == "skills/list":
+                return {
+                    "data": [
+                        {
+                            "skills": [
+                                {
+                                    "name": f"provider:{self.pass_number}",
+                                    "path": f"/plugin/{self.pass_number}/SKILL.md",
+                                    "enabled": True,
+                                }
+                            ]
+                        }
+                    ]
+                }
+            raise AssertionError(method)
+
+    with pytest.raises(CodexAppServerError, match="did not converge"):
+        load_codex_skill_catalog(
+            ChangingClient(),  # type: ignore[arg-type]
+            cwd=tmp_path,
+            maximum_passes=3,
+        )
 
 
 def test_agents_precedence_limit_and_live_sources_are_checked(tmp_path: Path) -> None:
@@ -358,6 +461,7 @@ def test_config_projection_fails_on_new_plugin_path_and_disabled_action() -> Non
                 "origins": {},
             },
             "configRequirements/read": {"requirements": None},
+            "plugin/installed": {"marketplaces": [], "marketplaceLoadErrors": []},
             "skills/list": {
                 "data": [
                     {

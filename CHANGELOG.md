@@ -31,6 +31,7 @@ The format follows Keep a Changelog, and system versions follow Semantic Version
 
 ### Changed
 
+- Codex user-surface planning now loads installed Plugins before Skill discovery and waits for the Plugin/Skill catalogue to reach a fixed point. Lazy Google Drive, template, Figma, history, or future Plugin Skills can no longer be omitted from the deny-list audit and then appear in the user menu after a false pass.
 - Adapter capability metadata now describes the active-on-install projection instead of calling live-discoverable Skills inactive.
 - Component status separates registration, loading, callability, and successful execution evidence.
 - Persistent activation remains under primary-user authority; candidate builds cannot activate themselves. An explicit `/version` order now completes only after the exact candidate is activated and verified in a fresh session.

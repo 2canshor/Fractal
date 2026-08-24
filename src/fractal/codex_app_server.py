@@ -165,6 +165,10 @@ def detect_codex_compatibility(
     ).stdout.strip()
     probes: dict[str, dict[str, Any]] = {}
     requests = {
+        # Remote and implicitly installed Plugins can register their Skills lazily.
+        # Discover Plugins before asking for the Skill catalogue or the result can
+        # omit exactly the entries the live Codex menu later exposes.
+        "plugin/installed": {"cwds": [str(Path.cwd())]},
         "skills/list": {"cwds": [str(Path.cwd())], "forceReload": True},
         "hooks/list": {"cwds": [str(Path.cwd())]},
         "mcpServerStatus/list": {"detail": "toolsAndAuthOnly"},
@@ -172,7 +176,6 @@ def detect_codex_compatibility(
         "config/read": {"cwd": str(Path.cwd()), "includeLayers": True},
         "configRequirements/read": {},
         "externalAgentConfig/detect": {"cwds": [str(Path.cwd())], "includeHome": True},
-        "plugin/installed": {"cwds": [str(Path.cwd())]},
         "plugin/list": {},
     }
     for method, params in requests.items():
@@ -192,6 +195,49 @@ def detect_codex_compatibility(
         "methods": probes,
         "source_main_assumed": False,
     }
+
+
+def load_codex_skill_catalog(
+    client: CodexAppServerClient,
+    *,
+    cwd: Path,
+    force_reload: bool = True,
+    required_stable_reads: int = 2,
+    maximum_passes: int = 8,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Return the Skill catalogue only after Plugin discovery reaches a fixed point."""
+    if required_stable_reads < 1 or maximum_passes < required_stable_reads:
+        raise ValueError("Skill catalogue convergence limits are invalid")
+    resolved_cwd = Path(cwd).expanduser().resolve()
+    previous_signature: tuple[tuple[str, ...], tuple[str, ...]] | None = None
+    stable_reads = 0
+    for _ in range(maximum_passes):
+        plugins = client.request("plugin/installed", {"cwds": [str(resolved_cwd)]})
+        response = client.request(
+            "skills/list",
+            {"cwds": [str(resolved_cwd)], "forceReload": force_reload},
+        )
+        buckets = response.get("data") or []
+        if len(buckets) != 1:
+            raise CodexAppServerError("Codex returned an unexpected Skill-list scope")
+        skills = buckets[0].get("skills") or []
+        installed_plugin_ids = tuple(
+            sorted(
+                str(plugin["id"])
+                for marketplace in plugins.get("marketplaces") or []
+                for plugin in marketplace.get("plugins") or []
+                if plugin.get("installed") and plugin.get("enabled", True)
+            )
+        )
+        skill_paths = tuple(sorted(str(item.get("path") or "") for item in skills))
+        signature = (installed_plugin_ids, skill_paths)
+        stable_reads = stable_reads + 1 if signature == previous_signature else 1
+        if stable_reads >= required_stable_reads:
+            return skills, plugins
+        previous_signature = signature
+    raise CodexAppServerError(
+        "Codex Plugin and Skill catalogue did not converge before the audit limit"
+    )
 
 
 def _normalise_path(value: str | Path) -> str:
@@ -242,13 +288,14 @@ def reconcile_codex_components(
     """Compare Fractal's expected set with what Codex reports as loaded now."""
     expected = active_components(registry, "codex")
     expected_by_id = {item["component_id"]: item for item in expected}
-    skills_response = client.request(
-        "skills/list", {"cwds": [str(cwd)], "forceReload": True}
+    loaded_skills, plugins_response = load_codex_skill_catalog(
+        client,
+        cwd=cwd,
+        force_reload=True,
     )
     hooks_response = client.request("hooks/list", {"cwds": [str(cwd)]})
     mcp_statuses = _all_mcp_status(client)
     apps = client.request("app/installed", {"forceRefresh": False}).get("apps", [])
-    plugins_response = client.request("plugin/installed", {"cwds": [str(cwd)]})
     config = client.request("config/read", {"cwd": str(cwd), "includeLayers": False})[
         "config"
     ]
@@ -263,9 +310,6 @@ def reconcile_codex_components(
     )
     instruction_sources = {_normalise_path(path) for path in thread.get("instructionSources", [])}
 
-    loaded_skills: list[dict[str, Any]] = []
-    for entry in skills_response.get("data", []):
-        loaded_skills.extend(entry.get("skills", []))
     loaded_hooks: list[dict[str, Any]] = []
     for entry in hooks_response.get("data", []):
         loaded_hooks.extend(entry.get("hooks", []))
@@ -806,15 +850,14 @@ def audit_codex_config_projection(
     skill_surface_path_audit: dict[str, Any] | None = None
     if user_surface is not None:
         visible = {item["entry_id"] for item in user_surface["entries"]}
-        listed_response = client.request(
-            "skills/list", {"cwds": [str(cwd)], "forceReload": False}
+        listed_skills, _ = load_codex_skill_catalog(
+            client,
+            cwd=cwd,
+            force_reload=True,
         )
-        buckets = listed_response.get("data") or []
-        if len(buckets) != 1:
-            raise CodexAppServerError("Codex returned an unexpected Skill-list scope")
         desired_disabled_skill_paths = sorted(
             str(item["path"])
-            for item in buckets[0].get("skills") or []
+            for item in listed_skills
             if (
                 str(item["path"]) not in set(visible_skill_paths.values())
                 if visible_skill_paths is not None
@@ -835,7 +878,7 @@ def audit_codex_config_projection(
         if visible_skill_paths is not None:
             skill_surface_path_audit = audit_codex_skill_path_surface(
                 user_surface,
-                buckets[0].get("skills") or [],
+                listed_skills,
                 visible_skill_paths=visible_skill_paths,
                 require_visible_paths=False,
             )

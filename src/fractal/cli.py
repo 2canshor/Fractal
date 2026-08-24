@@ -15,6 +15,7 @@ from fractal.codex_app_server import (
     audit_agents_hierarchy,
     detect_codex_compatibility,
     detect_legacy_review_inputs,
+    load_codex_skill_catalog,
     reconcile_codex_components,
     render_codex_inspection,
     trust_registered_codex_hooks,
@@ -385,14 +386,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.codex_action == "surface-plan":
                 registry = load_component_registry(args.registry.expanduser())
                 surface = load_user_surface(args.surface.expanduser(), registry)
-                response = client.request(
-                    "skills/list",
-                    {"cwds": [str(args.cwd.expanduser().resolve())], "forceReload": True},
+                listed, _ = load_codex_skill_catalog(
+                    client,
+                    cwd=args.cwd.expanduser().resolve(),
+                    force_reload=True,
                 )
-                buckets = response.get("data") or []
-                if len(buckets) != 1:
-                    raise ValueError("Codex returned an unexpected Skill-list scope")
-                listed = buckets[0].get("skills") or []
                 candidate = args.candidate.expanduser().resolve(strict=True)
                 visible_skill_paths = {
                     item["entry_id"]: str(
@@ -437,19 +435,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     )
                     for item in surface["entries"]
                 }
-                response = client.request(
-                    "skills/list",
-                    {
-                        "cwds": [str(args.cwd.expanduser().resolve())],
-                        "forceReload": True,
-                    },
+                listed, _ = load_codex_skill_catalog(
+                    client,
+                    cwd=args.cwd.expanduser().resolve(),
+                    force_reload=True,
                 )
-                buckets = response.get("data") or []
-                if len(buckets) != 1:
-                    raise ValueError("Codex returned an unexpected Skill-list scope")
                 report = audit_codex_skill_path_surface(
                     surface,
-                    buckets[0].get("skills") or [],
+                    listed,
                     visible_skill_paths=visible_skill_paths,
                 )
                 _write_optional_json(args.output, report)
