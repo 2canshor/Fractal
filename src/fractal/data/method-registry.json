@@ -1,7 +1,7 @@
 {
   "record_type": "method-registry",
   "record_version": 2,
-  "system_version": "0.1.0-alpha.6",
+  "system_version": "0.1.0-alpha.7",
   "core_philosophies": [
     {
       "id": "continuous-improvement",

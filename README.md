@@ -31,7 +31,7 @@ The public repository contains only reusable architecture, schemas, deterministi
 
 ## Current Status
 
-Development candidate `0.1.0-alpha.6` adds Object-Aware Actions: the object named after an Action selects the narrowest matching workflow over reusable internal dots. Provider and Tool Skills remain available as maintained methods without becoming separate user jobs, and Codex Skill visibility changes are planned as recoverable config edits rather than source deletion. The currently active System Version remains unchanged until Carson explicitly invokes `/version`. The repository does not yet make a stability or compatibility promise.
+Development candidate `0.1.0-alpha.7` corrects the Object-Aware Actions user surface after live UI evidence refuted the alpha.6 acceptance. Codex now discovers installed Plugins before auditing Skills, waits for the Plugin and Skill catalogue to converge, and fails closed instead of accepting a partial lazy-loaded menu. Provider and Tool Skills remain available as maintained internal methods without becoming separate user jobs. The currently active System Version remains unchanged until Carson explicitly invokes `/version`. The repository does not yet make a stability or compatibility promise.
 
 Fractal registers every active or discoverable Skill, Hook, agent role, MCP, Plugin, App, Tool, and adapter individually. Use `fractal components show` for the human-readable registered view and `fractal codex inspect` to compare it with the live Codex runtime. Registration, loading, callability, and successful execution are reported separately. A component being installed or present in a cache is not proof that it is active or working.
 
