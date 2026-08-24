@@ -11,21 +11,23 @@
       "implementation_summary": "Adapt Hermes Dojo session monitoring into typed, privacy-bounded evidence signals without storage coupling or mutation authority.",
       "change_action": "reconfigure",
       "target": {
-        "existing_element_id": "find-problems",
+        "existing_element_id": "hooks",
         "new_element_id": null,
-        "genre_id": "steps",
-        "element_type": "deuteragonist",
-        "marker": "$"
+        "genre_id": "infrastructure",
+        "element_type": "extra",
+        "marker": "^"
       },
       "core_concept_continuity": "The adaptation only supplies broader observations to Find Problems; it does not explain causes, choose responses or mutate the system.",
       "relationships": [
         {
-          "relationship": "serves",
-          "element_id": "find-problems"
-        },
-        {
           "relationship": "informs",
           "element_id": "fatigue"
+        }
+      ],
+      "flow_relationships": [
+        {
+          "relationship": "serves",
+          "flow_id": "find-problems"
         }
       ],
       "visibility": "background-only",
@@ -73,6 +75,825 @@
         "publication": false
       },
       "recovery": "Remove the unreferenced donor_signals module and its mapping; no active runtime or canonical state depends on it."
+    },
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-runtime-lifecycle-arrows",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-boxes-exist-arrows-do-not-travel",
+      "implementation_summary": "Reconfigure Hooks to dispatch typed lifecycle events through one durable local Fractal Orchestrator with immutable execution attempts and explicit investigator Activities.",
+      "change_action": "reconfigure",
+      "target": {
+        "existing_element_id": "hooks",
+        "new_element_id": null,
+        "genre_id": "infrastructure",
+        "element_type": "extra",
+        "marker": "^"
+      },
+      "core_concept_continuity": "Hooks still only connect bounded runtime events to existing responsibilities; the Orchestrator cannot own Perspective, System Review, Values or human authority.",
+      "relationships": [
+        {
+          "relationship": "serves",
+          "element_id": "project-review"
+        },
+        {
+          "relationship": "informs",
+          "element_id": "fatigue"
+        },
+        {
+          "relationship": "validates",
+          "element_id": "deterministic-over-probabilistic"
+        }
+      ],
+      "visibility": "background-only",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "A local SQLite execution spine replaces prompt-only travelling and adds no prompt context or selector-visible capability."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "Claim, run, terminal state, validation and advancement are deterministic program transitions."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "neutral",
+          "summary": "The runtime transports evidence without narrowing collection."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "One runtime spine replaces separate prompt glue for completion, Fatigue and System Review advancement."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "closer",
+          "summary": "Fatigue opens whole-Project Perspective instead of applying a local fix."
+        }
+      ],
+      "donor_ids": [
+        "hermes-agent",
+        "temporal-python-sdk"
+      ],
+      "evidence_ids": [
+        "hermes-v0.20.5-focused-ledger-tests-38-pass",
+        "fractal-orchestrator-focused-tests"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Remove orchestrator.py, restore LifecycleController completion to its prior single write and remove the Hook dispatch; active alpha8 remains untouched until /version."
+    },
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-reality-execution-receipts",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-build-gate-verifies-claims-not-reality",
+      "implementation_summary": "Replace caller-supplied verification booleans with shell-free execution receipts bound to exact commands, input hashes, output hashes, return values and the full candidate authority scope.",
+      "change_action": "replace",
+      "target": {
+        "existing_element_id": "reality-check",
+        "new_element_id": null,
+        "genre_id": "infrastructure",
+        "element_type": "extra",
+        "marker": "^"
+      },
+      "core_concept_continuity": "Reality Check still only distinguishes claims from observed reality; it neither approves a candidate nor activates a version.",
+      "relationships": [
+        {
+          "relationship": "validates",
+          "element_id": "capability-check"
+        },
+        {
+          "relationship": "serves",
+          "element_id": "human-control"
+        }
+      ],
+      "visibility": "operator-facing",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "Receipts live in candidate manifests and Python source; no prompt or new user-facing Action is added."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "The build boundary executes exact argv and derives gates from immutable receipts."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "neutral",
+          "summary": "Execution receipts do not change System Review evidence collection."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "One receipt replaces five ungrounded boolean claims and a partial build scope."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "closer",
+          "summary": "Candidate authority binds every component, migration, adapter, audit and verification command."
+        }
+      ],
+      "donor_ids": [
+        "hermes-agent",
+        "in-toto"
+      ],
+      "evidence_ids": [
+        "hermes-v0.20.5-verification-tests-19-pass",
+        "in-toto-v3.1.0-runlib-source",
+        "fractal-reality-check-focused-tests"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Restore VersionStore manifest record version 2 and the prior boolean API; no active immutable manifest is rewritten."
+    },
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-steal-curiosity-route",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-steal-curiosity-duplicate-responsibility-risk",
+      "implementation_summary": "Make Steal the bounded donor implementation-acquisition route activated by Curiosity during Flow 5, with mandatory handoff to Blueprint Mapping in Flow 6.",
+      "change_action": "reconfigure",
+      "target": {
+        "existing_element_id": "steal",
+        "new_element_id": null,
+        "genre_id": "methods",
+        "element_type": "prop",
+        "marker": "¢"
+      },
+      "core_concept_continuity": "Steal continues to reuse donor implementation only; Curiosity owns the search pressure and the eight-Flow guide owns sequencing while System Review retains the lifecycle.",
+      "relationships": [
+        {
+          "relationship": "implements",
+          "element_id": "curiosity"
+        }
+      ],
+      "flow_relationships": [
+        {
+          "relationship": "serves",
+          "flow_id": "find-global-pattern-solutions"
+        },
+        {
+          "relationship": "informs",
+          "flow_id": "map-implementations-to-blueprint"
+        }
+      ],
+      "visibility": "background-only",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "The relationship is machine-readable Blueprint data and adds no new architecture node or prompt."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "Activation and handoff boundaries are machine-validated."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "closer",
+          "summary": "Curiosity retains broad 60/20/20 discovery before donor comparison narrows candidates."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "Steal becomes one Curiosity route instead of a competing improvement lifecycle."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "closer",
+          "summary": "Every donor candidate returns to whole-System Blueprint Mapping and debate."
+        }
+      ],
+      "donor_ids": [
+        "hermes-agent"
+      ],
+      "evidence_ids": [
+        "blueprint-steal-activation-contract",
+        "hermes-first-donor-complete-research"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Remove the staged activation_contract and mapping; the prior Steal Prop and Curiosity Value remain unchanged."
+    },
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-post-work-learning",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-curiosity-action-ready-but-no-local-learning-worker",
+      "implementation_summary": "Reconfigure Curiosity so a repeated-work signal runs Post-Work Learning locally, separates transient failures, completes 60/20/20 evidence, stages a portable method candidate, retains blind spots and hands the result to Perspective and Blueprint Mapping.",
+      "change_action": "reconfigure",
+      "target": {
+        "existing_element_id": "curiosity",
+        "new_element_id": null,
+        "genre_id": "values",
+        "element_type": "deuteragonist",
+        "marker": "$"
+      },
+      "core_concept_continuity": "Curiosity still searches beyond the current approach; locally forked methods make that search executable without owning Perspective, System Review, Mapping, adoption or Human Decision.",
+      "relationships": [
+        {
+          "relationship": "informs",
+          "element_id": "project-review"
+        },
+        {
+          "relationship": "implements",
+          "element_id": "steal"
+        },
+        {
+          "relationship": "validates",
+          "element_id": "reality-check"
+        }
+      ],
+      "flow_relationships": [
+        {
+          "relationship": "informs",
+          "flow_id": "map-implementations-to-blueprint"
+        }
+      ],
+      "visibility": "background-only",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "The worker and donor procedures are packaged local data and Python; no donor prompt, model, service, plugin engine or new user-facing Action is loaded."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "Typed signals, local classifications, fixed research shares, immutable candidate files and exact integrity hashes replace an unexecuted research instruction."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "closer",
+          "summary": "All observations remain linked before repeated method-fixable signals form a Pattern."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "The worker reconfigures a current class-level method first and creates one local candidate only when recurrence supports it."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "closer",
+          "summary": "Every completed learning result returns to whole-Project Perspective before Blueprint Mapping and adoption."
+        }
+      ],
+      "donor_ids": [
+        "hermes-agent",
+        "super-hermes",
+        "hermes-dojo",
+        "hermes-workspace",
+        "evey-hermes-plugins",
+        "distilly"
+      ],
+      "evidence_ids": [
+        "learning-method-sources-local-snapshot",
+        "post-work-learning-focused-tests",
+        "local-method-candidate-integrity-tests",
+        "learning-to-perspective-orchestration-tests"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Disable the local Learning Review call, retain completed evidence, reject staged method candidates and restore Fatigue to its prior ready research action; active capabilities and the current System Version remain unchanged."
+    },
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-greed-outcome-ratchet",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-greed-has-baseline-primitives-without-material-outcome-gate",
+      "implementation_summary": "Reconfigure Greed with a local outcome-ratchet that preserves verified success, requires explicit absolute or relative material improvement, rejects missing evidence and sends only a stronger staged trial to Flow 5.",
+      "change_action": "reconfigure",
+      "target": {
+        "existing_element_id": "greed",
+        "new_element_id": null,
+        "genre_id": "values",
+        "element_type": "deuteragonist",
+        "marker": "$"
+      },
+      "core_concept_continuity": "Greed still asks whether genuine success can become materially stronger; the adapted comparator makes stronger measurable without changing the approved result, owning the Experiment or approving adoption.",
+      "relationships": [
+        {
+          "relationship": "validates",
+          "element_id": "experiment"
+        },
+        {
+          "relationship": "validates",
+          "element_id": "reality-check"
+        }
+      ],
+      "flow_relationships": [
+        {
+          "relationship": "serves",
+          "flow_id": "find-global-pattern-solutions"
+        }
+      ],
+      "visibility": "background-only",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "A small local Python rule replaces the former threshold suggestion glue; MLflow, Optuna and Promptfoo engines are not installed or loaded."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "Metric direction and material absolute or relative improvement are exact fail-closed comparisons."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "neutral",
+          "summary": "The ratchet judges a selected trial after evidence collection and does not narrow Flow 1 discovery."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "The existing Greed threshold glue is replaced by one bounded comparator instead of adding an optimisation platform."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "closer",
+          "summary": "The stronger target must be measured against verified whole-outcome metrics and preserve the original success."
+        }
+      ],
+      "donor_ids": ["mlflow"],
+      "evidence_ids": [
+        "mlflow-v3.15.1-source-inspection",
+        "greed-outcome-ratchet-focused-tests",
+        "greed-staged-trial-evidence"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Remove GreedMetricRule and evaluate_greed_trial, restore the prior challenge suggestion function, and retain the verified baseline plus original Project success; no donor runtime or active state depends on the candidate."
+    },
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-system-review-investigation-loop",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-system-review-validates-results-but-caller-prepares-every-stage",
+      "implementation_summary": "Reconfigure System Review so one bounded local loop collects canonical and read-only external evidence, asks one reasoning adapter for each judgement, validates and persists every result, automatically advances, resumes safely and stops before Human Decision.",
+      "change_action": "reconfigure",
+      "target": {
+        "section_id": "core",
+        "existing_element_id": "system-review",
+        "new_element_id": null,
+        "genre_id": null,
+        "element_type": "protagonist",
+        "marker": "#"
+      },
+      "core_concept_continuity": "System Review remains the sole improvement lifecycle owner. The loop only travels through its eight Flows and cannot decide, mutate, activate or publish a change.",
+      "relationships": [
+        {
+          "relationship": "implements",
+          "element_id": "hooks"
+        },
+        {
+          "relationship": "validates",
+          "element_id": "reality-check"
+        },
+        {
+          "relationship": "serves",
+          "element_id": "human-control"
+        }
+      ],
+      "flow_relationships": [
+        {"relationship": "implements", "flow_id": "find-problems"},
+        {"relationship": "implements", "flow_id": "find-local-patterns"},
+        {"relationship": "implements", "flow_id": "find-global-patterns"},
+        {"relationship": "implements", "flow_id": "find-global-pattern-reasons"},
+        {"relationship": "implements", "flow_id": "find-global-pattern-solutions"},
+        {"relationship": "implements", "flow_id": "map-implementations-to-blueprint"},
+        {"relationship": "implements", "flow_id": "debate-global-pattern-solutions"},
+        {"relationship": "implements", "flow_id": "present-decisions-one-by-one"}
+      ],
+      "visibility": "background-only",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "A local evidence bundle and bounded stage loop replace repeated caller-side prompt glue; no Hermes or Temporal runtime, prompt, provider or service is loaded."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "Stage order, evidence availability, iteration budget, persistence, retry and Human Control stop are deterministic."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "closer",
+          "summary": "The loop collects canonical and registered external evidence before the reasoning adapter narrows it."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "One loop replaces per-stage caller assembly without adding another lifecycle or user-facing capability."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "closer",
+          "summary": "Every stage receives the whole canonical Project snapshot and prior Flow results rather than a local fragment."
+        }
+      ],
+      "donor_ids": ["hermes-agent", "temporal-python-sdk"],
+      "evidence_ids": [
+        "hermes-run-agent-fcbd107-source-inspection",
+        "canonical-evidence-investigator-focused-tests",
+        "bounded-multi-flow-loop-staged-test"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Remove CanonicalEvidenceInvestigator and run_system_review_until_human; keep the durable per-stage Orchestrator and prior System Review contracts. No donor runtime, active System Version or canonical Project data depends on the candidate."
+    },
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-evidence-exploration",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-cause-research-needs-live-breadth-and-provenance-acquisition",
+      "implementation_summary": "Reconfigure Cause Research with local Evidence Exploration: plan multiple labelled perspectives, require external and internal scopes, execute every bounded question, retain duplicates and No Finding before later filtering, and expose provenance-linked artifacts to the System Review investigator.",
+      "change_action": "reconfigure",
+      "target": {
+        "existing_element_id": "cause-research",
+        "new_element_id": null,
+        "genre_id": "methods",
+        "element_type": "prop",
+        "marker": "¢"
+      },
+      "core_concept_continuity": "Cause Research still supplies bounded evidence for causal understanding. Evidence Exploration cannot reconcile causes, choose a solution, own a Flow or mutate Fractal.",
+      "relationships": [
+        {"relationship": "informs", "element_id": "curiosity"},
+        {"relationship": "validates", "element_id": "quantity-over-quality"},
+        {"relationship": "serves", "element_id": "reality-check"}
+      ],
+      "flow_relationships": [
+        {"relationship": "serves", "flow_id": "find-global-pattern-reasons"}
+      ],
+      "visibility": "background-only",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "A small local plan/result record and retriever interface replace prompt-only research assembly; donor models, crawlers, stores and report engines are absent."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "Question budgets, source scopes, raw result retention and provenance fields are deterministic contracts."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "closer",
+          "summary": "Every planned perspective question is executed and duplicates remain until the harvest is frozen."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "Only planning and retrieval shapes are kept; both donor research/report engines are excluded."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "closer",
+          "summary": "External and internal scopes plus multiple perspectives prevent one convenient local explanation from ending the search."
+        }
+      ],
+      "donor_ids": ["storm", "gpt-researcher"],
+      "evidence_ids": [
+        "storm-v1.1.0-source-inspection",
+        "gpt-researcher-v3.6.1-source-inspection",
+        "evidence-exploration-focused-tests"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Remove evidence_research.py and the Evidence Exploration collector; retain prior Cause Research contracts and use the existing read-only research route. No donor runtime or canonical conclusion depends on the candidate."
+    },
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-subtraction-first-escalation",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-subtraction-order-does-not-justify-bypassing-viable-smaller-change",
+      "implementation_summary": "Reconfigure Subtraction First so all delete-to-add responses remain in exact order and a later preferred response is invalid unless every earlier viable smaller response has an evidence-backed reason for not being selected.",
+      "change_action": "reconfigure",
+      "target": {
+        "existing_element_id": "subtraction-first",
+        "new_element_id": null,
+        "genre_id": "principles",
+        "element_type": "principle",
+        "marker": "%"
+      },
+      "core_concept_continuity": "Subtraction First remains an asymptotic direction rather than a ban on addition. The gate makes escalation explicit while Global Outcome may still justify a later option with evidence.",
+      "relationships": [
+        {"relationship": "validates", "element_id": "component-governance"},
+        {"relationship": "serves", "element_id": "greed"},
+        {"relationship": "serves", "element_id": "curiosity"}
+      ],
+      "flow_relationships": [
+        {"relationship": "validates", "flow_id": "find-global-pattern-solutions"},
+        {"relationship": "validates", "flow_id": "map-implementations-to-blueprint"}
+      ],
+      "visibility": "background-only",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "The existing Improvement Options validator is tightened in place; no new component, prompt or donor runtime is added."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "Order, viability and bypass evidence are exact validation conditions."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "neutral",
+          "summary": "The gate runs after all option families are collected and does not reduce evidence breadth."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "A later option cannot quietly bypass an earlier viable deletion, shortening, merge or simplification."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "closer",
+          "summary": "A later option remains possible only when the bypass reason explains why the smaller option harms the global result."
+        }
+      ],
+      "donor_ids": ["hermes-agent"],
+      "evidence_ids": [
+        "hermes-existing-method-first-source-inspection",
+        "subtraction-first-bypass-focused-tests"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Remove the viable-bypass validation and retain the prior complete option-family order. The current active System Version and Project decisions remain unchanged."
+    },
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-global-outcome-protected-dimensions",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-local-effect-can-hide-regression-in-global-dimension",
+      "implementation_summary": "Reconfigure Global Outcome over Local Optimisation with a local multi-metric gate that requires direct evidence, checks material improvement, protects named global dimensions from regression and classifies a local win with global harm as harmful local optimisation.",
+      "change_action": "reconfigure",
+      "target": {
+        "existing_element_id": "global-outcome-over-local-optimisation",
+        "new_element_id": null,
+        "genre_id": "principles",
+        "element_type": "principle",
+        "marker": "%"
+      },
+      "core_concept_continuity": "The Principle still judges the whole outcome rather than one convenient metric. The gate supplies evidence and classification but cannot define Project priorities or approve adoption.",
+      "relationships": [
+        {"relationship": "validates", "element_id": "greed"},
+        {"relationship": "validates", "element_id": "experiment"},
+        {"relationship": "validates", "element_id": "reality-check"}
+      ],
+      "flow_relationships": [
+        {"relationship": "validates", "flow_id": "find-global-patterns"},
+        {"relationship": "validates", "flow_id": "find-global-pattern-solutions"},
+        {"relationship": "validates", "flow_id": "debate-global-pattern-solutions"}
+      ],
+      "visibility": "background-only",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "The existing outcome comparison is extended in local Python; MLflow and Optuna packages, stores, services and optimisation engines remain absent."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "Metric direction, materiality and protected-dimension constraints are exact comparisons."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "neutral",
+          "summary": "The gate evaluates the selected representative trial after evidence collection and does not narrow discovery."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "One shared outcome rule serves Greed and global evaluation without adding an optimisation platform."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "closer",
+          "summary": "A local gain is rejected when any primary-user-protected global dimension regresses."
+        }
+      ],
+      "donor_ids": ["mlflow", "optuna"],
+      "evidence_ids": [
+        "mlflow-v3.15.1-source-inspection",
+        "optuna-v4.9.0-source-inspection",
+        "global-outcome-protected-dimension-focused-tests"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Remove evaluate_global_outcome_trial and restore the prior Local/Global boolean classifier. The prior baseline, Project result and active System Version remain unchanged."
+    },
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-perspective-checkpoint-review",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-perspective-contract-is-strong-but-checkpoint-travel-remains-prompt-led",
+      "implementation_summary": "Reconfigure Perspective so milestone, exception and human-request checkpoints automatically carry compact work, command, blocker and next-action evidence into the existing whole-Project Direction, Goal, criteria, Plan, resources, neglect, opportunity-cost and continuation review.",
+      "change_action": "reconfigure",
+      "target": {
+        "existing_element_id": "project-review",
+        "new_element_id": null,
+        "genre_id": "methods",
+        "element_type": "deuteragonist",
+        "marker": "$"
+      },
+      "core_concept_continuity": "Perspective remains the whole active-Project view and cannot become a second improvement lifecycle. Checkpoint evidence informs it but cannot choose a Plan change or alter Goal and Success Criteria authority.",
+      "relationships": [
+        {"relationship": "serves", "element_id": "fatigue"},
+        {"relationship": "validates", "element_id": "global-outcome-over-local-optimisation"},
+        {"relationship": "serves", "element_id": "human-control"}
+      ],
+      "flow_relationships": [
+        {"relationship": "informs", "flow_id": "find-global-patterns"},
+        {"relationship": "informs", "flow_id": "present-decisions-one-by-one"}
+      ],
+      "visibility": "background-only",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "Compact checkpoint fields feed the existing Perspective record; no workspace UI, swarm, raw terminal transcript or donor prompt is loaded."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "Review Point creation, checkpoint deduplication, whole-Project field coverage and Plan versioning are exact state transitions."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "closer",
+          "summary": "Perspective receives complete checkpoint and canonical Project evidence before deciding what matters."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "Checkpoint evidence is added to the existing Perspective record instead of creating another review component."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "closer",
+          "summary": "The review must assess all whole-Project dimensions, neglected areas, resources and opportunity cost before a local Plan change."
+        }
+      ],
+      "donor_ids": ["hermes-workspace"],
+      "evidence_ids": [
+        "hermes-workspace-checkpoint-source-inspection",
+        "perspective-whole-project-focused-tests"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Remove checkpoint evidence input and keep the existing Perspective review, Plan history and authority boundaries. No donor workspace or active version depends on the candidate."
+    },
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-two-sided-independent-runner",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-two-sided-contract-has-no-complete-isolated-runner",
+      "implementation_summary": "Reconfigure Two-Sided Review with one local runner that launches Case For and Case Against from separate initial contexts, rejects unavailable or cross-case evidence, verifies independence, and only then lets the Main Agent synthesize a recommendation and Biggest Remaining Concern.",
+      "change_action": "reconfigure",
+      "target": {
+        "existing_element_id": "two-sided-review",
+        "new_element_id": null,
+        "genre_id": "methods",
+        "element_type": "prop",
+        "marker": "¢"
+      },
+      "core_concept_continuity": "Two-Sided Review remains a reusable adversarial Method. It cannot own Debate, share one branch with the other, make the decision or replace Main Agent synthesis and Human Control.",
+      "relationships": [
+        {"relationship": "validates", "element_id": "reality-check"},
+        {"relationship": "serves", "element_id": "human-control"},
+        {"relationship": "validates", "element_id": "global-outcome-over-local-optimisation"}
+      ],
+      "flow_relationships": [
+        {"relationship": "serves", "flow_id": "debate-global-pattern-solutions"},
+        {"relationship": "informs", "flow_id": "present-decisions-one-by-one"}
+      ],
+      "visibility": "background-only",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "Two isolated evidence bundles and compact reports replace group-chat history; no debate framework, shared transcript, provider or consensus engine is loaded."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "Warrant fields, evidence availability, initial context hashes, branch independence and synthesis owner are exact gates."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "closer",
+          "summary": "Both strongest opposing cases are retained before synthesis narrows the decision."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "The current independent-branch contract is completed in place; no group-chat framework is added."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "closer",
+          "summary": "The Case Against must remain independent and the synthesis preserves the Biggest Remaining Concern."
+        }
+      ],
+      "donor_ids": [],
+      "evaluated_donor_ids": ["evey-hermes-plugins", "autogen"],
+      "evidence_ids": [
+        "evey-council-source-inspection",
+        "autogen-python-v0.7.5-source-inspection",
+        "two-sided-independent-runner-focused-tests"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Remove run_two_sided_review and retain the prior warrant, branch-independence and review-readiness validators. No donor runtime or active decision depends on the runner."
     }
   ]
 }

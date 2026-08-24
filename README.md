@@ -1,6 +1,6 @@
 # Fractal
 
-Fractal is a self-improving agentic environment for doing Projects and learning from them. While a Project is active, Perspective prevents local work from pulling attention, time, or resources away from the Project as a whole. After the primary user declares Project Completion, System Review uses the eight-step New Blueprint workflow to make future Projects better.
+Fractal is a self-improving agentic environment for doing Projects and learning from them. While a Project is active, Perspective prevents local work from pulling attention, time, or resources away from the Project as a whole. After the primary user declares Project Completion, System Review follows the eight New Blueprint Flows to make future Projects better.
 
 ```text
 Brief -> Direction -> Research and Clarification -> Goal
@@ -15,14 +15,14 @@ Its improvement hierarchy is:
 ```text
 Continuous Improvement                         Core Philosophy
 └── # System Review                            Sole Protagonist
-    ├── * Steps                                eight $ Steps
-    ├── * Values                               Fatigue, Curiosity, Greed
-    ├── * Principles                           %, including Subtraction First
-    ├── * Infrastructure                       ^ supporting Extras
-    └── * Methods                              $ Perspective and reusable ¢ Props
+
+Section 1 — Element Library                    Values, Principles,
+                                               Infrastructure, Methods
+Section 2 — Flows                              eight ordered use rules
+Section 3 — Blueprint Change Rules             mapping and change boundaries
 ```
 
-The [New Blueprint](docs/blueprint.md) is the canonical active workflow architecture. [Blueprint Implementation Gap](docs/blueprint-implementation-gap.md) separates current implementation and execution evidence without creating a second architecture, while the [Donor Inventory](docs/donor-inventory.md) treats Hermes and every other external source as a bounded, non-authoritative donor. [Agentic Element Map](docs/agentic-element-map.md) shows which parts belong to the Main Agent, Skills, Hooks, Subagents, MCP, Plugins, and deterministic programs.
+The [New Blueprint](docs/blueprint.md) is the canonical active workflow architecture. [Blueprint Implementation Gap](docs/blueprint-implementation-gap.md) and the [Coverage Matrix](docs/blueprint-coverage-matrix.md) separate contract, staged, and active-live evidence without creating a second architecture. The [Flagship Implementation Matrix](docs/flagship-implementation-matrix.md) records one current need-led implementation decision for every Element, while the [Donor Inventory](docs/donor-inventory.md) treats Hermes and every other external source as bounded and non-authoritative. The [Continuous Improvement Purpose Audit](docs/continuous-improvement-purpose-audit.md) proves every Library Element returns through a Flow to System Review and the one purpose. [Agentic Element Map](docs/agentic-element-map.md) shows which parts belong to the Main Agent, Skills, Hooks, Subagents, MCP, Plugins, and deterministic programs.
 
 [Actions, Commands, Workflows, and Dots](docs/actions-and-commands.md) explains Object-Aware Actions, the small user-facing Skill surface, and how provider methods remain reusable internally.
 

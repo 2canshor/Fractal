@@ -154,17 +154,83 @@ def _record_identifier(value: dict[str, Any]) -> str:
     return digest[:24]
 
 
-def _transcript_work_context(path: str | None) -> tuple[str | None, tuple[str, ...]]:
-    """Extract the latest user-turn key and its Tool identifiers."""
+def _user_record_text(value: dict[str, Any]) -> str:
+    """Extract only the real user's content for a non-reversible request-shape digest."""
+    message = value.get("message")
+    payload = value.get("payload")
+    container = message if isinstance(message, dict) else payload
+    if not isinstance(container, dict):
+        return ""
+    content = container.get("content")
+    if isinstance(content, str):
+        return content
+    parts = []
+    if isinstance(content, list):
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict):
+                text = item.get("text") or item.get("input_text")
+                if isinstance(text, str):
+                    parts.append(text)
+    return " ".join(parts)
+
+
+def _request_shape_digest(text: str) -> str | None:
+    """Hash a redacted request shape so paths, URLs, ids and raw text are not retained."""
+    if not text.strip():
+        return None
+    normalized = text.lower()
+    normalized = re.sub(r"https?://\S+", " <url> ", normalized)
+    normalized = re.sub(r"(?:^|\s)(?:/|~/?|\.\.?/)[^\s]+", " <path> ", normalized)
+    normalized = re.sub(r"\b[0-9a-f]{12,}\b", " <id> ", normalized)
+    normalized = re.sub(r"\b\d+(?:\.\d+)*\b", " <number> ", normalized)
+    normalized = re.sub(r"[\"'`][^\"'`]{1,120}[\"'`]", " <value> ", normalized)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:20]
+
+
+def _request_class(text: str) -> str:
+    """Return a small non-sensitive task class without retaining user wording."""
+    normalized = text.lower()
+    classes = (
+        "assess",
+        "automate",
+        "build",
+        "complete",
+        "create",
+        "deploy",
+        "edit",
+        "fix",
+        "match",
+        "organize",
+        "publish",
+        "research",
+        "review",
+        "summarize",
+        "test",
+        "translate",
+        "write",
+    )
+    for task_class in classes:
+        if re.search(rf"\b{task_class}(?:e[sd]?|ing)?\b", normalized):
+            return task_class
+    return "general"
+
+
+def _transcript_work_context(
+    path: str | None,
+) -> tuple[str | None, tuple[str, ...], str | None, str]:
+    """Extract the latest real user-turn key, Tool ids and redacted request shape."""
     if not path:
-        return None, ()
+        return None, (), None, "general"
     transcript = Path(path).expanduser()
     try:
         usable = transcript.is_file() and transcript.stat().st_size <= 5_000_000
     except OSError:
         usable = False
     if not usable:
-        return None, ()
+        return None, (), None, "general"
     records: list[Any] = []
     for line in transcript.read_text(encoding="utf-8", errors="replace").splitlines():
         try:
@@ -176,6 +242,9 @@ def _transcript_work_context(path: str | None) -> tuple[str | None, tuple[str, .
     turn_key = None
     if user_indexes:
         turn_key = _record_identifier(records[start])
+    request_text = _user_record_text(records[start]) if user_indexes else ""
+    request_shape = _request_shape_digest(request_text)
+    request_class = _request_class(request_text)
     found: set[str] = set()
 
     def visit(value: Any) -> None:
@@ -196,7 +265,7 @@ def _transcript_work_context(path: str | None) -> tuple[str | None, tuple[str, .
 
     for record in records[start:]:
         visit(record)
-    return turn_key, tuple(sorted(found))
+    return turn_key, tuple(sorted(found)), request_shape, request_class
 
 
 def _signature_from_dict(value: dict[str, Any]) -> WorkSignature:
@@ -227,14 +296,17 @@ def capture_work_completion(
     evaluations_path: Path,
 ) -> dict[str, Any]:
     """Capture one compact Work Signature from a real platform Stop event."""
-    project = context["active_project"]
+    live_state = resolve_session_state(context)
+    project = live_state["project"] if live_state is not None else context["active_project"]
     platform = context.get("platform", "unknown")
     thread_id = payload.get("thread_id") or payload.get("threadId")
     turn_id = payload.get("turn_id") or payload.get("turnId")
     if thread_id is None and platform == "codex":
         thread_id = payload.get("session_id")
     session_id = str(thread_id or payload.get("session_id") or "unknown-session")
-    turn_key, tools = _transcript_work_context(payload.get("transcript_path"))
+    turn_key, tools, request_shape, request_class = _transcript_work_context(
+        payload.get("transcript_path")
+    )
     if isinstance(turn_id, str) and turn_id:
         turn_key = turn_id
     if turn_key is None:
@@ -252,8 +324,12 @@ def capture_work_completion(
         signature = WorkSignature(
             work_id=work_id,
             project_id=project["project_id"],
-            work_type="agent-turn",
-            input_shape=f"{platform}-completed-turn",
+            work_type=f"request-{request_class}",
+            input_shape=(
+                f"{platform}-request-{request_shape}"
+                if request_shape is not None
+                else f"{platform}-completed-turn"
+            ),
             steps=("user-turn", "assistant-response"),
             tools=tools,
             outcome_category="completed-response",
@@ -298,6 +374,66 @@ def capture_work_completion(
         },
         "evaluated_at": utc_now(),
     }
+    if recognition.status == "investigation-required":
+        try:
+            if live_state is None:
+                raise LiveRuntimeStateError(
+                    "Fatigue orchestration requires verified canonical live state"
+                )
+            from fractal.orchestrator import FractalOrchestrator
+            from fractal.self_improvement import MethodCandidateStore, PostWorkLearning
+            from fractal.storage import ProjectStore
+
+            state_path = Path(context["live_runtime"]["state_path"]).expanduser()
+            runtime_root = state_path.parent.parent
+            project_path = Path(live_state["project"]["source_path"])
+            project_store = ProjectStore(project_path.parent.parent, runtime_root)
+            orchestrator = FractalOrchestrator(project_store)
+            outcome = orchestrator.handle_fatigue(
+                recognition,
+                signature,
+                actor="fractal-runtime",
+                platform=platform,
+            )
+            learning = None
+            research_action_id = (outcome.get("result") or {}).get("research_action_id")
+            if research_action_id:
+                candidate_store = MethodCandidateStore(runtime_root / "learning")
+                reviewer = PostWorkLearning(
+                    constraint_history=candidate_store.recent_constraint_reports()
+                )
+                learning = orchestrator.run_learning_review(
+                    research_action_id,
+                    reviewer=reviewer,
+                    candidate_store=candidate_store,
+                )
+            evaluation["orchestration"] = {
+                "status": "completed",
+                "execution_id": outcome["execution"]["execution_id"],
+                "idempotent": outcome["idempotent"],
+                "result": outcome["result"],
+                "learning": (
+                    {
+                        "status": learning["result"]["status"],
+                        "candidate_id": (
+                            learning["result"].get("candidate_manifest") or {}
+                        ).get("candidate_id"),
+                        "canonical_evidence_id": learning["result"].get(
+                            "canonical_evidence_id"
+                        ),
+                        "next_action_id": learning.get("next_action", {}).get(
+                            "action_id"
+                        ),
+                    }
+                    if learning is not None
+                    else None
+                ),
+            }
+        except Exception as error:
+            evaluation["orchestration"] = {
+                "status": "failed",
+                "error": str(error),
+            }
     evaluations_path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = evaluations_path.with_suffix(evaluations_path.suffix + ".lock")
     with lock_path.open("a", encoding="utf-8") as lock:

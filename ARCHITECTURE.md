@@ -29,7 +29,7 @@ Human-readable Markdown is a view of canonical state, not a second source of tru
 
 ## Core Philosophy
 
-Continuous Improvement is the only Core Philosophy and System Review is the sole Protagonist. During active work, the `$ Perspective` Method protects the whole Project trajectory. After Project Completion, System Review runs the eight New Blueprint Steps. Values, Principles, Infrastructure, Methods, roles, and Tags retain distinct meanings and must have observable behaviour, tests, and evidence.
+Continuous Improvement is the only Core Philosophy and System Review is the sole Protagonist. During active work, the `$ Perspective` Method protects the whole Project trajectory. After Project Completion, System Review follows the eight New Blueprint Flows. The Element Library contains Values, Principles, Infrastructure, and Methods; Flows only say how to use those Elements; Blueprint Change Rules govern changes to either section. Roles and Tags retain distinct meanings, and every Element must have observable behaviour, tests, and evidence.
 
 ## State Change Path
 
@@ -48,7 +48,9 @@ Everything an agent can discover, select, or run is a registered component. This
 The supported activation path is:
 
 ```text
-request -> source and overlap check -> Naming System -> permission and evaluation check
+request -> source and overlap check -> Naming System
+        -> required user-surface symbol selection for an Action or Command
+        -> permission and evaluation check
         -> registration -> candidate version -> generated adapter -> live verification
 ```
 

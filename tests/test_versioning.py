@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import pytest
 
 from fractal.improvement import TrialBoundary, TrialMeasurement
+from fractal.reality import ExecutionGate
 from fractal.storage import AuthorityError
 from fractal.versioning import (
     VersionError,
@@ -92,16 +94,17 @@ def issue_action(store: VersionStore, version: str, action: str, label: str) -> 
     )["receipt_id"]
 
 
-def verification(**overrides: bool) -> dict[str, bool]:
-    value = {
-        "clean_build": True,
-        "tests_passed": True,
-        "adapter_hashes_verified": True,
-        "migrations_verified": True,
-        "restore_verified": True,
-    }
-    value.update(overrides)
-    return value
+def verification_plan() -> list[ExecutionGate]:
+    root = Path(__file__).parent
+    return [
+        ExecutionGate(
+            gate_id=gate_id,
+            command=(sys.executable, "-c", "raise SystemExit(0)"),
+            cwd=root,
+            materials=("test_versioning.py",),
+        )
+        for gate_id in sorted(VersionStore.REQUIRED_VERIFICATIONS)
+    ]
 
 
 def component() -> dict:
@@ -113,19 +116,45 @@ def component() -> dict:
     }
 
 
+def candidate_inputs(
+    version: str,
+    *,
+    live_promotion_eligible: bool = True,
+    plan: list[ExecutionGate] | None = None,
+    components: list[dict] | None = None,
+) -> dict:
+    return {
+        "version": version,
+        "public_commit": "a" * 40,
+        "private_commit": "b" * 40,
+        "components": components or [component()],
+        "adapter_hashes": {"codex": "c" * 64},
+        "migrations": ["project-1.0-to-1.1"],
+        "restore_point": {"kind": "manifest", "version": "previous"},
+        "verification_plan": plan or verification_plan(),
+        "project_id": PROJECT_ID,
+        "project_revision": PROJECT_REVISION,
+        "decision_batch": decision_batch(),
+        "architecture_lineage": architecture_lineage(),
+        "claim_gate_audit": claim_gate_audit(),
+        "adapter_boundary_audit": adapter_boundary_audit(
+            live_promotion_eligible=live_promotion_eligible
+        ),
+        "preservation_audits": preservation_audits(),
+    }
+
+
 def build(
     store: VersionStore,
     version: str,
     *,
     live_promotion_eligible: bool = True,
 ) -> dict:
-    batch = decision_batch()
-    target, expected_state = store.build_authority_scope(
-        version=version,
-        public_commit="a" * 40,
-        private_commit="b" * 40,
-        decision_batch=batch,
+    inputs = candidate_inputs(
+        version, live_promotion_eligible=live_promotion_eligible
     )
+    candidate = store.candidate_input(**inputs)
+    target, expected_state = store.build_authority_scope(candidate)
     receipt_id = store.authority.issue(
         action="build",
         project_id=PROJECT_ID,
@@ -134,26 +163,7 @@ def build(
         expected_state=expected_state,
         authority_evidence=authority_evidence(store, f"build-{version}"),
     )["receipt_id"]
-    return store.build_candidate(
-        version=version,
-        public_commit="a" * 40,
-        private_commit="b" * 40,
-        components=[component()],
-        adapter_hashes={"codex": "c" * 64},
-        migrations=["project-1.0-to-1.1"],
-        restore_point={"kind": "manifest", "version": "previous"},
-        verification=verification(),
-        project_id=PROJECT_ID,
-        project_revision=PROJECT_REVISION,
-        decision_batch=batch,
-        architecture_lineage=architecture_lineage(),
-        claim_gate_audit=claim_gate_audit(),
-        adapter_boundary_audit=adapter_boundary_audit(
-            live_promotion_eligible=live_promotion_eligible
-        ),
-        preservation_audits=preservation_audits(),
-        authority_receipt_id=receipt_id,
-    )
+    return store.build_candidate(**inputs, authority_receipt_id=receipt_id)
 
 
 def test_candidate_requires_human_activation_rejection_and_restore(tmp_path: Path) -> None:
@@ -216,6 +226,64 @@ def test_candidate_requires_human_activation_rejection_and_restore(tmp_path: Pat
     assert store.version_state("0.1.0-alpha.3") == "previously-active"
 
 
+def test_build_runs_reality_checks_and_binds_full_candidate_scope(tmp_path: Path) -> None:
+    store = VersionStore(tmp_path / "reality")
+    manifest = build(store, "0.1.0-alpha.1")
+    assert set(manifest["verification"]) == VersionStore.REQUIRED_VERIFICATIONS
+    assert len(manifest["verification_receipts"]) == 5
+    assert all(
+        receipt["byproducts"]["exit_code"] == 0
+        for receipt in manifest["verification_receipts"]
+    )
+
+    approved = candidate_inputs("0.1.0-alpha.2")
+    target, expected_state = store.build_authority_scope(store.candidate_input(**approved))
+    receipt = store.authority.issue(
+        action="build",
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        target=target,
+        expected_state=expected_state,
+        authority_evidence=authority_evidence(store, "full-candidate-scope"),
+    )
+    changed = candidate_inputs(
+        "0.1.0-alpha.2",
+        components=[{**component(), "sha256": "f" * 64}],
+    )
+    with pytest.raises(AuthorityError, match="scope"):
+        store.build_candidate(
+            **changed,
+            authority_receipt_id=receipt["receipt_id"],
+        )
+
+
+def test_failed_reality_gate_prevents_manifest_and_consumes_build_attempt(
+    tmp_path: Path,
+) -> None:
+    store = VersionStore(tmp_path / "failed-reality")
+    plan = verification_plan()
+    failing_gate = next(item for item in plan if item.gate_id == "tests_passed")
+    plan[plan.index(failing_gate)] = ExecutionGate(
+        gate_id="tests_passed",
+        command=(sys.executable, "-c", "raise SystemExit(9)"),
+        cwd=failing_gate.cwd,
+        materials=failing_gate.materials,
+    )
+    inputs = candidate_inputs("0.1.0-alpha.1", plan=plan)
+    target, expected_state = store.build_authority_scope(store.candidate_input(**inputs))
+    receipt = store.authority.issue(
+        action="build",
+        project_id=PROJECT_ID,
+        project_revision=PROJECT_REVISION,
+        target=target,
+        expected_state=expected_state,
+        authority_evidence=authority_evidence(store, "failed-reality"),
+    )
+    with pytest.raises(VersionError, match="gate failed"):
+        store.build_candidate(**inputs, authority_receipt_id=receipt["receipt_id"])
+    assert not store._manifest_path("0.1.0-alpha.1").exists()
+
+
 def test_candidate_build_fails_closed_when_any_gate_is_missing(tmp_path: Path) -> None:
     store = VersionStore(tmp_path / "versions")
     with pytest.raises(VersionError, match="Every build"):
@@ -227,7 +295,7 @@ def test_candidate_build_fails_closed_when_any_gate_is_missing(tmp_path: Path) -
             adapter_hashes={},
             migrations=[],
             restore_point={},
-            verification=verification(restore_verified=False),
+            verification_plan=verification_plan()[:-1],
             project_id=PROJECT_ID,
             project_revision=PROJECT_REVISION,
             decision_batch=decision_batch(),
@@ -254,7 +322,7 @@ def test_candidate_build_is_idempotent_but_version_content_is_immutable(tmp_path
             adapter_hashes={"codex": "c" * 64},
             migrations=["project-1.0-to-1.1"],
             restore_point={"kind": "manifest", "version": "previous"},
-            verification=verification(),
+            verification_plan=verification_plan(),
             project_id=PROJECT_ID,
             project_revision=PROJECT_REVISION,
             decision_batch=decision_batch(),

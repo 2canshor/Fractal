@@ -13,6 +13,7 @@ from fractal.adapter_hook import main as hook_main
 from fractal.cli import main as cli_main
 from fractal.live_state import LiveRuntimeStateError, LiveRuntimeStateStore
 from fractal.models import ProjectRecord
+from fractal.reality import ExecutionGate
 from fractal.storage import ProjectStore
 from fractal.versioning import VersionStore
 
@@ -51,11 +52,51 @@ def authority_evidence(store: VersionStore, label: str) -> dict[str, str]:
 
 def build_version(store: VersionStore, version: str) -> None:
     batch = {"decision_batch_id": f"batch-{version}"}
+    verification_plan = [
+        ExecutionGate(
+            gate_id=gate_id,
+            command=(sys.executable, "-c", "raise SystemExit(0)"),
+            cwd=Path(__file__).parent,
+            materials=("test_live_state.py",),
+        )
+        for gate_id in sorted(VersionStore.REQUIRED_VERIFICATIONS)
+    ]
+    inputs = {
+        "version": version,
+        "public_commit": "a" * 40,
+        "private_commit": "b" * 40,
+        "components": [
+            {
+                "component_id": "recording-core",
+                "version": "1.0.0",
+                "sha256": "c" * 64,
+                "dependencies": [],
+            }
+        ],
+        "adapter_hashes": {"codex": "d" * 64},
+        "migrations": [],
+        "restore_point": {"kind": "manifest", "version": "previous"},
+        "verification_plan": verification_plan,
+        "project_id": PROJECT_ID,
+        "project_revision": PROJECT_REVISION,
+        "decision_batch": batch,
+        "architecture_lineage": {"structural_gate_passed": True},
+        "claim_gate_audit": {"passed": True, "claim_count": 20},
+        "adapter_boundary_audit": {
+            "passed_for_candidate": True,
+            "live_promotion_eligible": True,
+            "platforms": {"codex": {"staged_smoke_passed": True}},
+        },
+        "preservation_audits": {
+            "phase_a_pre_build": {"passed": True, "receipt_sha256": "e" * 64},
+            "phase_b_post_build_pre_activation": {
+                "passed": True,
+                "receipt_sha256": "f" * 64,
+            },
+        },
+    }
     target, expected_state = store.build_authority_scope(
-        version=version,
-        public_commit="a" * 40,
-        private_commit="b" * 40,
-        decision_batch=batch,
+        store.candidate_input(**inputs)
     )
     receipt = store.authority.issue(
         action="build",
@@ -65,47 +106,7 @@ def build_version(store: VersionStore, version: str) -> None:
         expected_state=expected_state,
         authority_evidence=authority_evidence(store, f"build-{version}"),
     )
-    store.build_candidate(
-        version=version,
-        public_commit="a" * 40,
-        private_commit="b" * 40,
-        components=[
-            {
-                "component_id": "recording-core",
-                "version": "1.0.0",
-                "sha256": "c" * 64,
-                "dependencies": [],
-            }
-        ],
-        adapter_hashes={"codex": "d" * 64},
-        migrations=[],
-        restore_point={"kind": "manifest", "version": "previous"},
-        verification={
-            "clean_build": True,
-            "tests_passed": True,
-            "adapter_hashes_verified": True,
-            "migrations_verified": True,
-            "restore_verified": True,
-        },
-        project_id=PROJECT_ID,
-        project_revision=PROJECT_REVISION,
-        decision_batch=batch,
-        architecture_lineage={"structural_gate_passed": True},
-        claim_gate_audit={"passed": True, "claim_count": 20},
-        adapter_boundary_audit={
-            "passed_for_candidate": True,
-            "live_promotion_eligible": True,
-            "platforms": {"codex": {"staged_smoke_passed": True}},
-        },
-        preservation_audits={
-            "phase_a_pre_build": {"passed": True, "receipt_sha256": "e" * 64},
-            "phase_b_post_build_pre_activation": {
-                "passed": True,
-                "receipt_sha256": "f" * 64,
-            },
-        },
-        authority_receipt_id=receipt["receipt_id"],
-    )
+    store.build_candidate(**inputs, authority_receipt_id=receipt["receipt_id"])
 
 
 def live_fixture(tmp_path: Path) -> tuple[ProjectStore, VersionStore, Path, Path]:

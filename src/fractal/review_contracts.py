@@ -329,7 +329,7 @@ def architecture_lineage_receipt(
     component_lineage: dict[str, list[str]],
 ) -> dict[str, Any]:
     """Prove each changed component traces to existing architecture meaning."""
-    method_ids = {
+    element_ids = {
         item["id"]
         for section in (
             "core_philosophies",
@@ -340,13 +340,15 @@ def architecture_lineage_receipt(
         )
         for item in method_registry[section]
     }
+    flow_ids = {item["id"] for item in method_registry["flows"]}
+    architecture_ids = element_ids | flow_ids
     mapped_ids = {item["node_id"] for item in agentic_element_map["mappings"]}
-    if method_ids != mapped_ids:
+    if architecture_ids != mapped_ids:
         raise ReviewContractError("Architecture map does not cover the canonical hierarchy")
     if set(component_lineage) != set(changed_component_ids):
         raise ReviewContractError("Changed-component lineage coverage is incomplete")
     for component_id, node_ids in component_lineage.items():
-        if not node_ids or not set(node_ids) <= method_ids:
+        if not node_ids or not set(node_ids) <= architecture_ids:
             raise ReviewContractError(f"Invalid architecture lineage: {component_id}")
     return {
         "record_type": "architecture-lineage-receipt",

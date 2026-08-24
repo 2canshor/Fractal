@@ -64,21 +64,14 @@ def validate_node_implementation_map(
         raise ValueError("Architecture lineage canonical baseline id mismatch")
     if not str(lineage["core_identity"]).strip():
         raise ValueError("Missing required JSON path: lineage_contract.core_identity")
-    blueprint_steps = sorted(
-        (
-            item
-            for item in method_registry["methodologies"]
-            if item.get("methodology_kind") == "blueprint-step"
-        ),
-        key=lambda item: item["sequence"],
-    )
+    blueprint_flows = sorted(method_registry["flows"], key=lambda item: item["sequence"])
     backbone = lineage["original_system_review_backbone"]
-    if not isinstance(backbone, list) or len(backbone) != len(blueprint_steps):
+    if not isinstance(backbone, list) or len(backbone) != len(blueprint_flows):
         raise ValueError("Hierarchy inversion at lineage_contract.original_system_review_backbone")
-    expected_backbone = [(item["sequence"], item["id"]) for item in blueprint_steps]
+    expected_backbone = [(item["sequence"], item["id"]) for item in blueprint_flows]
     observed_backbone: list[tuple[Any, Any]] = []
     for index, item in enumerate(backbone):
-        for key in ("step", "name", "original_question", "implemented_by"):
+        for key in ("flow", "name", "original_question", "implemented_by"):
             if key not in item:
                 raise ValueError(
                     "Missing required JSON path: "
@@ -89,7 +82,7 @@ def validate_node_implementation_map(
                 "Missing required JSON path: "
                 f"lineage_contract.original_system_review_backbone[{index}].implemented_by"
             )
-        observed_backbone.append((item["step"], item["name"]))
+        observed_backbone.append((item["flow"], item["name"]))
     if observed_backbone != expected_backbone:
         raise ValueError("Hierarchy inversion at lineage_contract.original_system_review_backbone")
     canonical_references = {

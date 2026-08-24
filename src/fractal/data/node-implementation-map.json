@@ -20,8 +20,8 @@
       "separately-approved-later-capability"
     ],
     "canonical_baseline_id": "method-registry-0.1.0-alpha.8-r1",
-    "canonical_baseline_sha256": "baa82a5fcab711a064b3902f84a0584762c00fd09a5d9190a49d1ccdb366589f",
-    "core_identity": "Use Perspective while a Project is active, then run the eight-step System Review after primary-user Project Completion.",
+    "canonical_baseline_sha256": "1bf11d56cb659b20c31aecf71db53f0b82d656c7dc676bbb6bb0b5b23d86eb3d",
+    "core_identity": "Use Perspective while a Project is active, then let System Review follow the eight Flows after primary-user Project Completion.",
     "original_system_review_backbone": [
       {
         "implemented_by": [
@@ -33,7 +33,7 @@
         ],
         "name": "find-problems",
         "original_question": "Collect the broad Project evidence before narrowing or explaining it.",
-        "step": 1
+        "flow": 1
       },
       {
         "implemented_by": [
@@ -43,7 +43,7 @@
         ],
         "name": "find-local-patterns",
         "original_question": "Identify meaningful local recurrence without confusing surface similarity with cause.",
-        "step": 2
+        "flow": 2
       },
       {
         "implemented_by": [
@@ -53,7 +53,7 @@
         ],
         "name": "find-global-patterns",
         "original_question": "Compare patterns across the relevant Project and improvement history before treating them as isolated.",
-        "step": 3
+        "flow": 3
       },
       {
         "implemented_by": [
@@ -63,7 +63,7 @@
         ],
         "name": "find-global-pattern-reasons",
         "original_question": "Make the causal reasoning for every Global Pattern explicit, including uncertainty and counterevidence.",
-        "step": 4
+        "flow": 4
       },
       {
         "implemented_by": [
@@ -73,7 +73,7 @@
         ],
         "name": "find-global-pattern-solutions",
         "original_question": "Search for possible responses to every Global Pattern without allowing one preferred implementation to end the search.",
-        "step": 5
+        "flow": 5
       },
       {
         "implemented_by": [
@@ -83,7 +83,7 @@
         ],
         "name": "map-implementations-to-blueprint",
         "original_question": "Classify every Candidate implementation by its true Blueprint role and apply the rules of its Genre before debate.",
-        "step": 6
+        "flow": 6
       },
       {
         "implemented_by": [
@@ -94,7 +94,7 @@
         ],
         "name": "debate-global-pattern-solutions",
         "original_question": "Challenge the mapped solutions for every Global Pattern before Carson is asked to decide.",
-        "step": 7
+        "flow": 7
       },
       {
         "implemented_by": [
@@ -105,7 +105,7 @@
         ],
         "name": "present-decisions-one-by-one",
         "original_question": "Present one fully prepared human-scale decision at a time without hiding the remaining decision set.",
-        "step": 8
+        "flow": 8
       }
     ],
     "required_fields_for_major_nodes": [
@@ -750,7 +750,7 @@
       "authority": "The Main Agent synthesises the assessment; only the primary user records Your Decision and approves persistent activation.",
       "change_failure_path": "Keep the current System Version and return the evidence gap to the primary user.",
       "checks": [
-        "eight-step-blueprint-lineage",
+        "eight-flow-blueprint-lineage",
         "required-stage-order",
         "positive-delta",
         "negative-delta",
@@ -773,7 +773,7 @@
           "old-workflow-or-unmapped-candidate-is-rejected"
         ],
         "positive": [
-          "full-eight-step-review-reaches-one-by-one-decisions"
+          "full-eight-flow-review-reaches-one-by-one-decisions"
         ]
       },
       "evidence": [
@@ -849,7 +849,7 @@
         "agent-finished-claim"
       ],
       "original_failure_mode": "Fractal can miss weak evidence, create one fix per symptom, forget earlier analyses and reversals, add complexity automatically, or mistake local change for genuine system improvement.",
-      "original_requirement": "Primary-user-confirmed eight-step New Blueprint System Review",
+      "original_requirement": "Primary-user-confirmed eight-Flow New Blueprint System Review",
       "outputs": [
         "positive-delta",
         "negative-delta",
@@ -867,7 +867,7 @@
         "completed-project-snapshot",
         "completion-authority-verified"
       ],
-      "purpose": "Run the eight-step New Blueprint workflow over a primary-user-completed Project and prepare one mapped decision at a time.",
+      "purpose": "Follow the eight New Blueprint Flows over a primary-user-completed Project and prepare one mapped decision at a time.",
       "stop_condition": [
         "your-decision-recorded",
         "required-stage-evidence-missing"

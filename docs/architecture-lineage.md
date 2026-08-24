@@ -9,22 +9,22 @@ Continuous Improvement    Core Philosophy
 └── # System Review       Sole Protagonist
 ```
 
-Perspective protects the whole active Project. It is a `$` Deuteragonist in the Methods Genre, not a second Protagonist and not a System Review Step. Its stable technical compatibility id remains `project-review`.
+Perspective protects the whole active Project. It is a `$` Deuteragonist in the Methods Genre, not a second Protagonist and not a System Review Flow. Its stable technical compatibility id remains `project-review`.
 
-## Eight System Review Steps
+## Eight System Review Flows
 
 1. **Find Problems.** Collect Positive Delta, Negative Delta, and high-recall observations from the whole Project. An honest complete scan may find zero observations.
 2. **Find Local Patterns.** Separate symptoms, possible causes, counterevidence, isolated incidents, and recurring local behaviour.
 3. **Find Global Patterns.** Compare Local Patterns with prior Projects, reviews, decisions, interventions, reversals, and outcomes.
-4. **Find the Reasons for Every Global Pattern.** Make causal reasoning and uncertainty explicit. Cause Research may support this Step.
+4. **Find the Reasons for Every Global Pattern.** Make causal reasoning and uncertainty explicit. Cause Research may support this Flow.
 5. **Find Solutions for Every Global Pattern.** Search current, current-field, and related-field options; preserve Subtraction First and No Change.
 6. **Map New Implementations into the Blueprint.** Give every Candidate one truthful Genre and role, assess all Principles, authority, context, evidence, donor provenance, and recovery.
-7. **Debate the Solutions for Every Global Pattern.** Two-Sided Review supports consequential debate after Mapping; it does not own the Step.
+7. **Debate the Solutions for Every Global Pattern.** Two-Sided Review supports consequential debate after Mapping; it does not own the Flow.
 8. **Present Decisions One-by-One.** Hand Carson one complete decision at a time while preserving the remaining set and Biggest Remaining Concern.
 
 ## Genre, Role, and Tag
 
-Genre answers where an element belongs: Steps, Values, Principles, Infrastructure, or Methods.
+Genre answers where a Library Element belongs: Values, Principles, Infrastructure, or Methods. Flows are a separate Blueprint section and do not receive a Genre or role.
 
 Role answers what it does in the story:
 
@@ -39,7 +39,7 @@ Role answers what it does in the story:
 
 Reality Check, Experiment, Component Governance, Work Signature, Naming System, Capability Check, Hooks, Human Control, Donor Quarantine, Donor Registry, and Environment Adapters are `^` Infrastructure Extras.
 
-Cause Research, Two-Sided Review, and Steal are reusable `¢` Methods. They may support several Steps without becoming parallel improvement lifecycles.
+Cause Research, Two-Sided Review, and Steal are reusable `¢` Methods. They may support several Flows without becoming parallel improvement lifecycles.
 
 ## Change Rule
 

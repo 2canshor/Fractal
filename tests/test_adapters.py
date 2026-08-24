@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+import fractal.adapter_hook as adapter_hook
 from fractal.adapter_hook import capture_work_completion, handle_hook
 from fractal.adapter_hook import main as hook_main
 from fractal.adapters import (
@@ -28,7 +29,9 @@ from fractal.component_installation import (
     CodexComponentInstaller,
     GeminiComponentInstaller,
 )
-from fractal.storage import value_sha256
+from fractal.models import ProjectRecord
+from fractal.storage import ProjectStore, value_sha256
+from fractal.surface_symbols import surface_symbol_by_entry
 from fractal.user_surface import build_user_surface
 
 ROOT = Path(__file__).parents[1]
@@ -356,7 +359,7 @@ def surface_governed_builder(tmp_path: Path, output: str) -> AdapterBuilder:
         json.dumps(
             {
                 "record_type": "user-surface-policy",
-                "record_version": 1,
+                "record_version": 2,
                 "platform": "codex",
                 "action_resolution": {
                     "feature_name": "Object-Aware Actions",
@@ -372,6 +375,11 @@ def surface_governed_builder(tmp_path: Path, output: str) -> AdapterBuilder:
                         "interface_type": "action",
                         "component_id": "research",
                         "outcome": "Answer one question with verified evidence.",
+                        "symbol": {
+                            "system": "sf-symbols",
+                            "name": "magnifyingglass.circle.fill",
+                            "selection": surface_symbol_by_entry()["research"]["selection"],
+                        },
                     }
                 ],
                 "dot_groups": [
@@ -684,8 +692,9 @@ def test_real_stop_payload_captures_and_evaluates_work_signature(tmp_path: Path)
     assert signature["tools"] == ["exec_command"]
     assert signature["project_id"] == "project-a"
     assert signature["work_id"] == "codex-turn-session-a-turn-a"
-    assert signature["work_type"] == "agent-turn"
-    assert signature["input_shape"] == "codex-completed-turn"
+    assert signature["work_type"] == "request-general"
+    assert signature["input_shape"].startswith("codex-request-")
+    assert "bounded" not in signature["input_shape"]
     assert signature["thread_id"] == "session-a"
     second = capture_work_completion(
         context,
@@ -703,7 +712,10 @@ def test_real_stop_payload_captures_and_evaluates_work_signature(tmp_path: Path)
                 {
                     "type": "user",
                     "uuid": "turn-b",
-                    "message": {"role": "user", "content": "Run it again."},
+                    "message": {
+                        "role": "user",
+                        "content": "Run the bounded probe.",
+                    },
                 }
             )
             + "\n"
@@ -771,6 +783,147 @@ def test_completed_turn_does_not_inherit_pre_fix_fragment_count(tmp_path: Path) 
     result = json.loads(evaluations.read_text().strip())
     assert result["recognition"]["status"] == "first-occurrence"
     assert result["recognition"]["occurrence_count"] == 1
+
+
+def test_request_shape_redacts_paths_urls_ids_and_numbers() -> None:
+    first = adapter_hook._request_shape_digest(
+        "Edit /private/tmp/alpha.txt from https://example.com/a for item 12345"
+    )
+    second = adapter_hook._request_shape_digest(
+        "Edit /private/tmp/beta.txt from https://other.example/b for item 98765"
+    )
+    assert first == second
+    assert first is not None
+    assert "/private/tmp" not in first
+    assert "example.com" not in first
+
+
+def test_different_jobs_using_the_same_tool_do_not_trigger_fatigue(tmp_path: Path) -> None:
+    transcript = tmp_path / "different-jobs.jsonl"
+    journal = tmp_path / "different-work-signatures.jsonl"
+    evaluations = tmp_path / "different-evaluations.jsonl"
+    context = {"platform": "codex", "active_project": {"project_id": "project-a"}}
+    for index, request in enumerate(
+        ("Write a report.", "Fix a Python bug.", "Organize the project folder.")
+    ):
+        with transcript.open("a", encoding="utf-8") as stream:
+            stream.write(
+                json.dumps(
+                    {
+                        "type": "user",
+                        "uuid": f"different-turn-{index}",
+                        "message": {"role": "user", "content": request},
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "type": "response_item",
+                        "payload": {"type": "function_call", "name": "exec_command"},
+                    }
+                )
+                + "\n"
+            )
+        capture_work_completion(
+            context,
+            {
+                "session_id": "different-session",
+                "transcript_path": str(transcript),
+                "last_assistant_message": f"Completed different job {index}",
+            },
+            journal_path=journal,
+            evaluations_path=evaluations,
+        )
+
+    signatures = [json.loads(line) for line in journal.read_text().splitlines()]
+    result = json.loads(evaluations.read_text().splitlines()[-1])
+    assert len({item["input_shape"] for item in signatures}) == 3
+    assert {item["work_type"] for item in signatures} == {
+        "request-write",
+        "request-fix",
+        "request-organize",
+    }
+    assert result["recognition"]["status"] == "first-occurrence"
+    assert "orchestration" not in result
+
+
+def test_work_completed_hook_runs_local_learning_without_any_donor_runtime(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime_root = tmp_path / "runtime"
+    project_root = tmp_path / "projects"
+    project_store = ProjectStore(project_root, runtime_root)
+    project_store.create(
+        ProjectRecord(
+            project_id="project-a",
+            title="Hook Learning Project",
+            system_version="0.1.0-alpha.8-r1",
+        ),
+        actor="main-agent",
+        platform="codex",
+    )
+    record_path = project_root / "project-a" / "record.json"
+    state_path = runtime_root / "live-state" / "current.json"
+    live_state = {
+        "project": {
+            "project_id": "project-a",
+            "revision": 0,
+            "status": "in_progress",
+            "current_phase": None,
+            "source_path": str(record_path),
+        },
+        "system_version": {"version": "0.1.0-alpha.8-r1"},
+    }
+    monkeypatch.setattr(adapter_hook, "resolve_session_state", lambda _context: live_state)
+    context = {
+        "platform": "codex",
+        "active_project": {"project_id": "stale-snapshot"},
+        "live_runtime": {"state_path": str(state_path)},
+    }
+    transcript = tmp_path / "transcript.jsonl"
+    journal = runtime_root / "work-signatures.jsonl"
+    evaluations = runtime_root / "work-signature-evaluations.jsonl"
+    for index in range(3):
+        with transcript.open("a", encoding="utf-8") as stream:
+            stream.write(
+                json.dumps(
+                    {
+                        "type": "user",
+                        "uuid": f"turn-{index}",
+                        "message": {"role": "user", "content": "Repeat the same work."},
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "type": "response_item",
+                        "payload": {"type": "function_call", "name": "exec_command"},
+                    }
+                )
+                + "\n"
+            )
+        capture_work_completion(
+            context,
+            {
+                "session_id": "session-a",
+                "transcript_path": str(transcript),
+                "last_assistant_message": f"Completed {index}",
+            },
+            journal_path=journal,
+            evaluations_path=evaluations,
+        )
+
+    evaluation = json.loads(evaluations.read_text().splitlines()[-1])
+    learning = evaluation["orchestration"]["learning"]
+    assert evaluation["recognition"]["status"] == "investigation-required"
+    assert learning["status"] == "candidate"
+    assert learning["candidate_id"].startswith("candidate-method-")
+    assert learning["canonical_evidence_id"].startswith("evidence-learning-review-")
+    assert (runtime_root / "learning" / "candidates" / learning["candidate_id"]).is_dir()
+    project = project_store.read("project-a")
+    assert any(item["id"] == learning["canonical_evidence_id"] for item in project.evidence)
+    assert project_store.verify("project-a")["event_chain_valid"] is True
 
 
 def test_final_cutover_context_removes_the_legacy_guard(tmp_path: Path) -> None:
@@ -913,6 +1066,18 @@ def test_user_surface_projects_only_entries_and_keeps_hidden_methods_internal(
     workflow_map = json.loads((built / "fractal" / "internal-workflow-map.json").read_text())
     assert workflow_map["visible_component_ids"] == ["research"]
     assert workflow_map["workflows"][0]["dots"][0]["component_id"] == "clarification"
+    metadata = json.loads((built / "fractal" / "capability-metadata.json").read_text())
+    research_metadata = next(item for item in metadata if item["capability_id"] == "research")
+    clarification_metadata = next(
+        item for item in metadata if item["capability_id"] == "clarification"
+    )
+    assert research_metadata["symbol"] == {
+        "system": "sf-symbols",
+        "name": "magnifyingglass.circle.fill",
+        "selection": surface_symbol_by_entry()["research"]["selection"],
+    }
+    assert "symbol" not in clarification_metadata
+    assert (built / "skills" / "research" / "assets" / "research-small.png").is_file()
 
     home = tmp_path / "surface-home"
     installer = CodexComponentInstaller(

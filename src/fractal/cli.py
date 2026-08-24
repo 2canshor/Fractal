@@ -335,7 +335,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(json.dumps(package, ensure_ascii=False, sort_keys=True))
             return 0
     if args.action == "codex":
-        with CodexAppServerClient() as client:
+        client_environment = None
+        if hasattr(args, "codex_home"):
+            client_environment = os.environ.copy()
+            client_environment["CODEX_HOME"] = str(args.codex_home.expanduser().resolve())
+        with CodexAppServerClient(environment=client_environment) as client:
             if args.codex_action == "inspect":
                 registry = load_component_registry(args.registry.expanduser())
                 cwd = args.cwd.expanduser().resolve()

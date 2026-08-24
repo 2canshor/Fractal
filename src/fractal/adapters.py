@@ -408,6 +408,10 @@ class AdapterBuilder:
             item["component_id"]: item["interface_type"]
             for item in (self.user_surface or {}).get("entries", [])
         }
+        symbol_by_component = {
+            item["component_id"]: item["symbol"]
+            for item in (self.user_surface or {}).get("entries", [])
+        }
         components = [
             item
             for item in active_components(self.component_registry, platform)
@@ -473,24 +477,26 @@ class AdapterBuilder:
                         raise AdapterError(
                             f"Generated Skill hash drift: {component['component_id']}"
                         )
-            projected.append(
-                {
-                    "capability_id": component["component_id"],
-                    "human_name": component["human_name"],
-                    "description": component["trigger"]["description"],
-                    "interface_type": interface_by_component.get(
-                        component["component_id"], "internal"
-                    ),
-                    "surface_audience": component["surface_audience"],
-                    "invocation": component["invocation"],
-                    "job_contract": component["job_contract"],
-                    "version": component["source"]["version"],
-                    "activation": "active-when-adapter-is-installed",
-                    "authority": "fractal-component-registry",
-                    "execution": component["status"]["execution"],
-                    "projection": projected_value,
-                }
-            )
+            projected_item = {
+                "capability_id": component["component_id"],
+                "human_name": component["human_name"],
+                "description": component["trigger"]["description"],
+                "interface_type": interface_by_component.get(
+                    component["component_id"], "internal"
+                ),
+                "surface_audience": component["surface_audience"],
+                "invocation": component["invocation"],
+                "job_contract": component["job_contract"],
+                "version": component["source"]["version"],
+                "activation": "active-when-adapter-is-installed",
+                "authority": "fractal-component-registry",
+                "execution": component["status"]["execution"],
+                "projection": projected_value,
+            }
+            symbol = symbol_by_component.get(component["component_id"])
+            if symbol is not None:
+                projected_item["symbol"] = symbol
+            projected.append(projected_item)
         return projected
 
     def _internal_workflow_map(self, platform: str) -> dict[str, Any]:

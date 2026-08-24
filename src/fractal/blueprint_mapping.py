@@ -24,19 +24,31 @@ VISIBILITIES = {"background-only", "operator-facing", "product-facing"}
 PRINCIPLE_DIRECTIONS = {"closer", "farther", "neutral", "unknown"}
 
 
-def _blueprint_indexes() -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+def _blueprint_indexes() -> tuple[
+    dict[str, dict[str, Any]], dict[str, dict[str, Any]], set[str]
+]:
     blueprint = load_blueprint()
-    genres = {genre["genre_id"]: genre for genre in blueprint["genres"]}
+    genres = {
+        genre["genre_id"]: genre for genre in blueprint["element_library"]["genres"]
+    }
     elements = {
         element["element_id"]: {
             **element,
             "genre_id": genre["genre_id"],
             "element_type": ROLE_BY_MARKER[element["marker"]],
         }
-        for genre in blueprint["genres"]
+        for genre in blueprint["element_library"]["genres"]
         for element in genre["elements"]
     }
-    return genres, elements
+    protagonist = blueprint["element_library"]["core"]["protagonist"]
+    elements[protagonist["element_id"]] = {
+        **protagonist,
+        "section_id": "core",
+        "genre_id": None,
+        "element_type": "protagonist",
+    }
+    flow_ids = {flow["flow_id"] for flow in blueprint["flows"]["entries"]}
+    return genres, elements, flow_ids
 
 
 def validate_candidate_mapping(value: dict[str, Any]) -> dict[str, Any]:
@@ -51,15 +63,10 @@ def validate_candidate_mapping(value: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Candidate Blueprint Mapping requires a Global Pattern")
     if not str(value.get("implementation_summary", "")).strip():
         raise ValueError("Candidate Blueprint Mapping requires an implementation summary")
-    genres, elements = _blueprint_indexes()
+    genres, elements, flow_ids = _blueprint_indexes()
     target = value.get("target")
-    if not isinstance(target, dict) or target.get("genre_id") not in genres:
-        raise ValueError("Candidate Blueprint Mapping requires a valid target Genre")
-    genre = genres[target["genre_id"]]
-    if target.get("marker") not in genre["allowed_markers"] or target.get(
-        "element_type"
-    ) != ROLE_BY_MARKER.get(target.get("marker")):
-        raise ValueError("Candidate target does not follow its Genre contract")
+    if not isinstance(target, dict):
+        raise ValueError("Candidate Blueprint Mapping requires a target")
     existing_id = target.get("existing_element_id")
     new_id = target.get("new_element_id")
     if bool(existing_id) == bool(new_id):
@@ -68,17 +75,32 @@ def validate_candidate_mapping(value: dict[str, Any]) -> dict[str, Any]:
         existing = elements.get(existing_id)
         if existing is None:
             raise ValueError("Candidate target references an unknown Blueprint element")
-        if (existing["genre_id"], existing["element_type"], existing["marker"]) != (
-            target["genre_id"],
-            target["element_type"],
-            target["marker"],
-        ):
+        expected_target = (
+            existing.get("section_id", "element-library"),
+            existing["genre_id"],
+            existing["element_type"],
+            existing["marker"],
+        )
+        observed_target = (
+            target.get("section_id", "element-library"),
+            target.get("genre_id"),
+            target.get("element_type"),
+            target.get("marker"),
+        )
+        if expected_target != observed_target:
             raise ValueError("Candidate target misclassifies an existing Blueprint element")
         if value["change_action"] == "add":
             raise ValueError("An existing Blueprint target cannot use the add action")
         if value.get("addition_priority_review"):
             raise ValueError("A non-additive Candidate cannot manufacture an addition review")
     else:
+        if target.get("genre_id") not in genres:
+            raise ValueError("A new Blueprint Element requires a valid target Genre")
+        genre = genres[target["genre_id"]]
+        if target.get("marker") not in genre["allowed_markers"] or target.get(
+            "element_type"
+        ) != ROLE_BY_MARKER.get(target.get("marker")):
+            raise ValueError("Candidate target does not follow its Genre contract")
         if value["change_action"] != "add":
             raise ValueError("A new Blueprint element requires the add action")
         _validate_addition_priority(value, target["element_type"])
@@ -90,6 +112,11 @@ def validate_candidate_mapping(value: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("Candidate Mapping relationship is invalid")
         if relationship.get("element_id") not in elements:
             raise ValueError("Candidate Mapping relationship target is unknown")
+    for relationship in value.get("flow_relationships", []):
+        if relationship.get("relationship") not in RELATIONSHIPS:
+            raise ValueError("Candidate Mapping Flow relationship is invalid")
+        if relationship.get("flow_id") not in flow_ids:
+            raise ValueError("Candidate Mapping Flow target is unknown")
     if value.get("visibility") not in VISIBILITIES:
         raise ValueError("Candidate Mapping visibility is invalid")
     context = value.get("context_effect")
@@ -116,6 +143,13 @@ def validate_candidate_mapping(value: dict[str, Any]) -> dict[str, Any]:
     unknown_donors = sorted(set(value.get("donor_ids", [])).difference(donor_ids))
     if unknown_donors:
         raise ValueError(f"Candidate Mapping contains unknown donors: {unknown_donors}")
+    unknown_evaluated_donors = sorted(
+        set(value.get("evaluated_donor_ids", [])).difference(donor_ids)
+    )
+    if unknown_evaluated_donors:
+        raise ValueError(
+            f"Candidate Mapping contains unknown evaluated donors: {unknown_evaluated_donors}"
+        )
     if not value.get("evidence_ids"):
         raise ValueError("Candidate Mapping requires evidence")
     authority = value.get("authority")

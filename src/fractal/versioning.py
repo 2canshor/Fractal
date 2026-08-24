@@ -15,6 +15,13 @@ from typing import Any
 from fractal.authority import AuthorityReceiptStore, ReceiptError
 from fractal.improvement import TrialBoundary, TrialMeasurement, compare_trial_results
 from fractal.models import utc_now
+from fractal.reality import (
+    ExecutionGate,
+    RealityCheckError,
+    RealityCheckRunner,
+    validate_execution_receipts,
+    verification_plan_sha256,
+)
 from fractal.storage import AuthorityError, value_sha256
 
 
@@ -56,7 +63,7 @@ class VersionStore:
         adapter_hashes: dict[str, str],
         migrations: list[str],
         restore_point: dict[str, Any],
-        verification: dict[str, bool],
+        verification_plan: list[ExecutionGate],
         project_id: str,
         project_revision: int,
         decision_batch: dict[str, Any],
@@ -68,8 +75,12 @@ class VersionStore:
     ) -> dict[str, Any]:
         """Build an immutable candidate only when every executable gate passes."""
         self._validate_version(version)
-        if set(verification) != self.REQUIRED_VERIFICATIONS or not all(verification.values()):
-            raise VersionError("Every build, test, adapter, migration, and restore gate must pass")
+        try:
+            plan_sha256 = verification_plan_sha256(verification_plan)
+        except RealityCheckError as error:
+            raise VersionError(str(error)) from error
+        if {gate.gate_id for gate in verification_plan} != self.REQUIRED_VERIFICATIONS:
+            raise VersionError("Every build, test, adapter, migration, and restore gate must run")
         if (
             re.fullmatch(r"[a-f0-9]{40}", public_commit) is None
             or re.fullmatch(r"[a-f0-9]{40}", private_commit) is None
@@ -106,47 +117,35 @@ class VersionStore:
         for component in components:
             if re.fullmatch(r"[a-f0-9]{64}", component["sha256"]) is None:
                 raise VersionError(f"Invalid component digest: {component['component_id']}")
-        manifest_content = {
-            "record_type": "system-version-manifest",
-            "record_version": 2,
-            "version": version,
-            "public_commit": public_commit,
-            "private_commit": private_commit,
-            "components": components,
-            "adapter_hashes": adapter_hashes,
-            "migrations": migrations,
-            "restore_point": restore_point,
-            "verification": verification,
-            "project_id": project_id,
-            "project_revision": project_revision,
-            "decision_batch": decision_batch,
-            "architecture_lineage": architecture_lineage,
-            "claim_gate_audit": claim_gate_audit,
-            "adapter_boundary_audit": adapter_boundary_audit,
-            "preservation_audits": preservation_audits,
-            "status": "candidate",
-        }
+        candidate_input = self.candidate_input(
+            version=version,
+            public_commit=public_commit,
+            private_commit=private_commit,
+            components=components,
+            adapter_hashes=adapter_hashes,
+            migrations=migrations,
+            restore_point=restore_point,
+            verification_plan=verification_plan,
+            project_id=project_id,
+            project_revision=project_revision,
+            decision_batch=decision_batch,
+            architecture_lineage=architecture_lineage,
+            claim_gate_audit=claim_gate_audit,
+            adapter_boundary_audit=adapter_boundary_audit,
+            preservation_audits=preservation_audits,
+        )
+        candidate_input_sha256 = value_sha256(candidate_input)
         path = self._manifest_path(version)
         if path.exists():
             existing = self.read_manifest(version)
-            comparable = {
-                key: value
-                for key, value in existing.items()
-                if key not in {"built_at", "manifest_sha256"}
-            }
-            if comparable != manifest_content:
+            if existing.get("candidate_input_sha256") != candidate_input_sha256:
                 raise VersionError(
                     f"System Version already exists with different content: {version}"
                 )
             if not self._has_build_event(version, existing["manifest_sha256"]):
                 raise VersionError("Existing candidate lacks a governed build event")
             return existing
-        target, expected_state = self.build_authority_scope(
-            version=version,
-            public_commit=public_commit,
-            private_commit=private_commit,
-            decision_batch=decision_batch,
-        )
+        target, expected_state = self.build_authority_scope(candidate_input)
         try:
             self.authority.claim(
                 authority_receipt_id,
@@ -158,6 +157,44 @@ class VersionStore:
             )
         except ReceiptError as error:
             raise AuthorityError(str(error)) from error
+        try:
+            receipts = RealityCheckRunner().run_all(verification_plan)
+            verification = validate_execution_receipts(
+                receipts,
+                required_gate_ids=self.REQUIRED_VERIFICATIONS,
+                expected_plan_sha256=plan_sha256,
+            )
+        except RealityCheckError as error:
+            self.authority.finish(
+                authority_receipt_id,
+                succeeded=False,
+                failure=str(error),
+            )
+            raise VersionError(str(error)) from error
+        manifest_content = {
+            "record_type": "system-version-manifest",
+            "record_version": 3,
+            "version": version,
+            "public_commit": public_commit,
+            "private_commit": private_commit,
+            "components": components,
+            "adapter_hashes": adapter_hashes,
+            "migrations": migrations,
+            "restore_point": restore_point,
+            "verification": verification,
+            "verification_plan": [gate.to_dict() for gate in verification_plan],
+            "verification_plan_sha256": plan_sha256,
+            "verification_receipts": receipts,
+            "project_id": project_id,
+            "project_revision": project_revision,
+            "decision_batch": decision_batch,
+            "architecture_lineage": architecture_lineage,
+            "claim_gate_audit": claim_gate_audit,
+            "adapter_boundary_audit": adapter_boundary_audit,
+            "preservation_audits": preservation_audits,
+            "candidate_input_sha256": candidate_input_sha256,
+            "status": "candidate",
+        }
         manifest = {
             **manifest_content,
             "manifest_sha256": None,
@@ -188,22 +225,56 @@ class VersionStore:
         self.authority.finish(authority_receipt_id, succeeded=True)
         return manifest
 
-    def build_authority_scope(
-        self,
+    @staticmethod
+    def candidate_input(
         *,
         version: str,
         public_commit: str,
         private_commit: str,
+        components: list[dict[str, Any]],
+        adapter_hashes: dict[str, str],
+        migrations: list[str],
+        restore_point: dict[str, Any],
+        verification_plan: list[ExecutionGate],
+        project_id: str,
+        project_revision: int,
         decision_batch: dict[str, Any],
+        architecture_lineage: dict[str, Any],
+        claim_gate_audit: dict[str, Any],
+        adapter_boundary_audit: dict[str, Any],
+        preservation_audits: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Return every input that primary-user build authority must bind."""
+        return {
+            "version": version,
+            "public_commit": public_commit,
+            "private_commit": private_commit,
+            "components": components,
+            "adapter_hashes": adapter_hashes,
+            "migrations": migrations,
+            "restore_point": restore_point,
+            "verification_plan": [gate.to_dict() for gate in verification_plan],
+            "verification_plan_sha256": verification_plan_sha256(verification_plan),
+            "project_id": project_id,
+            "project_revision": project_revision,
+            "decision_batch": decision_batch,
+            "architecture_lineage": architecture_lineage,
+            "claim_gate_audit": claim_gate_audit,
+            "adapter_boundary_audit": adapter_boundary_audit,
+            "preservation_audits": preservation_audits,
+        }
+
+    def build_authority_scope(
+        self,
+        candidate_input: dict[str, Any],
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        """Return the exact scope a primary-user build receipt must bind."""
+        """Return an exact scope for the entire candidate, including execution plan."""
         active = self.read_active()
+        version = candidate_input["version"]
         return (
             {
                 "version": version,
-                "public_commit": public_commit,
-                "private_commit": private_commit,
-                "decision_batch_sha256": value_sha256(decision_batch),
+                "candidate_input_sha256": value_sha256(candidate_input),
             },
             {
                 "active_version": active["version"] if active else None,

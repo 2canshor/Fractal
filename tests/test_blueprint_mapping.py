@@ -14,14 +14,14 @@ def mapping() -> dict:
     return copy.deepcopy(load_donor_candidate_mappings()["mappings"][0])
 
 
-def test_dojo_signal_candidate_is_mapped_to_existing_find_problems() -> None:
+def test_dojo_signal_candidate_is_mapped_to_existing_hooks_element() -> None:
     value = mapping()
     assert value["target"] == {
-        "existing_element_id": "find-problems",
+        "existing_element_id": "hooks",
         "new_element_id": None,
-        "genre_id": "steps",
-        "element_type": "deuteragonist",
-        "marker": "$",
+        "genre_id": "infrastructure",
+        "element_type": "extra",
+        "marker": "^",
     }
     assert value["change_action"] == "reconfigure"
     assert value["donor_ids"] == ["hermes-dojo"]
@@ -59,6 +59,37 @@ def test_candidate_must_assess_every_principle() -> None:
     value["principle_effects"].pop()
     with pytest.raises(ValueError, match="every current Principle"):
         validate_candidate_mapping(value)
+
+
+def test_greed_ratchet_maps_mlflow_mechanics_without_donor_authority() -> None:
+    mappings = load_donor_candidate_mappings()["mappings"]
+    ratchet = next(
+        item for item in mappings if item["candidate_id"] == "candidate-greed-outcome-ratchet"
+    )
+    assert ratchet["target"]["existing_element_id"] == "greed"
+    assert ratchet["donor_ids"] == ["mlflow"]
+    assert ratchet["flow_relationships"] == [
+        {"relationship": "serves", "flow_id": "find-global-pattern-solutions"}
+    ]
+    assert all(value is False for key, value in ratchet["authority"].items() if key != "scope")
+
+
+def test_system_review_implementation_maps_to_core_without_inventing_a_genre() -> None:
+    mappings = load_donor_candidate_mappings()["mappings"]
+    runtime = next(
+        item
+        for item in mappings
+        if item["candidate_id"] == "candidate-system-review-investigation-loop"
+    )
+    assert runtime["target"] == {
+        "section_id": "core",
+        "existing_element_id": "system-review",
+        "new_element_id": None,
+        "genre_id": None,
+        "element_type": "protagonist",
+        "marker": "#",
+    }
+    assert len(runtime["flow_relationships"]) == 8
 
 
 def test_additive_candidate_must_follow_genre_priority() -> None:

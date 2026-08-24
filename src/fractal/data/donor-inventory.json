@@ -3,22 +3,75 @@
   "record_version": 1,
   "observed_at": "2026-08-24",
   "blueprint_version": "0.1.0",
+  "donor_set_fixed": false,
+  "select_from_current_element_need": true,
+  "runtime_dependency_on_donor_services": false,
+  "fractal_local_names_required": true,
   "claim_boundary": "Repository contents were inspected at exact commits. Inventory status does not install, approve or activate donor code.",
   "donors": [
     {
       "donor_id": "hermes-agent",
       "human_name": "Hermes Agent",
       "source_url": "https://github.com/NousResearch/hermes-agent",
-      "commit": "91e867631e9d2eb9fbd69edd4459475d38070979",
+      "commit": "fcbd1076a93841fa88855acce810e342a5b78101",
+      "version": "v0.20.5 / v2026.8.19",
+      "acquired_at": "2026-08-24",
       "repository_status": "observed",
       "licence": {
         "spdx": "MIT",
         "status": "verified-file",
-        "evidence": "LICENSE"
+        "evidence": "LICENSE sha256 821556e6336796450ab852d375117b48a4887e71d255794fd6318d99982a5ab6"
       },
       "architecture_authority": false,
       "donor_role": "environment-and-implementation-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Only bounded provenance and implementation receipts are packaged; Hermes source is not loaded into prompts."
+      },
+      "recovery_path": "Remove the bounded adaptations and mappings; no Hermes process, state store or dependency is required by the active version.",
       "capabilities": [
+        {
+          "capability_id": "post-work-learning-source",
+          "summary": "Run an isolated review after substantial work, prefer improving an existing class-level method, retain only verified lessons, and later consolidate overlap.",
+          "blueprint_target": "curiosity",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Forked locally as Post-Work Learning with no Hermes model, service, memory, Skill store or direct active mutation dependency."
+        },
+        {
+          "capability_id": "existing-method-first-escalation",
+          "summary": "Prefer improving or consolidating an existing method before creating another, and retain evidence for why a lower-growth response was not enough.",
+          "blueprint_target": "subtraction-first",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Combined with Fractal's complete delete-to-add option order, the candidate now rejects a later preferred response unless every earlier viable response has an evidence-backed bypass reason."
+        },
+        {
+          "capability_id": "method-candidate-ledger-source",
+          "summary": "Record managed method mutations with before/after evidence, ownership boundaries and recovery.",
+          "blueprint_target": "component-governance",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Forked locally into immutable staged method candidates; active capabilities remain unchanged until Blueprint Mapping and Human Decision."
+        },
+        {
+          "capability_id": "hermes-bounded-investigation-loop",
+          "summary": "Collect evidence, call a reasoning step, validate the result, continue automatically under an iteration budget and stop at the human boundary.",
+          "blueprint_target": "system-review",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Forked locally as CanonicalEvidenceInvestigator plus the bounded System Review loop. Exact source: run_agent.py sha256 b8e0244cfdbdce9328040d92adb9b89d78351000ee88bafae35d71b3e33fb8a1. Provider, Tool, session, memory and final-decision authority are excluded."
+        },
+        {
+          "capability_id": "hermes-durable-execution-ledger",
+          "summary": "Persist claimed, running and immutable terminal execution attempts and mark abandoned effects unknown.",
+          "blueprint_target": "hooks",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Directly closes Fractal lifecycle arrows without inheriting the Hermes scheduler, retry policy or agent authority. Exact source: cron/executions.py; 19 focused ledger tests passed in the donor environment."
+        },
+        {
+          "capability_id": "hermes-verification-evidence-ledger",
+          "summary": "Record actual verification commands and invalidate proof after later edits.",
+          "blueprint_target": "reality-check",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Repairs the supplied-True trust hole when combined with artifact-bound execution; exact source: agent/verification_evidence.py; 19 focused evidence tests passed in the donor environment."
+        },
         {
           "capability_id": "hermes-runtime",
           "summary": "Agent runtime, provider abstraction, Tool transport and multiple terminal backends.",
@@ -54,6 +107,8 @@
       "human_name": "Hermes Agent Self-Evolution",
       "source_url": "https://github.com/NousResearch/hermes-agent-self-evolution",
       "commit": "0a929e3aa20e15cf04dc7c28492a7d41a5139125",
+      "version": "commit snapshot 0a929e3",
+      "acquired_at": "2026-08-24",
       "repository_status": "observed",
       "licence": {
         "spdx": "MIT",
@@ -62,6 +117,11 @@
       },
       "architecture_authority": false,
       "donor_role": "method-and-implementation-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Research record only; no source or prompt is loaded by the runtime."
+      },
+      "recovery_path": "Delete the research-only inventory entry; no code or runtime state depends on it.",
       "capabilities": [
         {
           "capability_id": "evolution-dataset-builder",
@@ -91,6 +151,8 @@
       "human_name": "Hermes Dojo",
       "source_url": "https://github.com/Yonkoo11/hermes-dojo",
       "commit": "ee114e72e18b13d3aeb4b76a8d1ade0916972248",
+      "version": "commit snapshot ee114e7",
+      "acquired_at": "2026-08-24",
       "repository_status": "observed",
       "licence": {
         "spdx": "MIT",
@@ -99,20 +161,27 @@
       },
       "architecture_authority": false,
       "donor_role": "method-and-implementation-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Only typed signal code and provenance are packaged; donor prompts and monitor state are excluded."
+      },
+      "recovery_path": "Remove donor_signals.py and its unactivated mapping; no active Hook or canonical state depends on it.",
       "capabilities": [
         {
           "capability_id": "dojo-session-signals",
           "summary": "Detect tool failures, user corrections and rapid retry loops from session events.",
-          "blueprint_target": "find-problems",
+          "blueprint_target": "hooks",
+          "serves_flow": "find-problems",
           "disposition": "staged-adaptation-candidate",
           "reason": "Fills a partial evidence gap when adapted to typed, privacy-bounded signals without automatic change."
         },
         {
           "capability_id": "dojo-weakness-analysis",
           "summary": "Rank tool and skill weaknesses and distinguish some infrastructure and authentication failures.",
-          "blueprint_target": "find-global-pattern-reasons",
-          "disposition": "research-only",
-          "reason": "Useful categories, but heuristic recommendations do not establish Fractal causal evidence."
+          "blueprint_target": "cause-research",
+          "serves_flow": "find-global-pattern-reasons",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Forked locally as Weakness Triage; its classifications only separate durable method weakness from transient infrastructure, authentication, rate-limit and setup state before Fractal causal review."
         },
         {
           "capability_id": "dojo-auto-fixer",
@@ -135,6 +204,8 @@
       "human_name": "Evey Hermes Plugins",
       "source_url": "https://github.com/42-evey/hermes-plugins",
       "commit": "b96aa74a44519bcc930b235a43d4e43824af9433",
+      "version": "commit snapshot b96aa74",
+      "acquired_at": "2026-08-24",
       "repository_status": "observed",
       "licence": {
         "spdx": "MIT",
@@ -143,6 +214,11 @@
       },
       "architecture_authority": false,
       "donor_role": "plugin-implementation-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Inventory only; no plugin or model council is installed or loaded."
+      },
+      "recovery_path": "Remove the research-only inventory entry; no code, plugin or state depends on it.",
       "capabilities": [
         {
           "capability_id": "evey-council",
@@ -162,8 +238,8 @@
           "capability_id": "evey-status-and-cost",
           "summary": "Unified status and cost-control plugins.",
           "blueprint_target": "human-control",
-          "disposition": "research-only",
-          "reason": "Potential operator Infrastructure; external telemetry and budget semantics require separate review."
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Compact verification and cost evidence is forked locally as Learning Evidence; external telemetry, wallet and plugin runtime are excluded."
         },
         {
           "capability_id": "evey-autonomy",
@@ -175,34 +251,378 @@
       ]
     },
     {
-      "donor_id": "super-hermes",
-      "human_name": "Super Hermes",
-      "source_url": null,
-      "commit": null,
-      "repository_status": "no-primary-source-finding",
+      "donor_id": "temporal-python-sdk",
+      "human_name": "Temporal Python SDK",
+      "source_url": "https://github.com/temporalio/sdk-python",
+      "commit": "84b519e0ff407b049da88ac7d1711f110494ff4d",
+      "version": "1.31.0",
+      "acquired_at": "2026-08-24",
+      "repository_status": "observed",
       "licence": {
-        "spdx": null,
-        "status": "unknown",
-        "evidence": "No exact primary repository was identified in the bounded search."
+        "spdx": "MIT",
+        "status": "verified-file",
+        "evidence": "LICENSE sha256 d7706f28d144dabf07e4946553a4d117d1dab5cda6bf34a602959b4a2fa86b38"
       },
       "architecture_authority": false,
-      "donor_role": "unresolved-source",
-      "capabilities": []
+      "donor_role": "workflow-implementation-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Only the deterministic coordinator/activity separation is adapted; the SDK and server are not dependencies."
+      },
+      "recovery_path": "Remove the staged runtime module and mapping; no Temporal server, worker or history is required.",
+      "capabilities": [
+        {
+          "capability_id": "temporal-deterministic-workflow-activity-split",
+          "summary": "Keep replayable coordination separate from side-effecting evidence Activities.",
+          "blueprint_target": "hooks",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "The separation correctly manifests Deterministic over Probabilistic in the local Fractal runtime without importing Temporal's server authority."
+        },
+        {
+          "capability_id": "temporal-service-runtime",
+          "summary": "Distributed workflow server, workers, task queues and replay history.",
+          "blueprint_target": "environment-adapters",
+          "disposition": "research-only",
+          "reason": "Rejected for this slice because service deployment, dependency and recovery cost exceed the local arrows being closed."
+        }
+      ]
     },
     {
-      "donor_id": "dot-skill",
-      "human_name": "dot-skill",
-      "source_url": null,
-      "commit": null,
-      "repository_status": "no-primary-source-finding",
+      "donor_id": "in-toto",
+      "human_name": "in-toto",
+      "source_url": "https://github.com/in-toto/in-toto",
+      "commit": "c82fe5d21aaa61c7f1a213db20a46f10bb3f411a",
+      "version": "v3.1.0",
+      "acquired_at": "2026-08-24",
+      "repository_status": "observed",
       "licence": {
-        "spdx": null,
-        "status": "unknown",
-        "evidence": "No exact primary repository was identified in the bounded search."
+        "spdx": "Apache-2.0",
+        "status": "verified-file",
+        "evidence": "LICENSE sha256 b5c26c8a2ad6dd7cac6646e470a32ee42d23c36124caac4e66c989b6545b2a44"
       },
       "architecture_authority": false,
-      "donor_role": "unresolved-source",
-      "capabilities": []
+      "donor_role": "execution-evidence-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "A compact receipt shape is packaged; in-toto libraries, layouts and keys are not runtime dependencies."
+      },
+      "recovery_path": "Restore the previous boolean-only build API and remove receipt fields; existing active manifests remain immutable."
+      ,"capabilities": [
+        {
+          "capability_id": "in-toto-command-material-product-link",
+          "summary": "Execute exact argv and bind return value, material hashes, product hashes and byproducts in one link record.",
+          "blueprint_target": "reality-check",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Fills the reality-verification gap while Fractal retains Human Control and version authority. Exact source: in_toto/runlib.py."
+        },
+        {
+          "capability_id": "in-toto-signed-layout-authority",
+          "summary": "Signed multi-step supply-chain layouts and functionary keys.",
+          "blueprint_target": "component-governance",
+          "disposition": "research-only",
+          "reason": "Rejected for this slice because it would introduce a second authority/key system beyond the exact Fractal receipt boundary."
+        }
+      ]
+    },
+    {
+      "donor_id": "super-hermes",
+      "human_name": "Super Hermes",
+      "source_url": "https://github.com/Cranot/super-hermes",
+      "commit": "ffe2d10042041dcc23325f013e8b7e607e069952",
+      "version": "commit snapshot ffe2d10",
+      "acquired_at": "2026-08-24",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "MIT",
+        "status": "verified-file",
+        "evidence": "LICENSE sha256 28273a2e019078e77d7ddbecaa18ca518e18a5e30c694c4115b82b431bfe35ca"
+      },
+      "architecture_authority": false,
+      "donor_role": "analysis-method-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Constraint and blind-spot procedures are implemented as local structured records; donor Skills and history files are not loaded at runtime."
+      },
+      "recovery_path": "Remove Blind Spot Review from the local forked method set; no active capability or donor service is required.",
+      "capabilities": [
+        {
+          "capability_id": "blind-spot-review-source",
+          "summary": "Analyze structure, temporal change and conflicting goals independently, then retain what the analysis missed for the next review.",
+          "blueprint_target": "curiosity",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Forked locally as Blind Spot Review with deterministic constraint history; donor prompt runtime and model-scored quality claims are excluded."
+        }
+      ]
+    },
+    {
+      "donor_id": "hermes-workspace",
+      "human_name": "Hermes Workspace",
+      "source_url": "https://github.com/outsourc-e/hermes-workspace",
+      "commit": "c631425d8baa933f8c61d8447040f4ec8b5f571c",
+      "version": "commit snapshot c631425",
+      "acquired_at": "2026-08-24",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "MIT",
+        "status": "verified-file",
+        "evidence": "LICENSE sha256 c113b60466b6181583e1079680900641678e6c84fefe8e6460f262468c350792"
+      },
+      "architecture_authority": false,
+      "donor_role": "inspection-and-workspace-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Only compact checkpoint and candidate inspection fields are retained locally; the Web workspace is not a dependency."
+      },
+      "recovery_path": "Remove Checkpoint Inspection fields and views; no Web service, remote harness or donor workspace state is required.",
+      "capabilities": [
+        {
+          "capability_id": "checkpoint-inspection-source",
+          "summary": "Expose worker state, files, commands, result, blocker, next action and review routing without granting workspace authority.",
+          "blueprint_target": "human-control",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Forked locally as Checkpoint Inspection records; the dashboard, swarm product and remote control are excluded."
+        },
+        {
+          "capability_id": "whole-project-checkpoint-review-routing",
+          "summary": "Record checkpoint work, files, commands, blocker and next action, deduplicate it and route completed work through review before continuation.",
+          "blueprint_target": "project-review",
+          "serves_flow": "find-global-patterns",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Selected for Perspective only as checkpoint evidence and review-before-continuation input. Fractal adds its complete Direction, Goal, criteria, Plan, resource, neglect, opportunity-cost and continuation review; the donor workspace and swarm authority are excluded."
+        }
+      ]
+    },
+    {
+      "donor_id": "distilly",
+      "human_name": "Colleague Skill source (Distilly)",
+      "source_url": "https://github.com/titanwings/colleague-skill",
+      "commit": "04c72cc26c04e12c673405b94c8a42400287d403",
+      "version": "1.0.0 / dot-skill",
+      "acquired_at": "2026-08-24",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "MIT",
+        "status": "verified-file",
+        "evidence": "LICENSE sha256 4364a2b804d4c6e6c1ab47226c7b48b7364701e1827b83c600d0c4ba46d009ec"
+      },
+      "architecture_authority": false,
+      "donor_role": "work-method-extraction-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Only portable work-method extraction and correction rules are retained; persona and installer content are excluded."
+      },
+      "recovery_path": "Remove Work Method Extraction from the local forked method set; generated candidates remain staged and inactive.",
+      "capabilities": [
+        {
+          "capability_id": "work-method-extraction-source",
+          "summary": "Extract reusable work procedure separately from persona, preserve corrections and unknowns, and write portable method artifacts.",
+          "blueprint_target": "steal",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Forked locally as Work Method Extraction; persona recreation, celebrity research and runtime-specific installers are excluded."
+        }
+      ]
+    },
+    {
+      "donor_id": "mlflow",
+      "human_name": "MLflow",
+      "source_url": "https://github.com/mlflow/mlflow",
+      "commit": "9a1c0d9a9827acd23c7a215f0999e4b0f97e9870",
+      "version": "v3.15.1",
+      "acquired_at": "2026-08-24",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "Apache-2.0",
+        "status": "verified-file",
+        "evidence": "LICENSE.txt sha256 6395355de6f391afff35996a30fb41b189b4991a4cb54993ace35ab69a0bfa28"
+      },
+      "architecture_authority": false,
+      "donor_role": "baseline-comparison-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Only generic baseline, absolute-change, relative-change and direction rules are retained in local Python; MLflow is not installed or loaded."
+      },
+      "recovery_path": "Remove GreedMetricRule and the outcome-ratchet evaluator; the verified baseline and original Project success remain unchanged.",
+      "capabilities": [
+        {
+          "capability_id": "metric-threshold-baseline-comparison",
+          "summary": "Validate candidate metrics against a baseline using direction, minimum absolute change and minimum relative change.",
+          "blueprint_target": "greed",
+          "serves_flow": "find-global-pattern-solutions",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Selected for Greed because it gives the smallest mature rule set for proving a materially stronger outcome while keeping baseline failure details explicit."
+        },
+        {
+          "capability_id": "multi-metric-regression-gate",
+          "summary": "Evaluate multiple candidate metrics against a baseline and retain explicit per-metric threshold and comparison failures.",
+          "blueprint_target": "global-outcome-over-local-optimisation",
+          "serves_flow": "debate-global-pattern-solutions",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Selected with a protected-dimension constraint so one improved local metric cannot hide a regression in a mandatory global metric."
+        }
+      ]
+    },
+    {
+      "donor_id": "optuna",
+      "human_name": "Optuna",
+      "source_url": "https://github.com/optuna/optuna",
+      "commit": "4db42e31c24b200e52595df9d4c00e2cdeefea2b",
+      "version": "v4.9.0",
+      "acquired_at": "2026-08-24",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "MIT",
+        "status": "verified-file",
+        "evidence": "LICENSE sha256 c3df8e8523cf46be4b366ee7dd11578454b10ea5ec5159e57df849513aafe059"
+      },
+      "architecture_authority": false,
+      "donor_role": "constrained-trial-research-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "No Optuna package, sampler, storage or study runtime is included in the Greed slice."
+      },
+      "recovery_path": "No code was adopted for Greed; remove the research record without changing Fractal behaviour.",
+      "capabilities": [
+        {
+          "capability_id": "feasible-best-trial-selection",
+          "summary": "Select completed feasible trials by objective direction and support multi-objective Pareto-front comparison.",
+          "blueprint_target": "experiment",
+          "serves_flow": "find-global-pattern-solutions",
+          "disposition": "research-only",
+          "reason": "Not selected for Greed because search and sampler machinery is larger than the present baseline-ratchet need; retain as an Experiment candidate if multi-objective trial search becomes necessary."
+        },
+        {
+          "capability_id": "protected-dimension-feasibility",
+          "summary": "Exclude a best-looking trial when its recorded constraints are not feasible, including multi-objective comparison.",
+          "blueprint_target": "global-outcome-over-local-optimisation",
+          "serves_flow": "debate-global-pattern-solutions",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Only the feasibility rule is retained locally: a protected global dimension must not regress. Samplers, storage, study ownership and automatic best-trial selection are excluded."
+        }
+      ]
+    },
+    {
+      "donor_id": "promptfoo",
+      "human_name": "Promptfoo",
+      "source_url": "https://github.com/promptfoo/promptfoo",
+      "commit": "7b898cbdb16205cb7f0e2994baa807d131eb2326",
+      "version": "0.122.0",
+      "acquired_at": "2026-08-24",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "MIT",
+        "status": "verified-file",
+        "evidence": "LICENSE sha256 bf813686553f451e1b833fbd827488aee49b60b189626915bf3108d10b754e44"
+      },
+      "architecture_authority": false,
+      "donor_role": "evaluation-matrix-research-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "No Promptfoo CLI, provider, database, assertion engine, Web view or executable configuration is included."
+      },
+      "recovery_path": "No code was adopted for Greed; remove the research record without changing Fractal behaviour.",
+      "capabilities": [
+        {
+          "capability_id": "assertion-evaluation-matrix",
+          "summary": "Compare prompts and providers across test cases with named assertions, thresholds, pass/fail results and exportable evidence.",
+          "blueprint_target": "reality-check",
+          "serves_flow": "debate-global-pattern-solutions",
+          "disposition": "research-only",
+          "reason": "Not selected for Greed because its LLM/provider evaluation engine and trusted executable configuration exceed the generic outcome-ratchet need; it may later inform a bounded Reality Check adapter."
+        }
+      ]
+    },
+    {
+      "donor_id": "storm",
+      "human_name": "STORM",
+      "source_url": "https://github.com/stanford-oval/storm",
+      "commit": "e80d9bbea7362141a479940dabb751c1f244e4b6",
+      "version": "v1.1.0",
+      "acquired_at": "2026-08-24",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "MIT",
+        "status": "verified-file",
+        "evidence": "LICENSE sha256 88241386c28ff04821832762714c9ff0d22c4de6b0633d11554e69a968a718e0"
+      },
+      "architecture_authority": false,
+      "donor_role": "perspective-guided-research-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Only perspective-labelled question planning and breadth limits are retained locally; DSPy, models, retrieval engines and article generation are excluded."
+      },
+      "recovery_path": "Remove Evidence Exploration question planning; Cause Research returns to the prior registered read-only research route.",
+      "capabilities": [
+        {
+          "capability_id": "perspective-guided-question-breadth",
+          "summary": "Generate questions from multiple perspectives, bound query count and collect references before writing or synthesis.",
+          "blueprint_target": "quantity-over-quality",
+          "serves_flow": "find-global-pattern-reasons",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Selected because it turns broad multi-perspective discovery into an explicit pre-synthesis phase without requiring STORM's article product."
+        }
+      ]
+    },
+    {
+      "donor_id": "gpt-researcher",
+      "human_name": "GPT Researcher",
+      "source_url": "https://github.com/assafelovic/gpt-researcher",
+      "commit": "6f998577d547b1e54ec662dac63583aa11e3b84b",
+      "version": "v3.6.1",
+      "acquired_at": "2026-08-24",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "Apache-2.0",
+        "status": "verified-file",
+        "evidence": "LICENSE sha256 c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      "architecture_authority": false,
+      "donor_role": "query-and-retrieval-research-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Only question expansion, retriever boundary, No Finding and source provenance shapes are retained; no agent, LLM, crawler, vector store, report or Web service is included."
+      },
+      "recovery_path": "Remove Evidence Exploration retrieval receipts; no donor agent, source store or service is required by Fractal.",
+      "capabilities": [
+        {
+          "capability_id": "planned-provenance-first-retrieval",
+          "summary": "Expand research questions, run registered retrievers, retain source-linked results and represent empty retrieval honestly.",
+          "blueprint_target": "cause-research",
+          "serves_flow": "find-global-pattern-reasons",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Selected because it cleanly separates planning, retrieval and later report synthesis; Fractal keeps only the first two as evidence acquisition."
+        }
+      ]
+    },
+    {
+      "donor_id": "autogen",
+      "human_name": "AutoGen",
+      "source_url": "https://github.com/microsoft/autogen",
+      "commit": "83afbf5857aac683340d4c692194e548b1e8edda",
+      "version": "python-v0.7.5",
+      "acquired_at": "2026-08-24",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "MIT",
+        "status": "verified-file",
+        "evidence": "LICENSE-CODE sha256 c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+      },
+      "architecture_authority": false,
+      "donor_role": "multi-agent-debate-research-source",
+      "context_cost": {
+        "always_loaded_tokens_delta": 0,
+        "summary": "Research record only; no AutoGen package, runtime, group chat, shared history or model client is included."
+      },
+      "recovery_path": "Remove the research-only comparison record; Fractal's independent cases remain unchanged.",
+      "capabilities": [
+        {
+          "capability_id": "group-chat-debate-and-selector",
+          "summary": "Coordinate multi-agent group conversations through round-robin, selector, graph, swarm and society-of-mind patterns.",
+          "blueprint_target": "two-sided-review",
+          "serves_flow": "debate-global-pattern-solutions",
+          "disposition": "research-only",
+          "reason": "Rejected for Two-Sided Review: the current project is in maintenance mode, group-chat history is shared, and selection or consensus does not prove independently formed Case For and Case Against. Fractal's isolated two-case runner is the better fit."
+        }
+      ]
     }
   ]
 }

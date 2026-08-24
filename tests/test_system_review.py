@@ -26,6 +26,7 @@ from fractal.system_review import (
     record_later_outcome_evaluation,
     record_system_review_stage,
     review_feedback,
+    run_two_sided_review,
     select_lightest_capable_agent,
     start_system_review,
     verify_branch_independence,
@@ -90,7 +91,7 @@ def stage_result(stage: str) -> dict:
         "issue-scan": {
             "collection_mode": "quantity-over-quality",
             "causal_filtering_applied": False,
-            "deduplication_status": "deferred-to-step-2",
+            "deduplication_status": "deferred-to-flow-2",
             "whole_project_history_manifest": {
                 "covered_sections": [
                     "project-direction",
@@ -287,7 +288,7 @@ def test_full_system_review_accepts_no_change_as_a_real_result() -> None:
     assert review["status"] == "completed"
     assert review["result"]["outcome"] == "no-change"
     assert len(review["stages"]) == len(SYSTEM_REVIEW_STAGES)
-    assert [item["blueprint_step"] for item in review["stages"]] == [
+    assert [item["blueprint_flow"] for item in review["stages"]] == [
         1,
         1,
         2,
@@ -306,7 +307,8 @@ def test_full_system_review_accepts_no_change_as_a_real_result() -> None:
         8,
         8,
     ]
-    assert review["backbone"]["workflow"] == "new-blueprint-eight-steps"
+    assert review["backbone"]["workflow"] == "new-blueprint-eight-flows"
+    assert len(review["backbone"]["required_flows"]) == 8
 
 
 def test_complete_zero_observation_path_reaches_honest_no_change() -> None:
@@ -455,7 +457,7 @@ def test_reversal_challenges_dimension_and_forces_cause_research() -> None:
         )
 
 
-def test_step_four_requires_complete_subtraction_first_and_capability_check() -> None:
+def test_flow_five_requires_complete_subtraction_first_and_capability_check() -> None:
     result = stage_result("improvement-options")
     result["options"].pop(4)
     with pytest.raises(SystemReviewError, match="must cover"):
@@ -468,11 +470,27 @@ def test_step_four_requires_complete_subtraction_first_and_capability_check() ->
         _validate_system_review_stage("improvement-options", add)
 
 
+def test_later_response_requires_evidence_for_bypassing_earlier_viable_subtraction() -> None:
+    from fractal.system_review import _validate_system_review_stage
+
+    result = stage_result("improvement-options")
+    delete = next(item for item in result["options"] if item["kind"] == "delete")
+    delete["status"] = "viable"
+    with pytest.raises(SystemReviewError, match="bypassing every earlier viable"):
+        _validate_system_review_stage("improvement-options", result)
+
+    delete["not_selected_reason"] = (
+        "Deleting the current review would remove required evidence coverage."
+    )
+    _validate_system_review_stage("improvement-options", result)
+
+
 def test_solution_needed_fails_closed_without_curiosity_60_20_20() -> None:
     from fractal.system_review import _validate_system_review_stage
 
     result = stage_result("improvement-options")
     result["preferred_kind"] = "modify"
+    next(item for item in result["options"] if item["kind"] == "modify")["status"] = "viable"
     result["complexity_delta"] = 0
     result["existing_capability_assessment"]["sufficient"] = True
     del result["curiosity"]
@@ -485,6 +503,7 @@ def test_solution_needed_accepts_complete_curiosity_60_20_20() -> None:
 
     result = stage_result("improvement-options")
     result["preferred_kind"] = "modify"
+    next(item for item in result["options"] if item["kind"] == "modify")["status"] = "viable"
     result["complexity_delta"] = 0
     result["existing_capability_assessment"]["sufficient"] = True
     result["curiosity"] = combine_curiosity_findings(
@@ -521,6 +540,7 @@ def test_solution_needed_rejects_cosmetic_or_misrouted_curiosity() -> None:
 
     result = stage_result("improvement-options")
     result["preferred_kind"] = "modify"
+    next(item for item in result["options"] if item["kind"] == "modify")["status"] = "viable"
     result["curiosity"] = combine_curiosity_findings(
         "solution-needed",
         [
@@ -734,6 +754,79 @@ def test_lightest_agent_and_independent_research_and_debate_branches() -> None:
         verify_branch_independence(
             contaminated,
             required_roles={"external-research", "internal-review"},
+        )
+
+
+def test_two_sided_review_runs_isolated_cases_before_main_agent_synthesis() -> None:
+    warrant = {
+        "high_impact": True,
+        "hard_to_restore": False,
+        "cross_project": False,
+        "cross_platform": False,
+        "authority_change": False,
+        "evidence_conflict": True,
+        "direction_reversal": False,
+        "primary_user_requested": False,
+    }
+    evidence = [
+        {"evidence_id": "evidence-a", "summary": "Supports the Candidate"},
+        {"evidence_id": "evidence-b", "summary": "Shows a recovery risk"},
+    ]
+    case_order = []
+
+    def case_reasoner(role: str, received: list[dict]) -> dict:
+        case_order.append(role)
+        assert received == evidence
+        return {
+            "summary": f"Strongest {role}",
+            "evidence_ids": [item["evidence_id"] for item in received],
+            "reasoner_id": role,
+        }
+
+    def synthesise(case_for: dict, case_against: dict) -> dict:
+        assert case_order == ["case-for", "case-against"]
+        assert case_for["role"] == "case-for"
+        assert case_against["role"] == "case-against"
+        return {
+            "recommendation": "Run a reversible trial before adoption.",
+            "biggest_remaining_concern": "The recovery path is not active-live tested.",
+        }
+
+    result = run_two_sided_review(
+        warrant=warrant,
+        evidence=evidence,
+        case_reasoner=case_reasoner,
+        synthesizer=synthesise,
+    )
+    assert result["independent_cases_verified"] is True
+    assert result["synthesised_by"] == "main-agent"
+    assert result["automatic_decision"] is False
+
+
+def test_two_sided_review_rejects_cross_case_or_unavailable_evidence() -> None:
+    warrant = {
+        "high_impact": False,
+        "hard_to_restore": False,
+        "cross_project": False,
+        "cross_platform": False,
+        "authority_change": False,
+        "evidence_conflict": True,
+        "direction_reversal": False,
+        "primary_user_requested": False,
+    }
+
+    def contaminated(role: str, _received: list[dict]) -> dict:
+        evidence_ids = ["evidence-a"]
+        if role == "case-against":
+            evidence_ids.append("case-for-output")
+        return {"summary": role, "evidence_ids": evidence_ids}
+
+    with pytest.raises(SystemReviewError, match="unavailable evidence"):
+        run_two_sided_review(
+            warrant=warrant,
+            evidence=[{"evidence_id": "evidence-a", "summary": "Evidence"}],
+            case_reasoner=contaminated,
+            synthesizer=lambda _case_for, _case_against: {},
         )
 
 

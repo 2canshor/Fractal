@@ -145,8 +145,16 @@ class LifecycleController:
         "delivery",
     }
 
-    def __init__(self, store: ProjectStore) -> None:
+    def __init__(
+        self,
+        store: ProjectStore,
+        *,
+        orchestrator: Any | None = None,
+        auto_orchestrate_completion: bool = True,
+    ) -> None:
         self.store = store
+        self.orchestrator = orchestrator
+        self.auto_orchestrate_completion = auto_orchestrate_completion
 
     def confirm_direction(
         self,
@@ -687,7 +695,7 @@ class LifecycleController:
         if record.status != "awaiting_completion":
             raise LifecycleError("Project must be Awaiting Completion")
         now = utc_now()
-        return self.store.apply_changes(
+        write = self.store.apply_changes(
             project_id,
             expected_revision=expected_revision,
             changes=[
@@ -700,6 +708,20 @@ class LifecycleController:
             authority_write=True,
             action="declare-project-completion",
         )
+        if self.auto_orchestrate_completion:
+            try:
+                runtime = self.orchestrator
+                if runtime is None:
+                    from fractal.orchestrator import FractalOrchestrator
+
+                    runtime = FractalOrchestrator(self.store)
+                runtime.handle_project_completion(project_id)
+            except Exception as error:
+                raise LifecycleError(
+                    "Project Completion is canonical, but System Review dispatch is pending "
+                    f"reconciliation: {error}"
+                ) from error
+        return write
 
     def reopen_after_correction(
         self,

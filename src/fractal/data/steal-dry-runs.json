@@ -8,9 +8,9 @@
       "run_id": "steal-dojo-session-signals",
       "status": "completed-staged-not-active",
       "target": {
-        "implementation_id": "find-problems-session-signals",
-        "blueprint_element_id": "find-problems",
-        "current_assessment": "implemented",
+        "implementation_id": "hooks-session-signals",
+        "blueprint_element_id": "hooks",
+        "current_assessment": "verified-staged",
         "desired_effect": "Increase privacy-bounded observation coverage for tool failures, retry loops and possible user corrections without granting mutation authority.",
         "evidence_ids": ["evidence-blueprint-gap-audit-4"]
       },
@@ -56,7 +56,7 @@
         {
           "dimension": "blueprint-fidelity",
           "result": "better",
-          "summary": "The adaptation routes signals to Find Problems and cannot perform later Steps.",
+          "summary": "The Hooks adaptation routes signals into Flow 1 and cannot perform later Flows.",
           "evidence_ids": ["evidence-donor-candidate-mapping"]
         },
         {

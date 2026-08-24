@@ -1,0 +1,277 @@
+{
+  "record_type": "learning-method-source-set",
+  "record_version": 1,
+  "acquired_at": "2026-08-24",
+  "runtime_dependency_on_upstream": false,
+  "claim_boundary": "These are the current source bindings for locally implemented Fractal methods, not a fixed donor list. Upstream repositories provide provenance and licence evidence only; no donor service, model or runtime is required.",
+  "selection_policy": {
+    "donor_set_fixed": false,
+    "select_from_current_need": true,
+    "multiple_donors_per_method_allowed": true,
+    "replacement_allowed": true,
+    "required_checks": [
+      "current implementation gap",
+      "Blueprint fit",
+      "implementation evidence",
+      "licence and provenance",
+      "context cost",
+      "recovery"
+    ]
+  },
+  "methods": [
+    {
+      "method_id": "post-work-learning",
+      "source_binding": "replaceable-current-source",
+      "donor_id": "hermes-agent",
+      "source_url": "https://github.com/NousResearch/hermes-agent",
+      "commit": "fcbd1076a93841fa88855acce810e342a5b78101",
+      "source_paths": [
+        "agent/background_review.py",
+        "tools/skill_manager_tool.py",
+        "agent/curator.py",
+        "agent/curator_backup.py"
+      ],
+      "licence": "MIT",
+      "forked_behaviour": [
+        "review completed work in an isolated pass",
+        "prefer updating a current or class-level method before adding another",
+        "retain only verified working lessons, not unresolved attempts",
+        "restrict mutation to a managed candidate area",
+        "record before and after state and preserve recovery",
+        "consolidate overlapping methods after evidence accumulates"
+      ],
+      "removed_behaviour": [
+        "direct writes to active skills",
+        "donor memory authority",
+        "donor model and provider runtime",
+        "automatic promotion"
+      ],
+      "blueprint_mapping": {
+        "activated_by": ["fatigue", "curiosity", "greed"],
+        "serves_elements": ["project-review"],
+        "serves_flows": ["find-global-pattern-solutions"],
+        "hands_off_to_flow": "map-implementations-to-blueprint"
+      }
+    },
+    {
+      "method_id": "blind-spot-review",
+      "source_binding": "replaceable-current-source",
+      "donor_id": "super-hermes",
+      "source_url": "https://github.com/Cranot/super-hermes",
+      "commit": "ffe2d10042041dcc23325f013e8b7e607e069952",
+      "source_paths": [
+        "skills/prism-reflect/SKILL.md",
+        "skills/prism-3way/SKILL.md",
+        "skills/prism-scan/SKILL.md"
+      ],
+      "licence": "MIT",
+      "forked_behaviour": [
+        "inspect structure, change over time and conflicting desirable properties independently",
+        "report what the analysis maximized and what it sacrificed",
+        "retain blind spots so later reviews cover previously missed angles",
+        "derive a falsifiable constraint instead of a generic recommendation"
+      ],
+      "removed_behaviour": [
+        "dependence on donor Skills Hub",
+        "claims based only on model-scored depth",
+        "single-file product limitation"
+      ],
+      "blueprint_mapping": {
+        "implements": "curiosity",
+        "serves_flows": ["find-global-pattern-reasons", "find-global-pattern-solutions"],
+        "hands_off_to_element": "two-sided-review"
+      }
+    },
+    {
+      "method_id": "weakness-triage",
+      "source_binding": "replaceable-current-source",
+      "donor_id": "hermes-dojo",
+      "source_url": "https://github.com/Yonkoo11/hermes-dojo",
+      "commit": "ee114e72e18b13d3aeb4b76a8d1ade0916972248",
+      "source_paths": [
+        "scripts/monitor.py",
+        "scripts/analyzer.py",
+        "scripts/fixer.py"
+      ],
+      "licence": "MIT",
+      "forked_behaviour": [
+        "rank repeated failures, retry loops, corrections and capability gaps",
+        "separate method-fixable weakness from infrastructure, authentication, rate-limit and context failures",
+        "recommend patch, create, evolve or investigate only after recurrence",
+        "compare before and after evidence"
+      ],
+      "removed_behaviour": [
+        "automatic direct skill fixing",
+        "GEPA invocation",
+        "donor cron scheduling",
+        "automatic promotion"
+      ],
+      "blueprint_mapping": {
+        "informs_elements": ["fatigue"],
+        "informs_flows": ["find-problems"],
+        "serves_flows": ["find-local-patterns", "find-global-pattern-solutions"]
+      }
+    },
+    {
+      "method_id": "work-method-extraction",
+      "source_binding": "replaceable-current-source",
+      "donor_id": "distilly",
+      "source_url": "https://github.com/titanwings/colleague-skill",
+      "commit": "04c72cc26c04e12c673405b94c8a42400287d403",
+      "source_paths": [
+        "prompts/work_analyzer.md",
+        "prompts/correction_handler.md",
+        "tools/skill_writer.py",
+        "tools/skill_schema.py"
+      ],
+      "licence": "MIT",
+      "forked_behaviour": [
+        "extract reusable work procedure separately from persona",
+        "preserve source evidence, corrections and unknowns",
+        "write portable method artifacts with stable identifiers",
+        "refuse to fabricate missing work knowledge"
+      ],
+      "removed_behaviour": [
+        "persona simulation",
+        "relationship recreation",
+        "celebrity research",
+        "runtime-specific installers"
+      ],
+      "blueprint_mapping": {
+        "serves_elements": ["steal"],
+        "serves_flows": ["find-local-patterns"],
+        "validates_element": "naming-system"
+      }
+    },
+    {
+      "method_id": "checkpoint-inspection",
+      "source_binding": "replaceable-current-source",
+      "donor_id": "hermes-workspace",
+      "source_url": "https://github.com/outsourc-e/hermes-workspace",
+      "commit": "c631425d8baa933f8c61d8447040f4ec8b5f571c",
+      "source_paths": [
+        "src/routes/api/swarm-orchestrator-loop.ts",
+        "src/routes/api/external-memory/candidates.ts",
+        "src/routes/api/swarm-checkpoint.ts"
+      ],
+      "licence": "MIT",
+      "forked_behaviour": [
+        "record worker checkpoint, files, commands, result, blocker and next action",
+        "deduplicate processed checkpoints",
+        "route completed work through a reviewer before continuation",
+        "surface human attention without granting the workspace decision authority"
+      ],
+      "removed_behaviour": [
+        "web user interface dependency",
+        "swarm product architecture",
+        "remote harness control",
+        "donor user identity"
+      ],
+      "blueprint_mapping": {
+        "serves_elements": ["human-control", "capability-check"],
+        "informs_element": "project-review"
+      }
+    },
+    {
+      "method_id": "learning-evidence",
+      "source_binding": "replaceable-current-source",
+      "donor_id": "evey-hermes-plugins",
+      "source_url": "https://github.com/42-evey/hermes-plugins",
+      "commit": "b96aa74a44519bcc930b235a43d4e43824af9433",
+      "source_paths": [
+        "evey-learner/__init__.py",
+        "evey-reflect/__init__.py",
+        "evey-verification/__init__.py",
+        "evey-cost-guard/__init__.py"
+      ],
+      "licence": "MIT",
+      "forked_behaviour": [
+        "retain compact learning and reflection records",
+        "make verification status explicit",
+        "record bounded cost alongside improvement evidence"
+      ],
+      "removed_behaviour": [
+        "plugin runtime dependency",
+        "model-routing authority",
+        "wallet and external telemetry",
+        "autonomous goal authority"
+      ],
+      "blueprint_mapping": {
+        "serves_elements": ["reality-check", "human-control"],
+        "informs_element": "greed"
+      }
+    },
+    {
+      "method_id": "outcome-ratchet",
+      "source_binding": "replaceable-current-source",
+      "donor_id": "mlflow",
+      "source_url": "https://github.com/mlflow/mlflow",
+      "commit": "9a1c0d9a9827acd23c7a215f0999e4b0f97e9870",
+      "source_paths": ["mlflow/models/evaluation/validation.py"],
+      "licence": "Apache-2.0",
+      "forked_behaviour": [
+        "compare candidate metrics with a verified baseline in the correct direction",
+        "require a positive absolute or relative material improvement threshold",
+        "fail closed when baseline, candidate or direct candidate evidence is missing",
+        "retain per-metric failure details and the original successful result"
+      ],
+      "removed_behaviour": [
+        "MLflow installation and tracking service",
+        "model-specific evaluation result types",
+        "automatic model registration or promotion",
+        "donor naming and experiment authority"
+      ],
+      "blueprint_mapping": {
+        "implements": "greed",
+        "serves_flows": ["find-global-pattern-solutions"],
+        "hands_off_to_element": "experiment"
+      }
+    },
+    {
+      "method_id": "evidence-exploration",
+      "source_binding": "replaceable-current-source",
+      "sources": [
+        {
+          "donor_id": "storm",
+          "source_url": "https://github.com/stanford-oval/storm",
+          "commit": "e80d9bbea7362141a479940dabb751c1f244e4b6",
+          "source_paths": [
+            "knowledge_storm/storm_wiki/modules/knowledge_curation.py",
+            "knowledge_storm/storm_wiki/modules/persona_generator.py"
+          ],
+          "licence": "MIT"
+        },
+        {
+          "donor_id": "gpt-researcher",
+          "source_url": "https://github.com/assafelovic/gpt-researcher",
+          "commit": "6f998577d547b1e54ec662dac63583aa11e3b84b",
+          "source_paths": [
+            "gpt_researcher/actions/query_processing.py",
+            "gpt_researcher/actions/retriever.py"
+          ],
+          "licence": "Apache-2.0"
+        }
+      ],
+      "forked_behaviour": [
+        "plan questions from multiple labelled perspectives before retrieval",
+        "require separate external and internal evidence scopes for Cause Research",
+        "execute every question inside a fixed breadth budget",
+        "retain duplicates, uncertainty and No Finding until the harvest is frozen",
+        "require source, observed date and a unique evidence id for every finding"
+      ],
+      "removed_behaviour": [
+        "donor LLM and provider selection",
+        "DSPy and autonomous agent runtime",
+        "crawler, vector store and Web application dependencies",
+        "article, report and citation-writing product layers",
+        "automatic causal conclusion or system mutation"
+      ],
+      "blueprint_mapping": {
+        "implements": "cause-research",
+        "informs_element": "curiosity",
+        "validates_element": "quantity-over-quality",
+        "serves_flows": ["find-global-pattern-reasons"]
+      }
+    }
+  ]
+}

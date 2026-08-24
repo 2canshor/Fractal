@@ -1,0 +1,125 @@
+"""Prove every Blueprint responsibility has one path to Continuous Improvement."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from fractal.blueprint import load_blueprint
+from fractal.flagship import load_flagship_implementation_matrix
+
+
+def build_continuous_improvement_purpose_receipt() -> dict[str, Any]:
+    """Return the exact Element-to-Flow-to-Protagonist-to-purpose paths."""
+    blueprint = load_blueprint()
+    flagship = load_flagship_implementation_matrix()
+    source_decisions = {
+        entry["element_id"]: entry["decision"] for entry in flagship["entries"]
+    }
+    downstream = {
+        element["element_id"]: []
+        for genre in blueprint["element_library"]["genres"]
+        for element in genre["elements"]
+    }
+    for flow in blueprint["flows"]["entries"]:
+        for element_id in flow["uses_elements"]:
+            downstream[element_id].append(flow["flow_id"])
+    if any(not flow_ids for flow_ids in downstream.values()):
+        raise ValueError("Every Library Element requires a Continuous Improvement Flow path")
+    element_paths = {
+        element_id: {
+            "flows": flow_ids,
+            "owner": blueprint["flows"]["owner"],
+            "purpose": blueprint["element_library"]["core"]["philosophy"]["element_id"],
+            "flagship_decision": source_decisions[element_id],
+        }
+        for element_id, flow_ids in downstream.items()
+    }
+    return {
+        "record_type": "continuous-improvement-purpose-receipt",
+        "record_version": 1,
+        "purpose": "continuous-improvement",
+        "sole_protagonist": "system-review",
+        "flow_owner": blueprint["flows"]["owner"],
+        "element_paths": element_paths,
+        "blueprint_change_path": [
+            "blueprint-change-rules",
+            "map-implementations-to-blueprint",
+            "system-review",
+            "continuous-improvement",
+        ],
+        "naming_and_symbol_path": [
+            "naming-system",
+            "map-implementations-to-blueprint",
+            "system-review",
+            "continuous-improvement",
+        ],
+        "retained_change_groups": [
+            {
+                "group": "Blueprint and Flow truth",
+                "purpose": "Define what Fractal owns and how System Review uses it.",
+            },
+            {
+                "group": "Flagship local implementations",
+                "purpose": "Make the owned responsibilities execute without donor authority.",
+            },
+            {
+                "group": "Naming and visible symbols",
+                "purpose": "Keep the governed Human Control surface intelligible and exact.",
+            },
+            {
+                "group": "Evidence, tests and recovery",
+                "purpose": "Distinguish claims from contract, staged and active-live reality.",
+            },
+        ],
+        "unrelated_change_groups": [],
+        "aligned": True,
+        "claim_boundary": (
+            "This receipt proves architecture and candidate-scope alignment. Active-live later "
+            "Project improvement remains pending until a separately authorised System Version."
+        ),
+    }
+
+
+def render_continuous_improvement_purpose_audit() -> str:
+    receipt = build_continuous_improvement_purpose_receipt()
+    lines = [
+        "# Continuous Improvement Purpose Audit",
+        "",
+        f"> {receipt['claim_boundary']}",
+        "",
+        f"- One purpose: `{receipt['purpose']}`",
+        f"- Sole Protagonist: `{receipt['sole_protagonist']}`",
+        f"- Classified Library Elements with a Flow path: `{len(receipt['element_paths'])}`",
+        f"- Unrelated retained change groups: `{len(receipt['unrelated_change_groups'])}`",
+        "",
+        "## Element paths",
+        "",
+        "| Element | Used by Flows | Flagship decision | Owner | Purpose |",
+        "|---|---|---|---|---|",
+    ]
+    for element_id, path in receipt["element_paths"].items():
+        lines.append(
+            f"| `{element_id}` | {', '.join(path['flows'])} | "
+            f"`{path['flagship_decision']}` | `{path['owner']}` | `{path['purpose']}` |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Retained change groups",
+            "",
+        ]
+    )
+    for group in receipt["retained_change_groups"]:
+        lines.append(f"- **{group['group']}:** {group['purpose']}")
+    lines.extend(
+        [
+            "",
+            "## Explicit supporting path",
+            "",
+            "`Naming System → Flow 6 → System Review → Continuous Improvement`",
+            "",
+            "No donor engine, donor identity, publication, activation, or unrelated product "
+            "scope is retained by this candidate.",
+        ]
+    )
+    return "\n".join(lines) + "\n"

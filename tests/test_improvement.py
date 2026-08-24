@@ -7,12 +7,14 @@ import pytest
 
 from fractal.improvement import (
     ComponentShape,
+    GreedMetricRule,
     ResearchFinding,
     TrialBoundary,
     TrialMeasurement,
     VerifiedOutcome,
     WorkSignature,
     WorkSignatureStore,
+    activate_value_behavior,
     assess_trial_boundary,
     build_improvement_investigation,
     build_performance_baseline,
@@ -22,6 +24,8 @@ from fractal.improvement import (
     combine_curiosity_findings,
     compare_trial_results,
     curiosity_routes,
+    evaluate_global_outcome_trial,
+    evaluate_greed_trial,
     recognise_repetition,
     route_value_evidence,
     semantic_comparison_payload,
@@ -313,6 +317,10 @@ def test_performance_baseline_and_greed_use_evidence_without_fabrication() -> No
             "reliability": {"threshold": 99, "direction": "maximize", "unit": "percent"},
         },
         baseline,
+        materiality_rules=[
+            GreedMetricRule("tokens", "minimize", min_absolute_change=100),
+            GreedMetricRule("accuracy", "maximize", min_absolute_change=1),
+        ],
         architecture_options=[
             {"summary": "Restructure the retrieval layer", "evidence_ids": ["evidence-a"]},
             {"summary": "Unsupported architecture idea", "evidence_ids": []},
@@ -321,11 +329,176 @@ def test_performance_baseline_and_greed_use_evidence_without_fabrication() -> No
     suggestions = {
         item["dimension"]: item["suggested_threshold"] for item in challenge["ambitious_options"]
     }
-    assert suggestions == {"tokens": 1500, "accuracy": 97}
+    assert suggestions == {"tokens": 1400, "accuracy": 98}
     assert len(challenge["architecture_options"]) == 1
     assert challenge["fabricated_targets"] is False
     assert challenge["automatic_approval"] is False
     assert all(item["dimension"] != "reliability" for item in challenge["ambitious_options"])
+
+
+def test_greed_ratchet_requires_material_verified_improvement_and_keeps_baseline() -> None:
+    baseline = {
+        "metrics": {
+            "quality": {
+                "value": 0.8,
+                "direction": "maximize",
+                "unit": "score",
+                "provenance_project_ids": ["project-a"],
+            },
+            "cost": {
+                "value": 100,
+                "direction": "minimize",
+                "unit": "tokens",
+                "provenance_project_ids": ["project-a"],
+            },
+        }
+    }
+    rules = [
+        GreedMetricRule("quality", "maximize", min_relative_change=0.1),
+        GreedMetricRule("cost", "minimize", min_absolute_change=10),
+    ]
+    passed = evaluate_greed_trial(
+        baseline=baseline,
+        candidate_metrics={
+            "quality": {
+                "value": 0.89,
+                "direction": "maximize",
+                "evidence_ids": ["evidence-quality"],
+            },
+            "cost": {
+                "value": 90,
+                "direction": "minimize",
+                "evidence_ids": ["evidence-cost"],
+            },
+        },
+        materiality_rules=rules,
+        original_success_preserved=True,
+        representative_trial=True,
+    )
+    assert passed["status"] == "candidate-for-flow-5"
+    assert passed["hands_off_to_flow"] == "find-global-pattern-solutions"
+    assert passed["automatic_approval"] is False
+    assert passed["persistent_change"] is False
+
+    weak = evaluate_greed_trial(
+        baseline=baseline,
+        candidate_metrics={
+            "quality": {
+                "value": 0.87,
+                "direction": "maximize",
+                "evidence_ids": ["evidence-quality"],
+            },
+            "cost": {
+                "value": 95,
+                "direction": "minimize",
+                "evidence_ids": ["evidence-cost"],
+            },
+        },
+        materiality_rules=rules,
+        original_success_preserved=True,
+        representative_trial=True,
+    )
+    assert weak["status"] == "retain-original-success"
+    assert weak["hands_off_to_flow"] is None
+
+
+def test_greed_ratchet_fails_closed_without_evidence_or_original_success() -> None:
+    baseline = {
+        "metrics": {
+            "quality": {
+                "value": 10,
+                "direction": "maximize",
+                "unit": "points",
+                "provenance_project_ids": ["project-a"],
+            }
+        }
+    }
+    rule = GreedMetricRule("quality", "maximize", min_absolute_change=1)
+    with pytest.raises(ValueError, match="original successful result"):
+        evaluate_greed_trial(
+            baseline=baseline,
+            candidate_metrics={},
+            materiality_rules=[rule],
+            original_success_preserved=False,
+            representative_trial=True,
+        )
+    with pytest.raises(ValueError, match="requires evidence"):
+        evaluate_greed_trial(
+            baseline=baseline,
+            candidate_metrics={
+                "quality": {"value": 11, "direction": "maximize", "evidence_ids": []}
+            },
+            materiality_rules=[rule],
+            original_success_preserved=True,
+            representative_trial=True,
+        )
+
+
+def test_global_outcome_rejects_a_local_win_that_regresses_a_protected_dimension() -> None:
+    baseline = {
+        "metrics": {
+            "quality": {
+                "value": 80,
+                "direction": "maximize",
+                "unit": "score",
+                "provenance_project_ids": ["project-a"],
+            },
+            "reliability": {
+                "value": 99,
+                "direction": "maximize",
+                "unit": "percent",
+                "provenance_project_ids": ["project-a"],
+            },
+        }
+    }
+    rules = [
+        GreedMetricRule("quality", "maximize", min_absolute_change=5),
+        GreedMetricRule("reliability", "maximize", min_absolute_change=0.5),
+    ]
+    harmful = evaluate_global_outcome_trial(
+        baseline=baseline,
+        candidate_metrics={
+            "quality": {
+                "value": 90,
+                "direction": "maximize",
+                "evidence_ids": ["quality-trial"],
+            },
+            "reliability": {
+                "value": 98,
+                "direction": "maximize",
+                "evidence_ids": ["reliability-trial"],
+            },
+        },
+        materiality_rules=rules,
+        protected_dimensions=["reliability"],
+        local_hypothesis_supported=True,
+        representative_trial=True,
+    )
+    assert harmful["improvement_status"] == "harmful-local-optimisation"
+    assert harmful["global_outcome_improved"] is False
+    assert harmful["automatic_approval"] is False
+
+    genuine = evaluate_global_outcome_trial(
+        baseline=baseline,
+        candidate_metrics={
+            "quality": {
+                "value": 90,
+                "direction": "maximize",
+                "evidence_ids": ["quality-trial"],
+            },
+            "reliability": {
+                "value": 99,
+                "direction": "maximize",
+                "evidence_ids": ["reliability-trial"],
+            },
+        },
+        materiality_rules=rules,
+        protected_dimensions=["reliability"],
+        local_hypothesis_supported=True,
+        representative_trial=True,
+    )
+    assert genuine["improvement_status"] == "genuine-improvement"
+    assert genuine["global_outcome_improved"] is True
 
 
 def test_greed_does_not_move_mid_project_goalposts() -> None:
@@ -352,16 +525,16 @@ def test_greed_does_not_move_mid_project_goalposts() -> None:
 
 
 @pytest.mark.parametrize(
-    ("value", "stage_inputs"),
+    ("value", "flow_inputs"),
     [
-        ("fatigue", ["issue-scan", "improvement-options"]),
-        ("curiosity", ["cause-research", "improvement-options"]),
-        ("greed", ["expected-effect", "improvement-options"]),
+        ("fatigue", ["find-problems", "find-local-patterns"]),
+        ("curiosity", ["find-global-pattern-reasons", "find-global-pattern-solutions"]),
+        ("greed", ["find-problems", "find-global-pattern-solutions"]),
     ],
 )
 def test_three_values_route_into_the_existing_review_backbone(
     value: str,
-    stage_inputs: list[str],
+    flow_inputs: list[str],
 ) -> None:
     active = route_value_evidence(
         value,
@@ -373,7 +546,7 @@ def test_three_values_route_into_the_existing_review_backbone(
     )
     assert active["primary_route"] == "project-review"
     assert active["system_review_evidence"] is True
-    assert active["system_review_stage_inputs"] == stage_inputs
+    assert active["system_review_flow_inputs"] == flow_inputs
     assert active["decision_mechanism"] == "project-review"
     assert active["competing_improvement_loop"] is False
 
@@ -386,6 +559,57 @@ def test_three_values_route_into_the_existing_review_backbone(
     )
     assert completed["primary_route"] == "system-review"
     assert completed["system_review_evidence"] is True
+
+
+def test_three_values_activate_only_at_their_blueprint_lifecycle_boundaries() -> None:
+    fatigue = activate_value_behavior(
+        "fatigue",
+        trigger="verified-repetition",
+        project_id="project-a",
+        project_status="in_progress",
+        evidence_ids=["work-a", "work-b", "work-c"],
+    )
+    curiosity = activate_value_behavior(
+        "curiosity",
+        trigger="solution-needed",
+        project_id="project-a",
+        project_status="completed",
+        evidence_ids=["pattern-a"],
+    )
+    greed = activate_value_behavior(
+        "greed",
+        trigger="verified-success",
+        project_id="project-a",
+        project_status="completed",
+        evidence_ids=["verified-outcome-a"],
+        original_success_preserved=True,
+    )
+    assert fatigue["next_action"] == "open-perspective-and-research"
+    assert curiosity["next_action"] == "run-evidence-exploration-and-optional-steal"
+    assert greed["next_action"] == "run-outcome-ratchet-and-bounded-experiment"
+    assert all(
+        activation["automatic_adoption"] is False
+        and activation["persistent_change"] is False
+        for activation in (fatigue, curiosity, greed)
+    )
+
+    with pytest.raises(ValueError, match="cannot activate"):
+        activate_value_behavior(
+            "curiosity",
+            trigger="verified-repetition",
+            project_id="project-a",
+            project_status="in_progress",
+            evidence_ids=["evidence-a"],
+        )
+    with pytest.raises(ValueError, match="verified original success"):
+        activate_value_behavior(
+            "greed",
+            trigger="verified-success",
+            project_id="project-a",
+            project_status="completed",
+            evidence_ids=["evidence-a"],
+            original_success_preserved=False,
+        )
 
 
 def test_value_evidence_requires_real_provenance() -> None:

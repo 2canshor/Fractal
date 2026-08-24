@@ -8,7 +8,7 @@ metadata:
 
 # System Review
 
-Use the deterministic System Review runtime for the completed Project snapshot and New Blueprint stage order. Begin from the Project Completion event Carson recorded. Keep all eight Steps visible throughout the review.
+Use the deterministic System Review runtime for the completed Project snapshot and New Blueprint Flow order. Begin from the Project Completion event Carson recorded. Keep all eight Flows visible throughout the review.
 
 1. **Find Problems.** Project Assessment compares the completed Project with its baseline and records Positive Delta and Negative Delta. Issue Scan uses `Quantity over Quality`: inspect the full Project history and record raw observations before grouping, explaining, prioritising, or proposing a change.
 2. **Find Local Patterns.** Project Patterns separates symptom, proximate cause, plausible common cause, isolated incident, recurring behaviour, counterexample, and uncertainty. A confirmed cause needs supporting evidence.
@@ -25,7 +25,7 @@ Before presentation, map every discovered Pattern exactly once into a response u
 
 Apply `Deterministic Over Probabilistic` to each bounded part: schemas, stage order, history coverage, hashes, authority, option coverage, and effect states use exact programs. The Main Agent handles interpretation, causal reasoning, trade-offs, and the final synthesis. Evaluate the complete Two-Sided warrant automatically. When any warrant is true, keep Case For and Case Against independent and finish both before showing the Pattern. Select the lightest evaluated agent that has the required capabilities; branches supply evidence, not the final decision.
 
-Fatigue, Curiosity, and Greed contribute evidence across the eight Steps without owning them. Reality Check, Experiment, Component Governance, Human Control and other Extras support the workflow without becoming Steps. `No Change` is valid, including a verified zero-observation and zero-pattern path. Only the Main Agent makes the final synthesis and states the Biggest Remaining Concern.
+Fatigue, Curiosity, and Greed contribute evidence across the eight Flows without owning them. Reality Check, Experiment, Component Governance, Human Control and other Extras support the workflow without becoming Flows. `No Change` is valid, including a verified zero-observation and zero-pattern path. Only the Main Agent makes the final synthesis and states the Biggest Remaining Concern.
 
 Present only the ordinary-language handoff: what problem occurred, how Fractal proposes to solve it, and what Carson must decide. Internal essays stay evidence. For the first three handoffs after this change, run the newcomer preflight in shadow-advisory mode: record advice but do not block, rewrite automatically, or add another approval turn.
 

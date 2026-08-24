@@ -1,6 +1,6 @@
 {
   "record_type": "fractal-blueprint",
-  "record_version": 1,
+  "record_version": 2,
   "blueprint_id": "new-architecture",
   "blueprint_version": "0.1.0",
   "lifecycle": {
@@ -10,7 +10,11 @@
     "implementation_status": "active-workflow-required",
     "claim_boundary": "This Blueprint is Fractal's only workflow architecture. The immutable System Version pointer identifies which exact implementation commit is active."
   },
-  "core": {
+  "element_library": {
+    "section_id": "element-library",
+    "human_name": "Element Library",
+    "meaning": "The complete set of persistent Fractal responsibilities. Every Library Element is classified once before any Flow may use it.",
+    "core": {
     "philosophy": {
       "element_id": "continuous-improvement",
       "human_name": "Continuous Improvement",
@@ -23,7 +27,7 @@
       "core_concept": "The sole protagonist that turns completed Project evidence into governed improvement of Fractal."
     }
   },
-  "tag_definitions": [
+    "tag_definitions": [
     {
       "tag_id": "signature-function",
       "human_name": "Signature Function",
@@ -31,7 +35,7 @@
       "meaning": "A recognisable Fractal function that should retain its core concept without becoming a Genre or changing the element's primary classification."
     }
   ],
-  "role_definitions": [
+    "role_definitions": [
     {
       "role_id": "deuteragonist",
       "human_name": "Deuteragonist",
@@ -53,72 +57,7 @@
       "marker": "%"
     }
   ],
-  "genres": [
-    {
-      "genre_id": "steps",
-      "human_name": "Steps",
-      "marker": "*",
-      "allowed_markers": ["$"],
-      "decision_status": "primary-user-confirmed",
-      "elements": [
-        {
-          "element_id": "find-problems",
-          "human_name": "Find Problems",
-          "marker": "$",
-          "sequence": 1,
-          "core_concept": "Collect the broad Project evidence before narrowing or explaining it."
-        },
-        {
-          "element_id": "find-local-patterns",
-          "human_name": "Find Local Patterns",
-          "marker": "$",
-          "sequence": 2,
-          "core_concept": "Identify meaningful local recurrence without confusing surface similarity with cause."
-        },
-        {
-          "element_id": "find-global-patterns",
-          "human_name": "Find Global Patterns",
-          "marker": "$",
-          "sequence": 3,
-          "core_concept": "Compare patterns across the relevant Project and improvement history before treating them as isolated."
-        },
-        {
-          "element_id": "find-global-pattern-reasons",
-          "human_name": "Find the Reasons for Every Global Pattern",
-          "marker": "$",
-          "sequence": 4,
-          "core_concept": "Make the causal reasoning for every Global Pattern explicit, including uncertainty and counterevidence."
-        },
-        {
-          "element_id": "find-global-pattern-solutions",
-          "human_name": "Find Solutions for Every Global Pattern",
-          "marker": "$",
-          "sequence": 5,
-          "core_concept": "Search for possible responses to every Global Pattern without allowing one preferred implementation to end the search."
-        },
-        {
-          "element_id": "map-implementations-to-blueprint",
-          "human_name": "Map New Implementations into the Blueprint",
-          "marker": "$",
-          "sequence": 6,
-          "core_concept": "Classify every Candidate implementation by its true Blueprint role and apply the rules of its Genre before debate."
-        },
-        {
-          "element_id": "debate-global-pattern-solutions",
-          "human_name": "Debate the Solutions for Every Global Pattern",
-          "marker": "$",
-          "sequence": 7,
-          "core_concept": "Challenge the mapped solutions for every Global Pattern before Carson is asked to decide."
-        },
-        {
-          "element_id": "present-decisions-one-by-one",
-          "human_name": "Present Decisions One-by-One",
-          "marker": "$",
-          "sequence": 8,
-          "core_concept": "Present one fully prepared human-scale decision at a time without hiding the remaining decision set."
-        }
-      ]
-    },
+    "genres": [
     {
       "genre_id": "values",
       "human_name": "Values",
@@ -192,12 +131,22 @@
           "marker": "^",
           "core_concept": "Retain compact evidence about completed work without becoming a product promise."
         },
+    {
+      "element_id": "naming-system",
+      "human_name": "Naming System",
+      "marker": "^",
+      "core_concept": "Keep Fractal-controlled identities intelligible and governed in the background.",
+      "required_steps": [
         {
-          "element_id": "naming-system",
-          "human_name": "Naming System",
-          "marker": "^",
-          "core_concept": "Keep Fractal-controlled identities intelligible and governed in the background."
-        },
+          "step_id": "select-user-surface-symbol",
+          "human_name": "Select User-Surface Symbol",
+          "trigger": "before registering a capability as a user-facing Action or Command",
+          "completion": "A unique semantically justified SF Symbol is recorded, rendered, inspected at real light and dark sizes, projected, and parsed by the staged platform runtime.",
+          "reference": "capabilities/skills/naming-system/references/user-surface-symbols.md",
+          "documentation": "`Select User-Surface Symbol` runs before a capability is registered as a user-facing Action or Command. It requires a unique semantically justified SF Symbol, canonical selection evidence, deterministic assets, real-size light/dark inspection, adapter projection, and staged runtime parsing. The maintained procedure is `capabilities/skills/naming-system/references/user-surface-symbols.md`. It remains a required step under `^ Naming System`; it is not another Blueprint Element or System Review Flow."
+        }
+      ]
+    },
         {
           "element_id": "capability-check",
           "human_name": "Capability Check",
@@ -282,13 +231,24 @@
           "marker": "¢",
           "core_concept": "Challenge a consequential mapped Candidate through genuinely opposing cases before synthesis."
         },
-        {
-          "element_id": "steal",
-          "human_name": "Steal",
-          "technical_id": "donor-implementation-reuse",
-          "marker": "¢",
-          "core_concept": "Reuse bounded donor implementations while stripping donor authority and remapping the result to Fractal.",
-          "does_not_own": [
+      {
+        "element_id": "steal",
+        "human_name": "Steal",
+        "technical_id": "donor-implementation-reuse",
+        "marker": "¢",
+        "core_concept": "Reuse bounded donor implementations while stripping donor authority and remapping the result to Fractal.",
+        "activation_contract": {
+          "activated_by": "curiosity",
+          "route_kind": "implementation-evidence-acquisition",
+          "serves_flow": "find-global-pattern-solutions",
+          "hands_off_to_flow": "map-implementations-to-blueprint",
+          "cannot_replace": [
+            "project-review",
+            "cause-research",
+            "two-sided-review"
+          ]
+        },
+        "does_not_own": [
             "architecture decisions",
             "canonical state",
             "persistent mutation",
@@ -298,49 +258,192 @@
         }
       ]
     }
-  ],
-  "modification_rules": {
-    "one_protagonist": true,
-    "new_protagonist_peers_allowed": false,
-    "persistent_elements_require_exactly_one_genre": true,
-    "deuteragonist_contract": "Preserve the core concept; freely improve, replace, merge or subtract its implementation without losing the responsibility.",
-    "extra_contract": "Keep it outside the product emphasis; add it only when a Protagonist or Deuteragonist needs supporting infrastructure.",
-    "prop_contract": "Keep it reusable, callable where relevant and replaceable by a stronger method; it never owns an Action, lifecycle or authority boundary.",
-    "principle_contract": "Treat it as an asymptotic direction that cannot be claimed complete; add one only after accumulated Global Patterns and repeated causal work.",
-    "addition_priority": [
-      "extra",
-      "prop",
-      "principle",
-      "deuteragonist"
-    ],
-    "addition_priority_markers": [
-      "^",
-      "¢",
-      "%",
-      "$"
-    ],
-    "truthful_classification_required": true,
-    "blueprint_mapping_before_debate": true,
-    "old_plan_authority": "superseded"
-  },
-  "donor_policy": {
-    "every_external_environment_is_a_donor": true,
-    "hermes_is_a_donor": true,
-    "donor_implementation_may_be_reused": true,
-    "donor_architecture_has_authority": false,
-    "donor_mutation_authority_may_be_inherited": false,
-    "unclassified_capability_status": "quarantined",
-    "bulk_import_allowed": false,
-    "required_intake": [
-      "bounded capability decomposition",
-      "source and exact version",
-      "licence and provenance",
-      "hidden authority analysis",
-      "Blueprint pre-mapping",
-      "full Blueprint mapping before debate",
-      "evidence and recovery"
     ]
   },
-  "unclassified_elements": [],
+  "flows": {
+    "section_id": "flows",
+    "human_name": "Flows",
+    "meaning": "Ordered rules for using registered Element Library capabilities. A Flow is not a Genre, Element or authority owner.",
+    "owner": "system-review",
+    "decision_status": "primary-user-confirmed",
+    "entries": [
+      {
+        "flow_id": "find-problems",
+        "human_name": "Find Problems",
+        "sequence": 1,
+        "activation_boundary": "System Review starts from completed Project evidence or a verified improvement opportunity.",
+        "uses_elements": [
+          "work-signature",
+          "hooks",
+          "reality-check",
+          "fatigue",
+          "greed",
+          "quantity-over-quality"
+        ],
+        "output": "A broad, provenance-linked observation set without premature causes."
+      },
+      {
+        "flow_id": "find-local-patterns",
+        "human_name": "Find Local Patterns",
+        "sequence": 2,
+        "activation_boundary": "Flow 1 has persisted a valid observation set.",
+        "uses_elements": [
+          "work-signature",
+          "fatigue",
+          "cause-research",
+          "quantity-over-quality"
+        ],
+        "output": "Local recurrence groups with surface similarity kept separate from cause."
+      },
+      {
+        "flow_id": "find-global-patterns",
+        "human_name": "Find Global Patterns",
+        "sequence": 3,
+        "activation_boundary": "Flow 2 has persisted local patterns and comparison scope.",
+        "uses_elements": [
+          "project-review",
+          "cause-research",
+          "global-outcome-over-local-optimisation",
+          "component-governance"
+        ],
+        "output": "Whole-Project pattern candidates linked to local evidence and relevant history."
+      },
+      {
+        "flow_id": "find-global-pattern-reasons",
+        "human_name": "Find the Reasons for Every Global Pattern",
+        "sequence": 4,
+        "activation_boundary": "Flow 3 has persisted every Global Pattern candidate.",
+        "uses_elements": [
+          "cause-research",
+          "curiosity",
+          "reality-check",
+          "two-sided-review"
+        ],
+        "output": "A bounded causal account for every Global Pattern, including uncertainty and counterevidence."
+      },
+      {
+        "flow_id": "find-global-pattern-solutions",
+        "human_name": "Find Solutions for Every Global Pattern",
+        "sequence": 5,
+        "activation_boundary": "Flow 4 has persisted a causal account for every Global Pattern.",
+        "uses_elements": [
+          "curiosity",
+          "greed",
+          "steal",
+          "experiment",
+          "reality-check",
+          "subtraction-first",
+          "global-outcome-over-local-optimisation"
+        ],
+        "output": "Multiple evidence-backed Solution Candidates per Global Pattern, including a truthful no-finding result."
+      },
+      {
+        "flow_id": "map-implementations-to-blueprint",
+        "human_name": "Map New Implementations into the Blueprint",
+        "sequence": 6,
+        "activation_boundary": "Flow 5 has persisted its complete Candidate set.",
+        "uses_elements": [
+          "steal",
+          "component-governance",
+          "donor-quarantine",
+          "donor-registry",
+          "environment-adapters",
+          "naming-system",
+          "capability-check",
+          "human-control",
+          "deterministic-over-probabilistic",
+          "subtraction-first"
+        ],
+        "output": "Every Candidate is classified against the Element Library and Section 3 rules before debate."
+      },
+      {
+        "flow_id": "debate-global-pattern-solutions",
+        "human_name": "Debate the Solutions for Every Global Pattern",
+        "sequence": 7,
+        "activation_boundary": "Flow 6 has mapped or honestly rejected every Candidate.",
+        "uses_elements": [
+          "two-sided-review",
+          "experiment",
+          "reality-check",
+          "global-outcome-over-local-optimisation",
+          "human-control",
+          "deterministic-over-probabilistic"
+        ],
+        "output": "Independent opposing cases and a reconciled recommendation for every decision unit."
+      },
+      {
+        "flow_id": "present-decisions-one-by-one",
+        "human_name": "Present Decisions One-by-One",
+        "sequence": 8,
+        "activation_boundary": "Flow 7 has completed both opposing cases and reconciliation.",
+        "uses_elements": [
+          "human-control",
+          "project-review",
+          "reality-check",
+          "component-governance"
+        ],
+        "output": "One prepared human decision at a time, with the remaining queue visible and no automatic activation."
+      }
+    ]
+  },
+  "blueprint_change_rules": {
+    "section_id": "blueprint-change-rules",
+    "human_name": "Blueprint Change Rules",
+    "meaning": "Rules that govern any addition, removal, merge, replacement or reclassification of the Element Library or Flows.",
+    "modification_rules": {
+      "one_protagonist": true,
+      "new_protagonist_peers_allowed": false,
+      "persistent_library_elements_require_exactly_one_genre": true,
+      "flows_are_elements": false,
+      "flows_are_genres": false,
+      "flow_references_require_registered_elements": true,
+      "deuteragonist_contract": "Preserve the core concept; freely improve, replace, merge or subtract its implementation without losing the responsibility.",
+      "extra_contract": "Keep it outside the product emphasis; add it only when a Protagonist or Deuteragonist needs supporting infrastructure.",
+      "prop_contract": "Keep it reusable, callable where relevant and replaceable by a stronger method; it never owns an Action, lifecycle or authority boundary.",
+      "principle_contract": "Treat it as an asymptotic direction that cannot be claimed complete; add one only after accumulated Global Patterns and repeated causal work.",
+      "addition_priority": [
+        "extra",
+        "prop",
+        "principle",
+        "deuteragonist"
+      ],
+      "addition_priority_markers": [
+        "^",
+        "¢",
+        "%",
+        "$"
+      ],
+      "truthful_classification_required": true,
+      "blueprint_mapping_before_debate": true,
+      "old_plan_authority": "superseded"
+    },
+    "donor_policy": {
+      "every_external_environment_is_a_donor": true,
+      "hermes_is_a_donor": true,
+      "donor_set_fixed": false,
+      "select_from_current_need": true,
+      "multiple_donors_per_element_allowed": true,
+      "replacement_allowed": true,
+      "local_fork_required": true,
+      "runtime_upstream_dependency_allowed": false,
+      "donor_name_becomes_fractal_name": false,
+      "donor_implementation_may_be_reused": true,
+      "donor_architecture_has_authority": false,
+      "donor_mutation_authority_may_be_inherited": false,
+      "unclassified_capability_status": "quarantined",
+      "bulk_import_allowed": false,
+      "required_intake": [
+        "bounded capability decomposition",
+        "source and exact version",
+        "licence and provenance",
+        "hidden authority analysis",
+        "Blueprint pre-mapping",
+        "full Blueprint mapping before debate",
+        "context cost",
+        "evidence and recovery"
+      ]
+    },
+    "candidate_queue": []
+  },
   "open_questions": []
 }

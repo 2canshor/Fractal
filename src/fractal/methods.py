@@ -111,24 +111,32 @@ def load_method_registry() -> dict[str, Any]:
     ):
         raise ValueError("Perspective must be a Methods Deuteragonist")
 
-    methodologies = value["methodologies"]
-    steps = [item for item in methodologies if item.get("methodology_kind") == "blueprint-step"]
-    three_values = [item for item in methodologies if item.get("methodology_kind") == "three-value"]
-    blueprint_steps = next(
-        genre["elements"] for genre in blueprint["genres"] if genre["genre_id"] == "steps"
-    )
-    if [item["id"] for item in steps] != [item["element_id"] for item in blueprint_steps]:
-        raise ValueError("Method registry Steps do not match the Blueprint")
-    if [item["sequence"] for item in steps] != list(range(1, 9)):
-        raise ValueError("The active System Review must preserve Blueprint Steps 1 to 8")
-    if [item["human_name"] for item in steps] != [
-        f"Step {item['sequence']}: {item['human_name']}" for item in blueprint_steps
+    flows = value["flows"]
+    blueprint_flows = blueprint["flows"]["entries"]
+    if [item["id"] for item in flows] != [item["flow_id"] for item in blueprint_flows]:
+        raise ValueError("Method registry Flows do not match the Blueprint")
+    if [item["sequence"] for item in flows] != list(range(1, 9)):
+        raise ValueError("The active System Review must preserve Blueprint Flows 1 to 8")
+    if [item["human_name"] for item in flows] != [
+        item["human_name"] for item in blueprint_flows
     ]:
-        raise ValueError("Method registry Step names do not match the Blueprint")
+        raise ValueError("Method registry Flow names do not match the Blueprint")
+    for flow in flows:
+        if flow.get("flow_kind") != "system-review-flow":
+            raise ValueError(f"Flow is incorrectly classified as an Element: {flow['id']}")
+        if any(key in flow for key in ("blueprint_genre", "blueprint_marker", "blueprint_tags")):
+            raise ValueError(f"Flow cannot carry Element classification: {flow['id']}")
+        if flow.get("decision_status") not in VALID_STATUSES or not flow.get(
+            "operational_mapping"
+        ):
+            raise ValueError(f"Flow registry entry is incomplete: {flow['id']}")
+
+    methodologies = value["methodologies"]
+    three_values = [item for item in methodologies if item.get("methodology_kind") == "three-value"]
     if [item["id"] for item in three_values] != ["fatigue", "curiosity", "greed"]:
         raise ValueError("The three Values must be Fatigue, Curiosity, and Greed")
-    if len(methodologies) != 11:
-        raise ValueError("Methodologies must contain exactly eight Steps and three Values")
+    if len(methodologies) != 3:
+        raise ValueError("Element methodologies must contain exactly the three Values")
     for methodology in three_values:
         if (
             methodology["decision_status"] != "intent-established-methodology-partially-defined"
@@ -142,7 +150,7 @@ def load_method_registry() -> dict[str, Any]:
     mechanism_ids = {item["id"] for item in value["mechanisms"]}
     required_mechanisms = {
         element["element_id"]
-        for genre in blueprint["genres"]
+        for genre in blueprint["element_library"]["genres"]
         if genre["genre_id"] in {"principles", "infrastructure", "methods"}
         for element in genre["elements"]
         if element["element_id"] != "project-review"
@@ -177,6 +185,7 @@ def load_agentic_element_map() -> dict[str, Any]:
     expected_ids = {
         item["id"] for section in METHOD_REGISTRY_SECTIONS for item in registry[section]
     }
+    expected_ids.update(item["id"] for item in registry["flows"])
     mappings = value["mappings"]
     mapped_ids = [item["node_id"] for item in mappings]
     if len(mapped_ids) != len(set(mapped_ids)):

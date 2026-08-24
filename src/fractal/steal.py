@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
+import re
+import shutil
+import tempfile
 from importlib.resources import files
+from pathlib import Path
 from typing import Any
 
 from fractal.blueprint import load_blueprint
@@ -33,6 +39,133 @@ DISPOSITIONS = {
     "reject-donor-authority",
     "staged-adaptation-candidate",
 }
+
+
+def select_donors_for_need(element_id: str) -> list[dict[str, Any]]:
+    """Return every current viable source for one Element without popularity ranking."""
+    if not element_id.strip():
+        raise ValueError("Donor selection requires a current Element need")
+    inventory = load_donor_inventory()
+    candidates = []
+    for donor in inventory["donors"]:
+        for capability in donor["capabilities"]:
+            if capability["blueprint_target"] != element_id or capability["disposition"] in {
+                "quarantined",
+                "reject-authority",
+            }:
+                continue
+            candidates.append(
+                {
+                    "donor_id": donor["donor_id"],
+                    "capability_id": capability["capability_id"],
+                    "disposition": capability["disposition"],
+                    "reason": capability["reason"],
+                    "source_url": donor["source_url"],
+                    "commit": donor["commit"],
+                    "version": donor["version"],
+                    "licence": donor["licence"],
+                    "context_cost": donor["context_cost"],
+                    "recovery_path": donor["recovery_path"],
+                    "architecture_authority": donor["architecture_authority"],
+                }
+            )
+    return sorted(candidates, key=lambda item: (item["donor_id"], item["capability_id"]))
+
+
+def stage_local_source_snapshot(
+    *,
+    snapshot_root: Path,
+    donor_id: str,
+    capability_id: str,
+    source_url: str,
+    commit: str,
+    acquired_at: str,
+    licence_spdx: str,
+    licence_text: bytes,
+    expected_licence_sha256: str,
+    source_files: dict[str, bytes],
+    fractal_local_name: str,
+    implementation_modules: list[str],
+    target_element_id: str,
+) -> dict[str, Any]:
+    """Persist an immutable selected-source snapshot outside the runtime dependency path."""
+    if re.fullmatch(r"[a-f0-9]{40}", commit) is None:
+        raise ValueError("Donor source snapshot requires an exact commit")
+    if not donor_id.strip() or not capability_id.strip() or not source_url.startswith("https://"):
+        raise ValueError("Donor source snapshot provenance is incomplete")
+    if (
+        not fractal_local_name.strip()
+        or not target_element_id.strip()
+        or not implementation_modules
+    ):
+        raise ValueError("Donor source snapshot requires a Fractal mapping")
+    actual_licence_sha256 = hashlib.sha256(licence_text).hexdigest()
+    if actual_licence_sha256 != expected_licence_sha256:
+        raise ValueError("Donor source snapshot licence digest mismatch")
+    if not source_files:
+        raise ValueError("Donor source snapshot requires selected source files")
+    file_records = []
+    for relative, content in sorted(source_files.items()):
+        path = Path(relative)
+        if path.is_absolute() or ".." in path.parts or not relative.strip():
+            raise ValueError(f"Unsafe donor source path: {relative}")
+        if not isinstance(content, bytes):
+            raise ValueError("Donor source snapshot content must be bytes")
+        file_records.append(
+            {
+                "path": path.as_posix(),
+                "sha256": hashlib.sha256(content).hexdigest(),
+                "size": len(content),
+            }
+        )
+    snapshot_id = f"{donor_id}-{capability_id}-{commit[:12]}"
+    root = Path(snapshot_root)
+    destination = root / snapshot_id
+    manifest = {
+        "record_type": "local-donor-source-snapshot",
+        "record_version": 1,
+        "snapshot_id": snapshot_id,
+        "donor_id": donor_id,
+        "capability_id": capability_id,
+        "source_url": source_url,
+        "commit": commit,
+        "acquired_at": acquired_at,
+        "licence": {"spdx": licence_spdx, "sha256": actual_licence_sha256},
+        "source_files": file_records,
+        "fractal_mapping": {
+            "local_name": fractal_local_name,
+            "target_element_id": target_element_id,
+            "implementation_modules": implementation_modules,
+        },
+        "runtime_dependency_on_snapshot": False,
+        "runtime_dependency_on_upstream": False,
+        "active": False,
+        "automatic_adoption": False,
+        "recovery": "Delete this inactive snapshot; the local Fractal implementation remains.",
+    }
+    manifest_text = json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    if destination.exists():
+        existing = (destination / "manifest.json").read_text(encoding="utf-8")
+        if existing != manifest_text:
+            raise ValueError("Immutable donor source snapshot already exists with different data")
+        return {**manifest, "path": str(destination), "idempotent": True}
+    root.mkdir(parents=True, exist_ok=True)
+    temporary = Path(tempfile.mkdtemp(prefix=f".{snapshot_id}.", dir=root))
+    try:
+        for relative, content in sorted(source_files.items()):
+            target = temporary / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+        (temporary / "LICENSE").write_bytes(licence_text)
+        (temporary / "manifest.json").write_text(manifest_text, encoding="utf-8")
+        os.replace(temporary, destination)
+    finally:
+        if temporary.exists():
+            shutil.rmtree(temporary)
+    read_back = json.loads((destination / "manifest.json").read_text(encoding="utf-8"))
+    if read_back != manifest:
+        raise ValueError("Donor source snapshot read-back mismatch")
+    return {**manifest, "path": str(destination), "idempotent": False}
 
 
 def validate_steal_run(value: dict[str, Any]) -> dict[str, Any]:

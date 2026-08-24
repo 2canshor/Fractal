@@ -14,4 +14,6 @@ Use nouns for persistent things and verbs for actions. Use a present participle 
 
 Before renaming, search all references and migrate source, tests, adapters, and documentation together. Record an exemption only where an external owner or protocol truly prevents a local change. Migration cost is not an exemption.
 
+Before any capability is registered as a user-facing Action or Command, complete the Blueprint-required `Select User-Surface Symbol` sub-step in `references/user-surface-symbols.md`. The symbol is part of the entry's visual identity: it needs semantic search evidence, an exact Apple-owned identifier, a unique circle or square container that matches the interface type, checked-in assets, small-size light/dark inspection, and staged Codex parsing evidence. Hidden dots do not receive a user-surface symbol.
+
 Run `scripts/check_name.py` for mechanically decidable casing and state-form checks. Treat a pass as syntax evidence only, not proof that the name is semantically natural.

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from fractal.surface_symbols import surface_symbol_by_entry
 from fractal.user_surface import (
     UserSurfaceError,
     audit_codex_skill_path_surface,
@@ -13,6 +14,25 @@ from fractal.user_surface import (
     load_user_surface,
     validate_user_surface,
 )
+
+SYMBOL_NAMES = {
+    "assess": "arrow.left.arrow.right.square.fill",
+    "automate": "repeat.circle.fill",
+    "complete": "checkmark.square.fill",
+    "create": "plus.circle.fill",
+    "match": "slider.horizontal.2.square",
+    "version": "arrow.clockwise.square.fill",
+}
+
+
+def sf_symbol(entry_id: str) -> dict:
+    registered = surface_symbol_by_entry()[entry_id]
+    assert registered["name"] == SYMBOL_NAMES[entry_id]
+    return {
+        "system": "sf-symbols",
+        "name": registered["name"],
+        "selection": registered["selection"],
+    }
 
 
 def skill(component_id: str, *, active: bool = True, platform: str = "codex") -> dict:
@@ -43,7 +63,7 @@ def registry() -> dict:
 def surface() -> dict:
     return {
         "record_type": "user-surface",
-        "record_version": 1,
+        "record_version": 2,
         "system_version": "0.1.0-alpha.6",
         "platform": "codex",
         "action_resolution": {
@@ -60,36 +80,42 @@ def surface() -> dict:
                 "interface_type": "command",
                 "component_id": "assess",
                 "outcome": "Decide whether to continue, change, or stop one idea.",
+                "symbol": sf_symbol("assess"),
             },
             {
                 "entry_id": "automate",
                 "interface_type": "action",
                 "component_id": "automate",
                 "outcome": "Make a repeated job run reliably.",
+                "symbol": sf_symbol("automate"),
             },
             {
                 "entry_id": "complete",
                 "interface_type": "command",
                 "component_id": "complete",
-                "outcome": "Finish the eight-step New Blueprint System Review.",
+                "outcome": "Finish the eight-Flow New Blueprint System Review.",
+                "symbol": sf_symbol("complete"),
             },
             {
                 "entry_id": "create",
                 "interface_type": "action",
                 "component_id": "create",
                 "outcome": "Make the requested outcome.",
+                "symbol": sf_symbol("create"),
             },
             {
                 "entry_id": "match",
                 "interface_type": "command",
                 "component_id": "match",
                 "outcome": "Match an active Project to reality.",
+                "symbol": sf_symbol("match"),
             },
             {
                 "entry_id": "version",
                 "interface_type": "command",
                 "component_id": "version",
                 "outcome": "Apply, record, activate, and publish a permitted version.",
+                "symbol": sf_symbol("version"),
             },
         ],
         "dot_groups": [
@@ -145,6 +171,65 @@ def test_user_surface_is_many_to_many_and_exhaustive() -> None:
         "reused_dot_count": 1,
         "workflow_count": 2,
     }
+    assert next(
+        item["symbol"]["name"]
+        for item in validated["entries"]
+        if item["entry_id"] == "match"
+    ) == "slider.horizontal.2.square"
+
+
+def test_user_surface_rejects_the_old_match_equal_symbol() -> None:
+    changed = deepcopy(surface())
+    next(item for item in changed["entries"] if item["entry_id"] == "match")["symbol"][
+        "name"
+    ] = "equal.square.fill"
+
+    with pytest.raises(UserSurfaceError, match="SF Symbol drifted: match"):
+        validate_user_surface(changed, registry())
+
+
+def test_user_surface_rejects_duplicate_symbols() -> None:
+    changed = deepcopy(surface())
+    next(item for item in changed["entries"] if item["entry_id"] == "automate")["symbol"] = (
+        sf_symbol("create")
+    )
+
+    with pytest.raises(UserSurfaceError, match="distinct SF Symbol"):
+        validate_user_surface(changed, registry())
+
+
+def test_user_surface_rejects_a_symbol_from_the_wrong_interface_class() -> None:
+    changed = deepcopy(surface())
+    next(item for item in changed["entries"] if item["entry_id"] == "automate")["symbol"][
+        "name"
+    ] = "equal.square.fill"
+
+    with pytest.raises(UserSurfaceError, match="SF Symbol drifted: automate"):
+        validate_user_surface(changed, registry())
+
+
+def test_user_surface_requires_a_symbol_for_every_entry() -> None:
+    changed = deepcopy(surface())
+    changed["entries"][0].pop("symbol")
+
+    with pytest.raises(UserSurfaceError, match="'symbol' is a required property"):
+        validate_user_surface(changed, registry())
+
+
+def test_user_surface_requires_symbol_selection_evidence() -> None:
+    changed = deepcopy(surface())
+    changed["entries"][0]["symbol"].pop("selection")
+
+    with pytest.raises(UserSurfaceError, match="'selection' is a required property"):
+        validate_user_surface(changed, registry())
+
+
+def test_user_surface_rejects_an_unreasoned_symbol_selection() -> None:
+    changed = deepcopy(surface())
+    changed["entries"][0]["symbol"]["selection"]["rationale"] = "Looks good."
+
+    with pytest.raises(UserSurfaceError, match="is too short"):
+        validate_user_surface(changed, registry())
 
 
 def test_user_surface_rejects_an_unclassified_active_skill() -> None:

@@ -1,0 +1,423 @@
+{
+  "palettes" : {
+    "action" : {
+      "foreground_color" : "#FFFFFF",
+      "outer_color" : "#0A84FF"
+    },
+    "command" : {
+      "foreground_color" : "#FFFFFF",
+      "outer_color" : "#BF5AF2"
+    },
+    "command-outline" : {
+      "foreground_color" : "#BF5AF2",
+      "outer_color" : "#BF5AF2"
+    }
+  },
+  "record_type" : "user-surface-symbol-manifest",
+  "record_version" : 1,
+  "sf_symbols_app_version" : "7.0",
+  "summary" : {
+    "action_count" : 6,
+    "command_count" : 4,
+    "entry_count" : 10
+  },
+  "symbol_system" : "sf-symbols",
+  "symbols" : [
+    {
+      "assets" : {
+        "large" : {
+          "openai_path" : ".\/assets\/assess-large.png",
+          "path" : "capabilities\/skills\/assess\/assets\/assess-large.png",
+          "pixels" : 800,
+          "sha256" : "c0a9f353031f82f19bf68dc8be2ad82fc3b7630ad82af590f6b3eba97c1dbbe3"
+        },
+        "small" : {
+          "openai_path" : ".\/assets\/assess-small.png",
+          "path" : "capabilities\/skills\/assess\/assets\/assess-small.png",
+          "pixels" : 400,
+          "sha256" : "e2fd6ec874ea06693ebc6394f7fe424c6e08c422bd9002106940c339b8ea2644"
+        }
+      },
+      "container_shape" : "square",
+      "entry_id" : "assess",
+      "foreground_color" : "#FFFFFF",
+      "interface_type" : "command",
+      "name" : "arrow.left.arrow.right.square.fill",
+      "outer_color" : "#BF5AF2",
+      "palette" : "command",
+      "rendering" : "palette",
+      "selection" : {
+        "alternatives_considered" : [
+          "scale.3d",
+          "arrow.left.and.right.square.fill"
+        ],
+        "rationale" : "Two opposing arrows show the independent Case For and Case Against required before synthesis.",
+        "search_terms" : [
+          "assess",
+          "balance",
+          "two-sided",
+          "arrow"
+        ]
+      },
+      "sf_symbols_introduced" : "2020"
+    },
+    {
+      "assets" : {
+        "large" : {
+          "openai_path" : ".\/assets\/automate-large.png",
+          "path" : "capabilities\/skills\/automate\/assets\/automate-large.png",
+          "pixels" : 800,
+          "sha256" : "bc09b7507df31a981d9130bb4bdcbafc2a15034316a6917f2023a6ecf2534bcf"
+        },
+        "small" : {
+          "openai_path" : ".\/assets\/automate-small.png",
+          "path" : "capabilities\/skills\/automate\/assets\/automate-small.png",
+          "pixels" : 400,
+          "sha256" : "e6fd21d87412f1ef26f25a1c657b022509519566c7e02751c1974b9b10c5b5b8"
+        }
+      },
+      "container_shape" : "circle",
+      "entry_id" : "automate",
+      "foreground_color" : "#FFFFFF",
+      "interface_type" : "action",
+      "name" : "repeat.circle.fill",
+      "outer_color" : "#0A84FF",
+      "palette" : "action",
+      "rendering" : "palette",
+      "selection" : {
+        "alternatives_considered" : [
+          "clock.circle",
+          "arrow.trianglehead.2.clockwise.rotate.90.circle"
+        ],
+        "rationale" : "A repeat loop represents recurring, scheduled, or triggered work becoming one reliable workflow.",
+        "search_terms" : [
+          "automate",
+          "repeat",
+          "clock"
+        ]
+      },
+      "sf_symbols_introduced" : "2020.1"
+    },
+    {
+      "assets" : {
+        "large" : {
+          "openai_path" : ".\/assets\/complete-large.png",
+          "path" : "capabilities\/skills\/complete\/assets\/complete-large.png",
+          "pixels" : 800,
+          "sha256" : "29197fa996ebc041ab04abc107cf2737c212e4b677ff1e6cc53a634382ea3b8a"
+        },
+        "small" : {
+          "openai_path" : ".\/assets\/complete-small.png",
+          "path" : "capabilities\/skills\/complete\/assets\/complete-small.png",
+          "pixels" : 400,
+          "sha256" : "f3b50b34edfd555fad36fb5196083dfb4bf4f45ea35beed0bfd9e230a8ca25b1"
+        }
+      },
+      "container_shape" : "square",
+      "entry_id" : "complete",
+      "foreground_color" : "#FFFFFF",
+      "interface_type" : "command",
+      "name" : "checkmark.square.fill",
+      "outer_color" : "#BF5AF2",
+      "palette" : "command",
+      "rendering" : "palette",
+      "selection" : {
+        "alternatives_considered" : [
+          "checkmark.seal",
+          "inset.filled.circle"
+        ],
+        "rationale" : "A checkmark communicates completion of the full review without adding another lifecycle metaphor.",
+        "search_terms" : [
+          "complete",
+          "checkmark"
+        ]
+      },
+      "sf_symbols_introduced" : "2019"
+    },
+    {
+      "assets" : {
+        "large" : {
+          "openai_path" : ".\/assets\/create-large.png",
+          "path" : "capabilities\/skills\/create\/assets\/create-large.png",
+          "pixels" : 800,
+          "sha256" : "a3d234cddfc72f31c3fa0e7715ec59222d01ad736e0192eabd94ed688d03b0cb"
+        },
+        "small" : {
+          "openai_path" : ".\/assets\/create-small.png",
+          "path" : "capabilities\/skills\/create\/assets\/create-small.png",
+          "pixels" : 400,
+          "sha256" : "8de5b61ad9e2a385288813b031fcd79abdd295c52e6a02bc81e86ca66747670d"
+        }
+      },
+      "container_shape" : "circle",
+      "entry_id" : "create",
+      "foreground_color" : "#FFFFFF",
+      "interface_type" : "action",
+      "name" : "plus.circle.fill",
+      "outer_color" : "#0A84FF",
+      "palette" : "action",
+      "rendering" : "palette",
+      "selection" : {
+        "alternatives_considered" : [
+          "plus.diamond.fill",
+          "document.badge.plus"
+        ],
+        "rationale" : "A plus sign is the smallest object-neutral expression of bringing a new outcome into existence.",
+        "search_terms" : [
+          "create",
+          "plus",
+          "new"
+        ]
+      },
+      "sf_symbols_introduced" : "2019"
+    },
+    {
+      "assets" : {
+        "large" : {
+          "openai_path" : ".\/assets\/edit-large.png",
+          "path" : "capabilities\/skills\/edit\/assets\/edit-large.png",
+          "pixels" : 800,
+          "sha256" : "83d63bb7287d7ba42b99f57bae18d47a700afb83ba51e81e9088a1e81fe6be2e"
+        },
+        "small" : {
+          "openai_path" : ".\/assets\/edit-small.png",
+          "path" : "capabilities\/skills\/edit\/assets\/edit-small.png",
+          "pixels" : 400,
+          "sha256" : "58dc7752224d918dda4e40756fd0ddde3cb69e65eccc2fca222aabc8dfc05853"
+        }
+      },
+      "container_shape" : "circle",
+      "entry_id" : "edit",
+      "foreground_color" : "#FFFFFF",
+      "interface_type" : "action",
+      "name" : "pencil.circle.fill",
+      "outer_color" : "#0A84FF",
+      "palette" : "action",
+      "rendering" : "palette",
+      "selection" : {
+        "alternatives_considered" : [
+          "square.and.pencil.circle.fill",
+          "slider.horizontal.2.square"
+        ],
+        "rationale" : "A pencil represents changing an existing object while leaving adjustment sliders available for Match.",
+        "search_terms" : [
+          "edit",
+          "pencil",
+          "adjust"
+        ]
+      },
+      "sf_symbols_introduced" : "2019"
+    },
+    {
+      "assets" : {
+        "large" : {
+          "openai_path" : ".\/assets\/match-large.png",
+          "path" : "capabilities\/skills\/match\/assets\/match-large.png",
+          "pixels" : 800,
+          "sha256" : "2e4d95f199adfcf324a3ee3b799f115a80261ff1741a421ca83d8a7597e7fc4c"
+        },
+        "small" : {
+          "openai_path" : ".\/assets\/match-small.png",
+          "path" : "capabilities\/skills\/match\/assets\/match-small.png",
+          "pixels" : 400,
+          "sha256" : "bd7ceef2c9d10b249abd97fa766b3e98daf8d115f07e439bd472421fb91b68a2"
+        }
+      },
+      "container_shape" : "square",
+      "entry_id" : "match",
+      "foreground_color" : "#BF5AF2",
+      "interface_type" : "command",
+      "name" : "slider.horizontal.2.square",
+      "outer_color" : "#BF5AF2",
+      "palette" : "command-outline",
+      "rendering" : "palette",
+      "selection" : {
+        "alternatives_considered" : [
+          "equal.square.fill",
+          "perspective",
+          "scope",
+          "align.horizontal.center.fill"
+        ],
+        "rationale" : "Two sliders show Project Plan dimensions being adjusted to current reality instead of falsely implying they already match.",
+        "search_terms" : [
+          "match",
+          "align",
+          "adjust",
+          "slider",
+          "perspective",
+          "reality"
+        ]
+      },
+      "sf_symbols_introduced" : "2023"
+    },
+    {
+      "assets" : {
+        "large" : {
+          "openai_path" : ".\/assets\/publish-large.png",
+          "path" : "capabilities\/skills\/publish\/assets\/publish-large.png",
+          "pixels" : 800,
+          "sha256" : "cef2c347cd88ab0f1d890be65e8a5557191baeee329a874966f9d5e747f27674"
+        },
+        "small" : {
+          "openai_path" : ".\/assets\/publish-small.png",
+          "path" : "capabilities\/skills\/publish\/assets\/publish-small.png",
+          "pixels" : 400,
+          "sha256" : "785cf0483d1a17b63451ec05ff4832ef90a53c1cc2f080634ba5de5124115493"
+        }
+      },
+      "container_shape" : "circle",
+      "entry_id" : "publish",
+      "foreground_color" : "#FFFFFF",
+      "interface_type" : "action",
+      "name" : "paperplane.circle.fill",
+      "outer_color" : "#0A84FF",
+      "palette" : "action",
+      "rendering" : "palette",
+      "selection" : {
+        "alternatives_considered" : [
+          "square.and.arrow.up.circle",
+          "paperplane.circle"
+        ],
+        "rationale" : "A paper plane expresses outward delivery across sending, releasing, deploying, and publishing.",
+        "search_terms" : [
+          "publish",
+          "send",
+          "paperplane"
+        ]
+      },
+      "sf_symbols_introduced" : "2020"
+    },
+    {
+      "assets" : {
+        "large" : {
+          "openai_path" : ".\/assets\/research-large.png",
+          "path" : "capabilities\/skills\/research\/assets\/research-large.png",
+          "pixels" : 800,
+          "sha256" : "636daec99863c0ebe3067aeee6fe2f96b927c94302f8cce776fc26d4fd1a03db"
+        },
+        "small" : {
+          "openai_path" : ".\/assets\/research-small.png",
+          "path" : "capabilities\/skills\/research\/assets\/research-small.png",
+          "pixels" : 400,
+          "sha256" : "faf2b70ef760d404efbfcd1938daf58503967a0b4e0d6fcf628813b93d8f584b"
+        }
+      },
+      "container_shape" : "circle",
+      "entry_id" : "research",
+      "foreground_color" : "#FFFFFF",
+      "interface_type" : "action",
+      "name" : "magnifyingglass.circle.fill",
+      "outer_color" : "#0A84FF",
+      "palette" : "action",
+      "rendering" : "palette",
+      "selection" : {
+        "alternatives_considered" : [
+          "doc.text.magnifyingglass",
+          "sparkle.magnifyingglass"
+        ],
+        "rationale" : "A magnifying glass communicates finding and verifying evidence without assuming a document source.",
+        "search_terms" : [
+          "research",
+          "search",
+          "magnifyingglass"
+        ]
+      },
+      "sf_symbols_introduced" : "2019"
+    },
+    {
+      "assets" : {
+        "large" : {
+          "openai_path" : ".\/assets\/review-large.png",
+          "path" : "capabilities\/skills\/review\/assets\/review-large.png",
+          "pixels" : 800,
+          "sha256" : "6f04e48bd42e238a9d84310674b22d9a7b61886d9900d71e9456c0069e3a7cb9"
+        },
+        "small" : {
+          "openai_path" : ".\/assets\/review-small.png",
+          "path" : "capabilities\/skills\/review\/assets\/review-small.png",
+          "pixels" : 400,
+          "sha256" : "050a3a4f6085309fafed8a57637375bea1fa4a157de4b945daa91800bbd4fb9c"
+        }
+      },
+      "container_shape" : "circle",
+      "entry_id" : "review",
+      "foreground_color" : "#FFFFFF",
+      "interface_type" : "action",
+      "name" : "eye.circle.fill",
+      "outer_color" : "#0A84FF",
+      "palette" : "action",
+      "rendering" : "palette",
+      "selection" : {
+        "alternatives_considered" : [
+          "checkmark.circle.fill",
+          "scope",
+          "viewfinder.circle.fill"
+        ],
+        "rationale" : "An eye communicates inspection without claiming that the reviewed object is approved or complete.",
+        "search_terms" : [
+          "review",
+          "inspect",
+          "eye",
+          "checkmark"
+        ]
+      },
+      "sf_symbols_introduced" : "2020"
+    },
+    {
+      "assets" : {
+        "large" : {
+          "openai_path" : ".\/assets\/version-large.png",
+          "path" : "capabilities\/skills\/version\/assets\/version-large.png",
+          "pixels" : 800,
+          "sha256" : "9d4b96d96e129dc8ce2096489b1c90f7078ebfda6d1450efb46f01b96f11ed32"
+        },
+        "small" : {
+          "openai_path" : ".\/assets\/version-small.png",
+          "path" : "capabilities\/skills\/version\/assets\/version-small.png",
+          "pixels" : 400,
+          "sha256" : "ce970465bbf9353287dc57484bbbf45a94c048bbbb7c9ed601c7a48f823eb69c"
+        }
+      },
+      "container_shape" : "square",
+      "entry_id" : "version",
+      "foreground_color" : "#FFFFFF",
+      "interface_type" : "command",
+      "name" : "arrow.clockwise.square.fill",
+      "outer_color" : "#BF5AF2",
+      "palette" : "command",
+      "rendering" : "palette",
+      "selection" : {
+        "alternatives_considered" : [
+          "arrow.trianglehead.branch",
+          "square.stack.3d.up",
+          "v.square"
+        ],
+        "rationale" : "Clockwise lifecycle movement represents applying a new exact System Version batch.",
+        "search_terms" : [
+          "version",
+          "branch",
+          "refresh",
+          "clockwise"
+        ]
+      },
+      "sf_symbols_introduced" : "2023"
+    }
+  ],
+  "verification_contract" : {
+    "codex_discovery_order" : [
+      "plugin\/installed",
+      "skills\/list:forceReload"
+    ],
+    "live_ui_required_after_install" : true,
+    "required_appearances" : [
+      "light",
+      "dark"
+    ],
+    "required_sizes_px" : [
+      16,
+      20,
+      24,
+      32
+    ]
+  }
+}

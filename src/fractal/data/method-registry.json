@@ -279,16 +279,13 @@
       ]
     }
   ],
-  "methodologies": [
+  "flows": [
     {
-      "blueprint_genre": "steps",
-      "blueprint_marker": "$",
-      "blueprint_tags": [],
       "decision_status": "architecture-baseline",
-      "human_name": "Step 1: Find Problems",
+      "human_name": "Find Problems",
       "id": "find-problems",
       "intent": "Collect the broad Project evidence before narrowing or explaining it.",
-      "methodology_kind": "blueprint-step",
+      "flow_kind": "system-review-flow",
       "operational_mapping": [
         "project-assessment",
         "positive-delta",
@@ -299,14 +296,11 @@
       "sequence": 1
     },
     {
-      "blueprint_genre": "steps",
-      "blueprint_marker": "$",
-      "blueprint_tags": [],
       "decision_status": "architecture-baseline",
-      "human_name": "Step 2: Find Local Patterns",
+      "human_name": "Find Local Patterns",
       "id": "find-local-patterns",
       "intent": "Identify meaningful local recurrence without confusing surface similarity with cause.",
-      "methodology_kind": "blueprint-step",
+      "flow_kind": "system-review-flow",
       "operational_mapping": [
         "project-patterns",
         "causal-interpretation",
@@ -315,14 +309,11 @@
       "sequence": 2
     },
     {
-      "blueprint_genre": "steps",
-      "blueprint_marker": "$",
-      "blueprint_tags": [],
       "decision_status": "architecture-baseline",
-      "human_name": "Step 3: Find Global Patterns",
+      "human_name": "Find Global Patterns",
       "id": "find-global-patterns",
       "intent": "Compare patterns across the relevant Project and improvement history before treating them as isolated.",
-      "methodology_kind": "blueprint-step",
+      "flow_kind": "system-review-flow",
       "operational_mapping": [
         "cross-project-patterns",
         "reversal-check",
@@ -331,14 +322,11 @@
       "sequence": 3
     },
     {
-      "blueprint_genre": "steps",
-      "blueprint_marker": "$",
-      "blueprint_tags": [],
       "decision_status": "architecture-baseline",
-      "human_name": "Step 4: Find the Reasons for Every Global Pattern",
+      "human_name": "Find the Reasons for Every Global Pattern",
       "id": "find-global-pattern-reasons",
       "intent": "Make the causal reasoning for every Global Pattern explicit, including uncertainty and counterevidence.",
-      "methodology_kind": "blueprint-step",
+      "flow_kind": "system-review-flow",
       "operational_mapping": [
         "cause-research",
         "reconciliation",
@@ -347,14 +335,11 @@
       "sequence": 4
     },
     {
-      "blueprint_genre": "steps",
-      "blueprint_marker": "$",
-      "blueprint_tags": [],
       "decision_status": "architecture-baseline",
-      "human_name": "Step 5: Find Solutions for Every Global Pattern",
+      "human_name": "Find Solutions for Every Global Pattern",
       "id": "find-global-pattern-solutions",
       "intent": "Search for possible responses to every Global Pattern without allowing one preferred implementation to end the search.",
-      "methodology_kind": "blueprint-step",
+      "flow_kind": "system-review-flow",
       "operational_mapping": [
         "curiosity",
         "improvement-options",
@@ -363,14 +348,11 @@
       "sequence": 5
     },
     {
-      "blueprint_genre": "steps",
-      "blueprint_marker": "$",
-      "blueprint_tags": [],
       "decision_status": "architecture-baseline",
-      "human_name": "Step 6: Map New Implementations into the Blueprint",
+      "human_name": "Map New Implementations into the Blueprint",
       "id": "map-implementations-to-blueprint",
       "intent": "Classify every Candidate implementation by its true Blueprint role and apply the rules of its Genre before debate.",
-      "methodology_kind": "blueprint-step",
+      "flow_kind": "system-review-flow",
       "operational_mapping": [
         "blueprint-mapping",
         "addition-priority",
@@ -379,14 +361,11 @@
       "sequence": 6
     },
     {
-      "blueprint_genre": "steps",
-      "blueprint_marker": "$",
-      "blueprint_tags": [],
       "decision_status": "architecture-baseline",
-      "human_name": "Step 7: Debate the Solutions for Every Global Pattern",
+      "human_name": "Debate the Solutions for Every Global Pattern",
       "id": "debate-global-pattern-solutions",
       "intent": "Challenge the mapped solutions for every Global Pattern before Carson is asked to decide.",
-      "methodology_kind": "blueprint-step",
+      "flow_kind": "system-review-flow",
       "operational_mapping": [
         "two-sided-review",
         "case-for",
@@ -396,14 +375,11 @@
       "sequence": 7
     },
     {
-      "blueprint_genre": "steps",
-      "blueprint_marker": "$",
-      "blueprint_tags": [],
       "decision_status": "architecture-baseline",
-      "human_name": "Step 8: Present Decisions One-by-One",
+      "human_name": "Present Decisions One-by-One",
       "id": "present-decisions-one-by-one",
       "intent": "Present one fully prepared human-scale decision at a time without hiding the remaining decision set.",
-      "methodology_kind": "blueprint-step",
+      "flow_kind": "system-review-flow",
       "operational_mapping": [
         "human-control",
         "plain-handoff",
@@ -411,7 +387,9 @@
         "your-decision"
       ],
       "sequence": 8
-    },
+    }
+  ],
+  "methodologies": [
     {
       "blueprint_genre": "values",
       "blueprint_marker": "$",

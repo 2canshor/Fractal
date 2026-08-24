@@ -1,6 +1,8 @@
 interface:
   display_name: "Automate"
   short_description: "Make a repeated job run reliably"
+  icon_small: "./assets/automate-small.png"
+  icon_large: "./assets/automate-large.png"
   default_prompt: "Use $automate to turn this repeated job into a tested, recoverable workflow."
 policy:
   allow_implicit_invocation: true

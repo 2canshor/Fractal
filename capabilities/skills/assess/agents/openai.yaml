@@ -1,6 +1,8 @@
 interface:
   display_name: "Assess"
   short_description: "Challenge an idea from both sides"
+  icon_small: "./assets/assess-small.png"
+  icon_large: "./assets/assess-large.png"
   default_prompt: "Use $assess to decide whether I should continue, change, or stop this idea."
 policy:
   allow_implicit_invocation: true

@@ -9,7 +9,13 @@ from typing import Any
 from fractal.blueprint import load_blueprint
 from fractal.methods import load_agentic_element_map
 
-ASSESSMENTS = {"architecture-only", "partial", "implemented"}
+ASSESSMENTS = {
+    "architecture-only",
+    "partial",
+    "implemented",
+    "verified-staged",
+    "verified-live",
+}
 ALIGNMENTS = {
     "aligned-core-concept",
     "missing-implementation",
@@ -21,14 +27,27 @@ ALIGNMENTS = {
     "needs-role-redesign",
     "needs-step-extraction",
     "needs-workflow-redesign",
+    "aligned-infrastructure-source",
+    "staged-arrow-needs-active-hook-proof",
+    "staged-curiosity-route-needs-acquisition-runner",
+    "staged-donor-route-needs-live-research-adapter",
+    "staged-execution-receipts-not-active",
+    "staged-local-donor-methods-needs-refresh-route",
+    "staged-local-learning-not-active",
+    "staged-orchestration-connection",
+    "staged-orchestrator-needs-live-investigator",
 }
 
 
 def _blueprint_element_ids(blueprint: dict[str, Any]) -> set[str]:
     return {
-        blueprint["core"]["philosophy"]["element_id"],
-        blueprint["core"]["protagonist"]["element_id"],
-        *(element["element_id"] for genre in blueprint["genres"] for element in genre["elements"]),
+        blueprint["element_library"]["core"]["philosophy"]["element_id"],
+        blueprint["element_library"]["core"]["protagonist"]["element_id"],
+        *(
+            element["element_id"]
+            for genre in blueprint["element_library"]["genres"]
+            for element in genre["elements"]
+        ),
     }
 
 
@@ -57,6 +76,24 @@ def validate_blueprint_implementation_map(
             f"Blueprint implementation coverage mismatch: missing={missing}, extra={extra}"
         )
     current_nodes = {item["node_id"] for item in agentic_map["mappings"]}
+    flow_mappings = value.get("flow_mappings")
+    if not isinstance(flow_mappings, list):
+        raise ValueError("Blueprint Flow implementation mappings are missing")
+    expected_flow_ids = [item["flow_id"] for item in blueprint["flows"]["entries"]]
+    if [item.get("flow_id") for item in flow_mappings] != expected_flow_ids:
+        raise ValueError("Blueprint Flow implementation coverage is incomplete or out of order")
+    for mapping in flow_mappings:
+        if mapping.get("implementation_assessment") not in ASSESSMENTS:
+            raise ValueError(f"Invalid Flow assessment: {mapping['flow_id']}")
+        if mapping.get("target_alignment") not in ALIGNMENTS:
+            raise ValueError(f"Invalid Flow alignment: {mapping['flow_id']}")
+        if not str(mapping.get("gap", "")).strip():
+            raise ValueError(f"Flow gap summary is missing: {mapping['flow_id']}")
+        unknown = sorted(set(mapping.get("current_node_ids", [])).difference(current_nodes))
+        if unknown:
+            raise ValueError(
+                f"Unknown retained Flow evidence for {mapping['flow_id']}: {unknown}"
+            )
     for mapping in mappings:
         if mapping.get("implementation_assessment") not in ASSESSMENTS:
             raise ValueError(f"Invalid implementation assessment: {mapping['element_id']}")
@@ -107,7 +144,13 @@ def render_blueprint_implementation_gap(value: dict[str, Any] | None = None) -> 
         assessment: sum(
             item["implementation_assessment"] == assessment for item in audit["mappings"]
         )
-        for assessment in ("architecture-only", "partial", "implemented")
+        for assessment in (
+            "architecture-only",
+            "partial",
+            "implemented",
+            "verified-staged",
+            "verified-live",
+        )
     }
     lines = [
         "# Blueprint Implementation Gap",
@@ -117,6 +160,8 @@ def render_blueprint_implementation_gap(value: dict[str, Any] | None = None) -> 
         f"- Architecture Only: `{counts['architecture-only']}`",
         f"- Partial: `{counts['partial']}`",
         f"- Implemented: `{counts['implemented']}`",
+        f"- Verified Staged: `{counts['verified-staged']}`",
+        f"- Verified Live: `{counts['verified-live']}`",
         "",
         f"> {audit['claim_boundary']}",
         "",

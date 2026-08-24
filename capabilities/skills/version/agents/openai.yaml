@@ -1,6 +1,8 @@
 interface:
   display_name: "Version"
   short_description: "Activate one permitted Fractal version"
+  icon_small: "./assets/version-small.png"
+  icon_large: "./assets/version-large.png"
   default_prompt: "Use $version to apply, verify, record, activate, and publish the exact permitted Fractal change batch."
 policy:
   allow_implicit_invocation: false

@@ -17,12 +17,12 @@ def test_correct_improvement_hierarchy_is_canonical() -> None:
     assert registry["secondary_mechanisms"][0]["blueprint_genre"] == "methods"
 
 
-def test_methodologies_are_exactly_eight_blueprint_steps_and_three_values() -> None:
+def test_flows_are_separate_from_the_three_value_elements() -> None:
     registry = load_method_registry()
+    flows = registry["flows"]
     methodologies = registry["methodologies"]
-    steps = [item for item in methodologies if item["methodology_kind"] == "blueprint-step"]
     values = [item for item in methodologies if item["methodology_kind"] == "three-value"]
-    assert [item["id"] for item in steps] == [
+    assert [item["id"] for item in flows] == [
         "find-problems",
         "find-local-patterns",
         "find-global-patterns",
@@ -32,7 +32,9 @@ def test_methodologies_are_exactly_eight_blueprint_steps_and_three_values() -> N
         "debate-global-pattern-solutions",
         "present-decisions-one-by-one",
     ]
-    assert [item["sequence"] for item in steps] == list(range(1, 9))
+    assert [item["sequence"] for item in flows] == list(range(1, 9))
+    assert all(item["flow_kind"] == "system-review-flow" for item in flows)
+    assert all("blueprint_genre" not in item for item in flows)
     assert [item["id"] for item in values] == ["fatigue", "curiosity", "greed"]
     for value in values:
         assert value["decision_status"] == "intent-established-methodology-partially-defined"
@@ -114,7 +116,7 @@ def test_live_claims_are_separate_from_source_and_projection() -> None:
     assert by_id["system-review"]["status"] == {
         "source": "implemented",
         "projection": "staged",
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
     }
 
 

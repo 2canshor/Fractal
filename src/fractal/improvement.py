@@ -6,13 +6,14 @@ import fcntl
 import json
 import os
 from dataclasses import asdict, dataclass
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Literal
 
-VALUE_STAGE_INPUTS = {
-    "fatigue": ("issue-scan", "improvement-options"),
-    "curiosity": ("cause-research", "improvement-options"),
-    "greed": ("expected-effect", "improvement-options"),
+VALUE_FLOW_INPUTS = {
+    "fatigue": ("find-problems", "find-local-patterns"),
+    "curiosity": ("find-global-pattern-reasons", "find-global-pattern-solutions"),
+    "greed": ("find-problems", "find-global-pattern-solutions"),
 }
 ACTIVE_PROJECT_STATUSES = {"planning", "in_progress", "awaiting_completion", "blocked"}
 
@@ -27,7 +28,7 @@ def route_value_evidence(
     persistent_system_observation: bool = False,
 ) -> dict[str, Any]:
     """Route each Value into the existing review backbone."""
-    if value not in VALUE_STAGE_INPUTS:
+    if value not in VALUE_FLOW_INPUTS:
         raise ValueError(f"Unknown Continuous Improvement Value: {value}")
     if not project_id.strip() or not summary.strip() or not evidence_ids:
         raise ValueError("Value evidence requires Project, summary, and evidence ids")
@@ -50,9 +51,59 @@ def route_value_evidence(
         "system_review_evidence": (
             primary_route == "system-review" or persistent_system_observation
         ),
-        "system_review_stage_inputs": list(VALUE_STAGE_INPUTS[value]),
+        "system_review_flow_inputs": list(VALUE_FLOW_INPUTS[value]),
         "decision_mechanism": primary_route,
         "competing_improvement_loop": False,
+    }
+
+
+def activate_value_behavior(
+    value: Literal["fatigue", "curiosity", "greed"],
+    *,
+    trigger: str,
+    project_id: str,
+    project_status: str,
+    evidence_ids: list[str],
+    original_success_preserved: bool | None = None,
+) -> dict[str, Any]:
+    """Activate one Value only at its Blueprint lifecycle boundary."""
+    expected_trigger = {
+        "fatigue": "verified-repetition",
+        "curiosity": "solution-needed",
+        "greed": "verified-success",
+    }.get(value)
+    if trigger != expected_trigger:
+        raise ValueError(f"{value} cannot activate from trigger {trigger}")
+    if not project_id.strip() or not evidence_ids or len(evidence_ids) != len(set(evidence_ids)):
+        raise ValueError("Value activation requires Project and unique evidence")
+    if value == "fatigue" and project_status not in ACTIVE_PROJECT_STATUSES:
+        raise ValueError("Fatigue activation requires an active Project")
+    if value in {"curiosity", "greed"} and project_status not in {
+        *ACTIVE_PROJECT_STATUSES,
+        "completed",
+    }:
+        raise ValueError(f"{value} activation requires a recognised Project lifecycle state")
+    if value == "greed" and original_success_preserved is not True:
+        raise ValueError("Greed requires a verified original success that remains preserved")
+    next_action = {
+        "fatigue": "open-perspective-and-research",
+        "curiosity": "run-evidence-exploration-and-optional-steal",
+        "greed": "run-outcome-ratchet-and-bounded-experiment",
+    }[value]
+    return {
+        "record_type": "value-behavior-activation",
+        "record_version": 1,
+        "value": value,
+        "trigger": trigger,
+        "project_id": project_id,
+        "project_status": project_status,
+        "evidence_ids": evidence_ids,
+        "flow_inputs": list(VALUE_FLOW_INPUTS[value]),
+        "next_action": next_action,
+        "original_success_preserved": original_success_preserved,
+        "automatic_adoption": False,
+        "automatic_decision": False,
+        "persistent_change": False,
     }
 
 
@@ -640,35 +691,84 @@ def build_performance_baseline(
     }
 
 
+@dataclass(frozen=True, slots=True)
+class GreedMetricRule:
+    """One evidence-backed material improvement rule adapted from MLflow thresholds."""
+
+    dimension: str
+    direction: Literal["minimize", "maximize"]
+    min_absolute_change: float | None = None
+    min_relative_change: float | None = None
+
+    def validate(self) -> None:
+        if not self.dimension.strip():
+            raise ValueError("Greed metric rule requires a dimension")
+        if self.min_absolute_change is not None and self.min_absolute_change <= 0:
+            raise ValueError("Greed absolute change must be positive")
+        if self.min_relative_change is not None and not 0 < self.min_relative_change <= 1:
+            raise ValueError("Greed relative change must be greater than zero and at most one")
+        if self.min_absolute_change is None and self.min_relative_change is None:
+            raise ValueError("Greed metric rule requires a material improvement threshold")
+
+
+def _required_stronger_value(baseline_value: float, rule: GreedMetricRule) -> float:
+    baseline_decimal = Decimal(str(baseline_value))
+    required_changes = []
+    if rule.min_absolute_change is not None:
+        required_changes.append(Decimal(str(rule.min_absolute_change)))
+    if rule.min_relative_change is not None:
+        relative = abs(baseline_decimal) * Decimal(str(rule.min_relative_change))
+        if relative == 0:
+            relative = Decimal("0.0000000001")
+        required_changes.append(relative)
+    material_change = max(required_changes)
+    if rule.direction == "maximize":
+        return float(baseline_decimal + material_change)
+    return float(baseline_decimal - material_change)
+
+
 def challenge_candidate_criteria(
     candidate: dict[str, dict[str, Any]],
     baseline: dict[str, Any],
     *,
+    materiality_rules: list[GreedMetricRule],
     architecture_options: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Propose evidence-supported stronger options without changing approved criteria."""
+    """Propose materially stronger targets without changing approved criteria."""
+    rules = {rule.dimension: rule for rule in materiality_rules}
+    if len(rules) != len(materiality_rules):
+        raise ValueError("Greed materiality rules must have unique dimensions")
+    for rule in materiality_rules:
+        rule.validate()
     options = []
     for dimension, candidate_metric in candidate.items():
         baseline_metric = baseline["metrics"].get(dimension)
-        if baseline_metric is None:
+        rule = rules.get(dimension)
+        if baseline_metric is None or rule is None:
             continue
-        direction = candidate_metric["direction"]
+        direction = rule.direction
+        if candidate_metric["direction"] != direction or baseline_metric["direction"] != direction:
+            raise ValueError(f"Greed metric direction mismatch: {dimension}")
         baseline_value = baseline_metric["value"]
         candidate_value = candidate_metric["threshold"]
-        stronger = (
-            baseline_value < candidate_value
+        suggested_value = _required_stronger_value(baseline_value, rule)
+        original_is_weaker = (
+            candidate_value > suggested_value
             if direction == "minimize"
-            else baseline_value > candidate_value
+            else candidate_value < suggested_value
         )
-        if stronger:
+        if original_is_weaker:
             options.append(
                 {
-                    "kind": "evidence-supported-ambitious-threshold",
+                    "kind": "materially-stronger-evidence-threshold",
                     "dimension": dimension,
                     "original_threshold": candidate_value,
-                    "suggested_threshold": baseline_value,
+                    "verified_baseline": baseline_value,
+                    "suggested_threshold": suggested_value,
                     "direction": direction,
                     "unit": baseline_metric["unit"],
+                    "min_absolute_change": rule.min_absolute_change,
+                    "min_relative_change": rule.min_relative_change,
                     "evidence_project_ids": baseline_metric["provenance_project_ids"],
                 }
             )
@@ -691,6 +791,162 @@ def challenge_candidate_criteria(
             "record-excess-result",
             "create-future-candidate",
         ],
+    }
+
+
+def evaluate_greed_trial(
+    *,
+    baseline: dict[str, Any],
+    candidate_metrics: dict[str, dict[str, Any]],
+    materiality_rules: list[GreedMetricRule],
+    original_success_preserved: bool,
+    representative_trial: bool,
+) -> dict[str, Any]:
+    """Compare one bounded trial with the verified baseline and retain original success."""
+    if not original_success_preserved:
+        raise ValueError("Greed cannot erase or weaken the original successful result")
+    rules = {rule.dimension: rule for rule in materiality_rules}
+    if len(rules) != len(materiality_rules):
+        raise ValueError("Greed materiality rules must have unique dimensions")
+    results = []
+    for dimension, rule in rules.items():
+        rule.validate()
+        baseline_metric = baseline["metrics"].get(dimension)
+        candidate_metric = candidate_metrics.get(dimension)
+        if baseline_metric is None or candidate_metric is None:
+            results.append(
+                {
+                    "dimension": dimension,
+                    "passed": False,
+                    "reason": "missing-baseline-or-candidate",
+                }
+            )
+            continue
+        if (
+            baseline_metric["direction"] != rule.direction
+            or candidate_metric.get("direction") != rule.direction
+        ):
+            raise ValueError(f"Greed metric direction mismatch: {dimension}")
+        if not candidate_metric.get("evidence_ids"):
+            raise ValueError(f"Greed candidate metric requires evidence: {dimension}")
+        required_value = _required_stronger_value(baseline_metric["value"], rule)
+        candidate_value = candidate_metric["value"]
+        passed = (
+            candidate_value >= required_value
+            if rule.direction == "maximize"
+            else candidate_value <= required_value
+        )
+        results.append(
+            {
+                "dimension": dimension,
+                "baseline_value": baseline_metric["value"],
+                "candidate_value": candidate_value,
+                "required_value": required_value,
+                "direction": rule.direction,
+                "passed": passed,
+                "evidence_ids": candidate_metric["evidence_ids"],
+            }
+        )
+    passed = bool(results) and all(result["passed"] for result in results)
+    if not representative_trial:
+        passed = False
+    return {
+        "record_type": "greed-outcome-ratchet",
+        "record_version": 1,
+        "status": "candidate-for-flow-5" if passed else "retain-original-success",
+        "original_success_preserved": True,
+        "representative_trial": representative_trial,
+        "metric_results": results,
+        "automatic_approval": False,
+        "persistent_change": False,
+        "hands_off_to_flow": "find-global-pattern-solutions" if passed else None,
+        "recovery": (
+            "Discard the trial Candidate; the verified baseline and original result remain."
+        ),
+    }
+
+
+def evaluate_global_outcome_trial(
+    *,
+    baseline: dict[str, Any],
+    candidate_metrics: dict[str, dict[str, Any]],
+    materiality_rules: list[GreedMetricRule],
+    protected_dimensions: list[str],
+    local_hypothesis_supported: bool,
+    representative_trial: bool,
+) -> dict[str, Any]:
+    """Reject a local win that regresses protected global dimensions."""
+    rules = {rule.dimension: rule for rule in materiality_rules}
+    if len(rules) != len(materiality_rules):
+        raise ValueError("Global Outcome rules must have unique dimensions")
+    unknown_protected = sorted(set(protected_dimensions).difference(rules))
+    if unknown_protected:
+        raise ValueError(f"Unknown protected Global Outcome dimensions: {unknown_protected}")
+    results = []
+    for dimension, rule in rules.items():
+        rule.validate()
+        baseline_metric = baseline["metrics"].get(dimension)
+        candidate_metric = candidate_metrics.get(dimension)
+        if baseline_metric is None or candidate_metric is None:
+            raise ValueError(f"Global Outcome metric is missing: {dimension}")
+        if (
+            baseline_metric["direction"] != rule.direction
+            or candidate_metric.get("direction") != rule.direction
+        ):
+            raise ValueError(f"Global Outcome metric direction mismatch: {dimension}")
+        if not candidate_metric.get("evidence_ids"):
+            raise ValueError(f"Global Outcome metric requires evidence: {dimension}")
+        baseline_value = Decimal(str(baseline_metric["value"]))
+        candidate_value = Decimal(str(candidate_metric["value"]))
+        signed_change = (
+            candidate_value - baseline_value
+            if rule.direction == "maximize"
+            else baseline_value - candidate_value
+        )
+        required_value = _required_stronger_value(float(baseline_value), rule)
+        material_improvement = (
+            float(candidate_value) >= required_value
+            if rule.direction == "maximize"
+            else float(candidate_value) <= required_value
+        )
+        protected = dimension in protected_dimensions
+        results.append(
+            {
+                "dimension": dimension,
+                "baseline_value": float(baseline_value),
+                "candidate_value": float(candidate_value),
+                "direction": rule.direction,
+                "signed_change": float(signed_change),
+                "protected": protected,
+                "constraint_satisfied": not protected or signed_change >= 0,
+                "material_improvement": material_improvement,
+                "evidence_ids": candidate_metric["evidence_ids"],
+            }
+        )
+    constraints_satisfied = all(result["constraint_satisfied"] for result in results)
+    globally_improved = (
+        representative_trial
+        and constraints_satisfied
+        and any(result["material_improvement"] for result in results)
+    )
+    improvement_status = {
+        (True, True): "genuine-improvement",
+        (True, False): "harmful-local-optimisation",
+        (False, True): "helpful-wrong-causal-model",
+        (False, False): "failed-intervention",
+    }[(local_hypothesis_supported, globally_improved)]
+    return {
+        "record_type": "global-outcome-trial",
+        "record_version": 1,
+        "representative_trial": representative_trial,
+        "metric_results": results,
+        "constraints_satisfied": constraints_satisfied,
+        "global_outcome_improved": globally_improved,
+        "local_hypothesis_supported": local_hypothesis_supported,
+        "improvement_status": improvement_status,
+        "automatic_approval": False,
+        "persistent_change": False,
+        "recovery": "Reject the trial and retain the prior globally verified baseline.",
     }
 
 

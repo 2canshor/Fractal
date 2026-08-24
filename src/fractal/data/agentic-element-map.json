@@ -37,11 +37,11 @@
       "output": "external report, internal report, disagreement record, and reconciled causal assessment",
       "permissions": "Read-only research; source access through governed MCP or Tools; no system mutation.",
       "primary_element": "subagent",
-      "selection_reason": "External Research and Internal Review have separate evidence sources and benefit from context isolation; the Main Agent reconciles them after both initial reports exist.",
+      "selection_reason": "Local Evidence Exploration plans multiple perspectives, requires separate external and internal scopes, retains raw provenance and No Finding, and exposes the frozen artifacts to isolated research branches before the Main Agent reconciles them.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "main-agent",
@@ -113,16 +113,16 @@
     },
     {
       "job": "Challenge the mapped solutions for every Global Pattern before Carson is asked to decide.",
-      "layer": "steps-deuteragonist",
+      "layer": "system-review-flow",
       "node_id": "debate-global-pattern-solutions",
       "output": "Case For, Case Against, Final Assessment, and Biggest Remaining Concern",
       "permissions": "Read evidence only; no edits or decisions by the Subagents.",
       "primary_element": "main-agent",
       "selection_reason": "Fresh isolated contexts reduce anchoring between Case For and Case Against; the Main Agent then reconciles them and a deterministic check proves initial independence.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "main-agent",
@@ -156,11 +156,11 @@
       "output": "registered active set, generated adapter, drift finding, quarantine, or restore route",
       "permissions": "Manage candidate and active projections through declared authority and secrets boundaries.",
       "primary_element": "deterministic-program",
-      "selection_reason": "Registry, hashes, adapter generation, quarantine, drift, and restore are exact system operations. Plugins package coherent capability sets, while MCP connections remain individually governed components.",
+      "selection_reason": "A deterministic intake gate keeps quarantined or rejected donor capabilities out of Steal, requires every staged unit to have a local offline implementation, and preserves an exact recovery route.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "hook",
@@ -176,11 +176,11 @@
       "output": "registered active set, generated adapter, drift finding, quarantine, or restore route",
       "permissions": "Manage candidate and active projections through declared authority and secrets boundaries.",
       "primary_element": "deterministic-program",
-      "selection_reason": "Registry, hashes, adapter generation, quarantine, drift, and restore are exact system operations. Plugins package coherent capability sets, while MCP connections remain individually governed components.",
+      "selection_reason": "A deterministic registry validates exact source and commit, licence, acquisition date, adoption or rejection reason, Element and Flow mapping, context cost, local Fractal name, offline implementation and recovery for every staged donor unit.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "hook",
@@ -196,11 +196,11 @@
       "output": "context load, boundary decision, or Work Signature",
       "permissions": "Run only the registered handler with its declared platform scope.",
       "primary_element": "deterministic-program",
-      "selection_reason": "Hooks are the Guide-recommended element for event-triggered deterministic automation and guardrails.",
+      "selection_reason": "Generated platform adapters project the same registered Fractal jobs and bounded event handlers, while exact manifests, smoke checks and authority tests prevent any environment from owning architecture or canonical state.",
       "status": {
         "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "deterministic-program"
@@ -248,16 +248,16 @@
     },
     {
       "job": "Make the causal reasoning for every Global Pattern explicit, including uncertainty and counterevidence.",
-      "layer": "steps-deuteragonist",
+      "layer": "system-review-flow",
       "node_id": "find-global-pattern-reasons",
       "output": "external report, internal report, disagreement record, and reconciled causal assessment",
       "permissions": "Read-only research; source access through governed MCP or Tools; no system mutation.",
       "primary_element": "main-agent",
       "selection_reason": "External Research and Internal Review have separate evidence sources and benefit from context isolation; the Main Agent reconciles them after both initial reports exist.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "main-agent",
@@ -269,7 +269,7 @@
     },
     {
       "job": "Search for possible responses to every Global Pattern without allowing one preferred implementation to end the search.",
-      "layer": "steps-deuteragonist",
+      "layer": "system-review-flow",
       "mechanism_nodes": {
         "capability-check": "deterministic-program",
         "experiment": "deterministic-program",
@@ -282,7 +282,7 @@
       "primary_element": "main-agent",
       "selection_reason": "Trade-offs need judgement; deterministic capability, overlap, permission, and option-order checks stop the choice from depending on memory or persuasive wording.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
         "source": "implemented"
       },
@@ -290,11 +290,11 @@
         "skill",
         "deterministic-program"
       ],
-      "trigger": "Step 3 produces an understood pattern or evidence gap"
+      "trigger": "Flow 3 produces an understood pattern or evidence gap"
     },
     {
       "job": "Compare patterns across the relevant Project and improvement history before treating them as isolated.",
-      "layer": "steps-deuteragonist",
+      "layer": "system-review-flow",
       "mechanism_nodes": {
         "cause-research": "subagent",
         "component-history": "deterministic-program",
@@ -310,7 +310,7 @@
       "primary_element": "main-agent",
       "selection_reason": "The Main Agent integrates the historical reasoning chain. Independent External Research and Internal Review use isolated Subagents when Cause Research is warranted; MCP supplies governed external evidence; deterministic queries assemble complete history.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
         "source": "implemented"
       },
@@ -320,11 +320,11 @@
         "mcp",
         "deterministic-program"
       ],
-      "trigger": "Step 2 Local Patterns exist"
+      "trigger": "Flow 2 Local Patterns exist"
     },
     {
       "job": "Identify meaningful local recurrence without confusing surface similarity with cause.",
-      "layer": "steps-deuteragonist",
+      "layer": "system-review-flow",
       "mechanism_nodes": {
         "causal-interpretation": "main-agent",
         "observation-cause-separation": "deterministic-program",
@@ -332,11 +332,11 @@
       },
       "node_id": "find-local-patterns",
       "output": "Local Patterns with causal uncertainty",
-      "permissions": "Read Step 1 observations; write patterns; no persistent change.",
+      "permissions": "Read Flow 1 observations; write patterns; no persistent change.",
       "primary_element": "main-agent",
       "selection_reason": "Causal interpretation needs contextual judgement; a deterministic schema keeps symptom, proximate cause, common cause, confidence, and exceptions separate.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
         "source": "implemented"
       },
@@ -344,11 +344,11 @@
         "skill",
         "deterministic-program"
       ],
-      "trigger": "Step 1 observation set is frozen"
+      "trigger": "Flow 1 observation set is frozen"
     },
     {
       "job": "Collect the broad Project evidence before narrowing or explaining it.",
-      "layer": "steps-deuteragonist",
+      "layer": "system-review-flow",
       "mechanism_nodes": {
         "issue-scan": "main-agent",
         "negative-delta": "main-agent",
@@ -361,9 +361,9 @@
       "output": "Project Assessment and high-recall Issue Scan",
       "permissions": "Read completed Project history; write observations; no system mutation.",
       "primary_element": "main-agent",
-      "selection_reason": "Whole-Project observation needs judgement, while a deterministic history manifest and schema prove that the entire record was considered and that Step 2 was not performed early.",
+      "selection_reason": "Whole-Project observation needs judgement, while a deterministic history manifest and schema prove that the entire record was considered and that Flow 2 was not performed early.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
         "source": "implemented"
       },
@@ -380,11 +380,11 @@
       "output": "separate local and global assessment",
       "permissions": "Read outcome evidence and write assessment; no activation.",
       "primary_element": "main-agent",
-      "selection_reason": "The Main Agent judges the Project-wide trade-off; the ledger keeps Local Effect and Global Effect distinct across later Projects.",
+      "selection_reason": "The Main Agent identifies Project priorities, while a local multi-metric gate checks material improvement, direct evidence and protected global dimensions before classifying any local win as genuine.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "deterministic-program",
@@ -399,11 +399,11 @@
       "output": "evidence-backed stronger target, bounded trial, or No Change",
       "permissions": "Read verified baselines; propose a challenge; cannot rewrite approved achievement.",
       "primary_element": "skill",
-      "selection_reason": "The Challenge is a reusable procedure, the Main Agent judges which dimension matters, deterministic comparison preserves the achieved baseline, and governed sources can supply current benchmarks.",
+      "selection_reason": "The Main Agent judges which dimensions matter, while the locally forked outcome-ratchet applies explicit absolute or relative materiality rules, preserves the achieved baseline, fails closed on missing evidence and cannot approve its own result.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "main-agent",
@@ -450,14 +450,14 @@
     },
     {
       "job": "Classify every Candidate implementation by its true Blueprint role and apply the rules of its Genre before debate.",
-      "layer": "steps-deuteragonist",
+      "layer": "system-review-flow",
       "node_id": "map-implementations-to-blueprint",
       "output": "registered active set, generated adapter, drift finding, quarantine, or restore route",
       "permissions": "Manage candidate and active projections through declared authority and secrets boundaries.",
       "primary_element": "deterministic-program",
       "selection_reason": "Registry, hashes, adapter generation, quarantine, drift, and restore are exact system operations. Plugins package coherent capability sets, while MCP connections remain individually governed components.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
         "source": "implemented"
       },
@@ -472,10 +472,10 @@
       "job": "Keep Fractal-controlled identities intelligible and governed in the background.",
       "layer": "infrastructure-extra",
       "node_id": "naming-system",
-      "output": "approved name or recorded external-identifier exemption",
+      "output": "approved name, required user-surface symbol evidence, or recorded external-identifier exemption",
       "permissions": "Read naming context; propose and lint; activation remains governed.",
       "primary_element": "skill",
-      "selection_reason": "Naming needs semantic judgement followed by exact syntax checks; the activation guard enforces the recorded result.",
+      "selection_reason": "Naming needs semantic judgement followed by exact syntax checks. A user-facing Action or Command also requires semantic SF Symbol discovery, real-size rendering evidence and exact platform metadata before the activation guard enforces the recorded result.",
       "status": {
         "execution": "verified-synthetic",
         "projection": "active",
@@ -485,11 +485,11 @@
         "deterministic-program",
         "hook"
       ],
-      "trigger": "new or renamed Skill, Hook, Subagent, MCP, Plugin, Tool, role, registry key, or adapter"
+      "trigger": "new or renamed Skill, Action, Command, Hook, Subagent, MCP, Plugin, Tool, role, registry key, or adapter"
     },
     {
       "job": "Present one fully prepared human-scale decision at a time without hiding the remaining decision set.",
-      "layer": "steps-deuteragonist",
+      "layer": "system-review-flow",
       "node_id": "present-decisions-one-by-one",
       "output": "Human Control View and recovery instructions",
       "permissions": "Read canonical state; write only through approved typed actions.",
@@ -498,7 +498,7 @@
       "status": {
         "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "main-agent"
@@ -519,11 +519,11 @@
       "output": "whole-Project conclusion, concern, and versioned Plan update when justified",
       "permissions": "Read current Project; update Plan within approved authority; Goal and Success Criteria changes go to the primary user.",
       "primary_element": "main-agent",
-      "selection_reason": "The whole Project must stay in one context. A Skill supplies the review procedure, Hooks can open Review Points, deterministic programs preserve snapshots and Plan versions, and a verifier Subagent can independently check evidence when warranted.",
+      "selection_reason": "Compact checkpoints and canonical state keep the whole Project in one review context. Hooks open typed Review Points, deterministic programs require every Project dimension and preserve Plan versions, and independent verification can check evidence without owning the conclusion.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "active",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "skill",
@@ -540,17 +540,17 @@
       "output": "high-recall observation set",
       "permissions": "Read history and write observations only.",
       "primary_element": "skill",
-      "selection_reason": "The Skill tells the Main Agent to maximise recall; a schema checks whole-history coverage and keeps causal fields out of the first-pass observation record.",
+      "selection_reason": "A local perspective-guided exploration plan executes every bounded question, retains duplicates and No Finding before filtering, and a schema keeps causal fields out until the harvest is frozen.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "main-agent",
         "deterministic-program"
       ],
-      "trigger": "System Review Step 1"
+      "trigger": "System Review Flow 1"
     },
     {
       "job": "Support Fractal in distinguishing claimed improvement from observed reality.",
@@ -591,9 +591,9 @@
       "output": "selected component, conflict, quarantine route, or evidence gap",
       "permissions": "Read registry and platform status; write candidate status; no silent adoption.",
       "primary_element": "skill",
-      "selection_reason": "Registry, permissions, status, hashes, overlap decisions, and live reconciliation are structured comparisons; Skills and MCP supply the approved work after selection.",
+      "selection_reason": "A need-led selector returns every viable current source without popularity ranking; immutable local source snapshots verify commit, licence and file hashes, while local Fractal implementations remain independent of both the snapshot and upstream service.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
         "source": "implemented"
       },
@@ -611,16 +611,16 @@
       "output": "ordered, evidence-linked response options",
       "permissions": "Propose only; removal and activation follow normal authority.",
       "primary_element": "skill",
-      "selection_reason": "A reusable decision procedure generates options; a deterministic coverage check proves that reconfigure and modify were considered before add.",
+      "selection_reason": "A deterministic validator requires the complete delete-to-add family in exact order and rejects any later preferred response that bypasses an earlier viable smaller response without evidence.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "deterministic-program"
       ],
-      "trigger": "Step 4 Improvement Options"
+      "trigger": "Flow 5 Solution search"
     },
     {
       "job": "The sole protagonist that turns completed Project evidence into governed improvement of Fractal.",
@@ -629,9 +629,9 @@
       "output": "Change Proposal, Experiment, Need More Evidence, or No Change, followed by Your Decision",
       "permissions": "Read completed Project and System history; write review and candidate records; no self-activation.",
       "primary_element": "main-agent",
-      "selection_reason": "The five steps form one dependent reasoning chain, so the Main Agent keeps the complete causal story. Skills provide the procedure, deterministic programs enforce order and evidence, and isolated Subagents serve independent branches.",
+      "selection_reason": "The eight Flows form one dependent reasoning chain, so one reasoning adapter keeps the causal story while a local investigator gathers canonical evidence, deterministic programs enforce order, persistence and budget, and isolated branches supply independent research where required.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
         "source": "implemented"
       },
@@ -650,11 +650,11 @@
       "output": "Case For, Case Against, Final Assessment, and Biggest Remaining Concern",
       "permissions": "Read evidence only; no edits or decisions by the Subagents.",
       "primary_element": "subagent",
-      "selection_reason": "Fresh isolated contexts reduce anchoring between Case For and Case Against; the Main Agent then reconciles them and a deterministic check proves initial independence.",
+      "selection_reason": "A local runner creates distinct initial contexts for Case For and Case Against, rejects cross-case or unavailable evidence, verifies both branches, and invokes Main Agent synthesis only after both reports exist.",
       "status": {
-        "execution": "verified-synthetic",
+        "execution": "verified-staged",
         "projection": "staged",
-        "source": "partially-implemented"
+        "source": "implemented"
       },
       "supporting_elements": [
         "main-agent",

@@ -19,21 +19,35 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_gap_audit_covers_every_classified_blueprint_element() -> None:
     blueprint = load_blueprint()
     audit = load_blueprint_implementation_map()
+    library = blueprint["element_library"]
     expected = {
-        blueprint["core"]["philosophy"]["element_id"],
-        blueprint["core"]["protagonist"]["element_id"],
-        *(element["element_id"] for genre in blueprint["genres"] for element in genre["elements"]),
+        library["core"]["philosophy"]["element_id"],
+        library["core"]["protagonist"]["element_id"],
+        *(
+            element["element_id"]
+            for genre in library["genres"]
+            for element in genre["elements"]
+        ),
     }
     assert {item["element_id"] for item in audit["mappings"]} == expected
+    assert [item["flow_id"] for item in audit["flow_mappings"]] == [
+        item["flow_id"] for item in blueprint["flows"]["entries"]
+    ]
 
 
-def test_gap_audit_records_mapping_and_steal_as_implemented_sources() -> None:
+def test_gap_audit_separates_protocol_source_from_staged_and_live_execution() -> None:
     audit = load_blueprint_implementation_map()
     by_id = {item["element_id"]: item for item in audit["mappings"]}
-    assert by_id["map-implementations-to-blueprint"]["implementation_assessment"] == ("implemented")
-    assert by_id["steal"]["implementation_assessment"] == "implemented"
+    by_flow = {item["flow_id"]: item for item in audit["flow_mappings"]}
+    assert by_flow["map-implementations-to-blueprint"]["implementation_assessment"] == (
+        "verified-staged"
+    )
+    assert by_id["steal"]["implementation_assessment"] == "verified-staged"
     assert by_id["work-signature"]["implementation_assessment"] == "implemented"
-    assert by_id["reality-check"]["implementation_assessment"] == "partial"
+    assert by_id["reality-check"]["implementation_assessment"] == "verified-staged"
+    assert by_id["fatigue"]["implementation_assessment"] == "verified-staged"
+    assert by_id["curiosity"]["implementation_assessment"] == "verified-staged"
+    assert by_id["system-review"]["implementation_assessment"] == "verified-staged"
 
 
 def test_gap_audit_rejects_unknown_retained_evidence() -> None:

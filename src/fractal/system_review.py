@@ -46,7 +46,7 @@ SYSTEM_REVIEW_STAGES = [
     "your-decision",
 ]
 
-BACKBONE_STEP_BY_STAGE = {
+BACKBONE_FLOW_BY_STAGE = {
     "project-assessment": 1,
     "issue-scan": 1,
     "project-patterns": 2,
@@ -169,6 +169,277 @@ def verify_branch_independence(
     }
 
 
+def run_two_sided_review(
+    *,
+    warrant: dict[str, bool],
+    evidence: list[dict[str, Any]],
+    case_reasoner: Callable[[str, list[dict[str, Any]]], dict[str, Any]],
+    synthesizer: Callable[[dict[str, Any], dict[str, Any]], dict[str, Any]],
+) -> dict[str, Any]:
+    """Run isolated Case For and Case Against before Main Agent synthesis."""
+    if not warrants_two_sided_review(warrant):
+        result = {
+            "status": "not-warranted",
+            "warrant": warrant,
+            "reason": "No consequential Two-Sided Review warrant is present.",
+        }
+        validate_two_sided_result(result)
+        return result
+    evidence_ids = [item.get("evidence_id") for item in evidence]
+    if (
+        not evidence
+        or any(not isinstance(item, str) or not item.strip() for item in evidence_ids)
+        or len(evidence_ids) != len(set(evidence_ids))
+    ):
+        raise SystemReviewError("Two-Sided Review requires unique evidence artifacts")
+    reports = {}
+    branches = []
+    for role in ("case-for", "case-against"):
+        initial_context_sha256 = value_sha256(
+            {"role": role, "evidence_ids": evidence_ids}
+        )
+        report = case_reasoner(role, copy.deepcopy(evidence))
+        used_evidence_ids = report.get("evidence_ids")
+        if (
+            not str(report.get("summary", "")).strip()
+            or not isinstance(used_evidence_ids, list)
+            or not used_evidence_ids
+            or not set(used_evidence_ids).issubset(set(evidence_ids))
+        ):
+            raise SystemReviewError(f"Two-Sided Review branch used unavailable evidence: {role}")
+        artifact_id = f"two-sided:{value_sha256(report)}"
+        reports[role] = {
+            **report,
+            "role": role,
+            "artifact_id": artifact_id,
+            "initial_context_sha256": initial_context_sha256,
+        }
+        branches.append(
+            IndependentBranch(
+                branch_id=f"branch:{role}",
+                role=role,
+                initial_context_sha256=initial_context_sha256,
+                input_artifact_ids=tuple(used_evidence_ids),
+                output_artifact_id=artifact_id,
+                source_ids=tuple(used_evidence_ids),
+                selected_agent_id=str(report.get("reasoner_id", "registered-reasoner")),
+                result_summary=report["summary"],
+            )
+        )
+    independence = verify_branch_independence(
+        branches,
+        required_roles={"case-for", "case-against"},
+    )
+    synthesis = synthesizer(reports["case-for"], reports["case-against"])
+    if (
+        not str(synthesis.get("recommendation", "")).strip()
+        or not str(synthesis.get("biggest_remaining_concern", "")).strip()
+    ):
+        raise SystemReviewError("Two-Sided Review synthesis is incomplete")
+    result = {
+        "status": "completed",
+        "warrant": warrant,
+        "case_for_artifact_id": reports["case-for"]["artifact_id"],
+        "case_against_artifact_id": reports["case-against"]["artifact_id"],
+        "independent_cases_verified": independence["independent"],
+        "synthesised_by": "main-agent",
+        "case_reports": reports,
+        "synthesis": synthesis,
+        "automatic_decision": False,
+    }
+    try:
+        validate_two_sided_result(result)
+    except ReviewContractError as error:
+        raise SystemReviewError(str(error)) from error
+    return result
+
+
+def verified_zero_pattern_reasoner(
+    stage: str,
+    bundle: dict[str, Any],
+) -> tuple[dict[str, Any], list[str]]:
+    """Produce the deterministic No Change path only from a complete zero-pattern receipt."""
+    receipts = [
+        artifact
+        for artifact in bundle.get("artifacts", [])
+        if artifact.get("payload", {}).get("record_type")
+        == "zero-pattern-coverage-receipt"
+    ]
+    if len(receipts) != 1:
+        raise SystemReviewError("Zero-pattern review requires one complete coverage receipt")
+    artifact = receipts[0]
+    receipt = artifact["payload"]
+    if (
+        receipt.get("coverage_complete") is not True
+        or receipt.get("observation_count") != 0
+        or not str(receipt.get("reason", "")).strip()
+        or receipt.get("project_snapshot_sha256")
+        != bundle.get("project_snapshot_sha256")
+    ):
+        raise SystemReviewError(
+            "Zero-pattern coverage receipt is incomplete or for another Project"
+        )
+    evidence_ids = [artifact["evidence_id"]]
+    hypothesis_id = f"hypothesis-no-change:{bundle['project_snapshot_sha256'][:16]}"
+    common_reason = receipt["reason"]
+    values = {
+        "project-assessment": {
+            "comparison_baseline": receipt["comparison_baseline"],
+            "positive_delta": [],
+            "no_positive_delta_reason": common_reason,
+            "negative_delta": [],
+            "no_negative_delta_reason": common_reason,
+        },
+        "issue-scan": {
+            "collection_mode": "quantity-over-quality",
+            "causal_filtering_applied": False,
+            "deduplication_status": "deferred-to-flow-2",
+            "whole_project_history_manifest": {
+                "covered_sections": sorted(ISSUE_SCAN_HISTORY_SECTIONS),
+                "snapshot_sha256": bundle["project_snapshot_sha256"],
+                "source_artifact_ids": evidence_ids,
+            },
+            "observations": [],
+            "coverage_complete": True,
+            "no_observation_reason": common_reason,
+        },
+        "project-patterns": {
+            "status": "no-pattern",
+            "observation_ids_considered": [],
+            "patterns": [],
+            "reason": "No observations exist to group into a Local Pattern.",
+        },
+        "cross-project-patterns": {
+            "history_status": "insufficient",
+            "history_manifest": {
+                key: list(receipt.get("history_manifest", {}).get(key, []))
+                for key in HISTORICAL_RECORD_TYPES
+            },
+            "pattern_types_seen": [],
+            "comparisons": [],
+            "reason": "No Local Pattern exists for cross-history comparison.",
+        },
+        "reversal-check": {
+            "direction_history": [],
+            "reversals": [],
+            "problem_dimension_status": "not-enough-history",
+            "cause_research_warranted": False,
+        },
+        "cause-research": {
+            "status": "not-needed",
+            "reason": "No Global Pattern exists to explain.",
+        },
+        "reconciliation": {
+            "status": "not-needed",
+            "reason": "Cause Research was not needed.",
+        },
+        "improvement-options": {
+            "existing_capability_assessment": {
+                "checked": True,
+                "sufficient": True,
+                "component_ids": [],
+                "evidence_ids": evidence_ids,
+            },
+            "options": [
+                {
+                    "kind": kind,
+                    "status": "viable" if kind == "no-change" else "not-applicable",
+                    "reason": (
+                        "No verified Pattern supports this response."
+                        if kind != "no-change"
+                        else "Complete coverage supports retaining the current system."
+                    ),
+                    "evidence_ids": evidence_ids,
+                }
+                for kind in IMPROVEMENT_OPTION_KINDS
+            ],
+            "preferred_kind": "no-change",
+            "complexity_delta": 0,
+            "curiosity": {
+                "trigger": "solution-needed",
+                "status": "not-needed",
+                "reason": "No solution is needed because no Pattern exists.",
+                "automatic_adoption": False,
+            },
+        },
+        "expected-effect": {
+            "hypothesis_id": hypothesis_id,
+            "problem_summary": "No verified improvement problem was observed.",
+            "causal_hypothesis": "The current evidence does not justify a system change.",
+            "expected_local_effect": "No local behaviour changes.",
+            "expected_global_effect": "System complexity remains stable.",
+            "possible_downside": "A subtle opportunity may remain undiscovered.",
+            "uncertainty": "The conclusion is limited to the completed coverage receipt.",
+            "evaluation_horizon": "the next comparable completed Project",
+        },
+        "local-effect": {
+            "status": "not-applicable",
+            "hypothesis_id": hypothesis_id,
+            "evidence_ids": [],
+            "reason": "No system change is proposed.",
+        },
+        "global-effect": {
+            "status": "not-applicable",
+            "hypothesis_id": hypothesis_id,
+            "evidence_ids": [],
+            "reason": "No system change is proposed.",
+        },
+        "blueprint-mapping": {
+            "status": "no-candidates",
+            "candidate_mappings": [],
+            "unmapped_candidate_ids": [],
+            "reason": "No Pattern or solution created an implementation Candidate.",
+        },
+        "two-sided-review": {
+            "status": "not-warranted",
+            "reason": "No consequential Candidate exists.",
+            "warrant": {
+                "high_impact": False,
+                "hard_to_restore": False,
+                "cross_project": False,
+                "cross_platform": False,
+                "authority_change": False,
+                "evidence_conflict": False,
+                "direction_reversal": False,
+                "primary_user_requested": False,
+            },
+        },
+        "final-assessment": {
+            "recommendation": "no-change",
+            "confidence": "bounded",
+            "synthesised_by": "main-agent",
+            "before_after_compared": True,
+            "history_checked": True,
+            "improvement_status": "not-applicable",
+        },
+        "biggest-remaining-concern": {
+            "summary": "A later Project may reveal evidence absent from this complete snapshot."
+        },
+        "result": {
+            "outcome": "no-change",
+            "reason": common_reason,
+            "response_units": [],
+            "zero_pattern_coverage_receipt": {
+                "coverage_complete": True,
+                "observation_count": 0,
+                "pattern_status": "no-pattern",
+                "reason": common_reason,
+            },
+            "unmapped_pattern_ids": [],
+            "plain_handoff": {
+                "problem": "No material improvement problem was observed.",
+                "solution": "Keep the current system unchanged.",
+                "decision": "Carson decides whether to accept No Change.",
+            },
+            "newcomer_shadow_handoff_number": 1,
+        },
+    }
+    result = values.get(stage)
+    if result is None:
+        raise SystemReviewError(f"Zero-pattern reasoner cannot execute stage: {stage}")
+    return result, evidence_ids
+
+
 def warrants_two_sided_review(warrant: dict[str, bool]) -> bool:
     """Use independent debate only for an approved consequential trigger."""
     fields = {
@@ -202,8 +473,8 @@ def start_system_review(project: ProjectRecord) -> dict[str, Any]:
         "status": "in_progress",
         "backbone": {
             "protagonist": "system-review",
-            "workflow": "new-blueprint-eight-steps",
-            "required_steps": [
+            "workflow": "new-blueprint-eight-flows",
+            "required_flows": [
                 "find-problems",
                 "find-local-patterns",
                 "find-global-patterns",
@@ -245,7 +516,7 @@ def record_system_review_stage(
         raise AuthorityError("Your Decision requires the primary user")
     stage_record = {
         "stage": stage,
-        "blueprint_step": BACKBONE_STEP_BY_STAGE[stage],
+        "blueprint_flow": BACKBONE_FLOW_BY_STAGE[stage],
         "result": copy.deepcopy(result),
         "evidence_ids": list(evidence_ids),
         "recorded_at": utc_now(),
@@ -288,8 +559,8 @@ def _validate_system_review_stage(stage: str, result: dict[str, Any]) -> None:
             raise SystemReviewError("Issue Scan requires the Quantity over Quality collection mode")
         if result.get("causal_filtering_applied") is not False:
             raise SystemReviewError("Issue Scan must preserve observations before causal filtering")
-        if result.get("deduplication_status") != "deferred-to-step-2":
-            raise SystemReviewError("Issue Scan must defer deduplication and grouping to Step 2")
+        if result.get("deduplication_status") != "deferred-to-flow-2":
+            raise SystemReviewError("Issue Scan must defer deduplication and grouping to Flow 2")
         _validate_whole_project_history_manifest(result.get("whole_project_history_manifest"))
         observations = result.get("observations")
         if not isinstance(observations, list):
@@ -498,7 +769,7 @@ def _validate_raw_observation(observation: Any) -> None:
     }
     found = sorted(premature_fields.intersection(observation))
     if found:
-        raise SystemReviewError(f"Issue Scan performed Step 2 or Step 4 work too early: {found}")
+        raise SystemReviewError(f"Issue Scan performed Flow 2 or Flow 4 work too early: {found}")
 
 
 def _validate_project_patterns(result: dict[str, Any]) -> None:
@@ -620,6 +891,18 @@ def _validate_improvement_options(result: dict[str, Any]) -> None:
         raise SystemReviewError("Improvement Options requires a preferred response kind")
     if result["preferred_kind"] not in set(IMPROVEMENT_OPTION_KINDS):
         raise SystemReviewError("Preferred response is not a recognised option kind")
+    preferred_index = IMPROVEMENT_OPTION_KINDS.index(result["preferred_kind"])
+    preferred_option = options[preferred_index]
+    if preferred_option["status"] != "viable":
+        raise SystemReviewError("Preferred response must be a viable Improvement Option")
+    for earlier in options[:preferred_index]:
+        if earlier["status"] == "viable" and not str(
+            earlier.get("not_selected_reason", "")
+        ).strip():
+            raise SystemReviewError(
+                "Selecting a later option requires evidence for bypassing every earlier viable "
+                "Subtraction First response"
+            )
     if not isinstance(result.get("complexity_delta"), int):
         raise SystemReviewError("Improvement Options requires a complexity delta")
     _validate_solution_curiosity(

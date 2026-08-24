@@ -1,6 +1,6 @@
 # Continuous Improvement
 
-Continuous Improvement is Fractal's Core Philosophy. System Review is its sole Protagonist and follows the eight Steps in the [Blueprint](blueprint.md).
+Continuous Improvement is Fractal's Core Philosophy. System Review is its sole Protagonist and follows the eight Flows in the [Blueprint](blueprint.md).
 
 ## Values
 
@@ -10,7 +10,7 @@ Fatigue, Curiosity, and Greed are `$` Deuteragonists in the Values Genre and car
 - **Curiosity** explores a better current method, dated same-field findings, and a structurally related field.
 - **Greed** starts after genuine success and tests whether a materially stronger global outcome is possible.
 
-Values contribute evidence; they do not own Steps or persistent authority.
+Values contribute evidence to Flows; they do not own the Flow or persistent authority.
 
 ## Principles
 

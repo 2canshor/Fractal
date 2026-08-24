@@ -1,6 +1,8 @@
 interface:
   display_name: "Complete"
   short_description: "Prepare the complete System Review"
-  default_prompt: "Use $complete to finish the eight-step New Blueprint System Review before presenting decisions one-by-one."
+  icon_small: "./assets/complete-small.png"
+  icon_large: "./assets/complete-large.png"
+  default_prompt: "Use $complete to finish the eight-Flow New Blueprint System Review before presenting decisions one-by-one."
 policy:
   allow_implicit_invocation: true

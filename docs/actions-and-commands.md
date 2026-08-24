@@ -26,7 +26,7 @@ The object stays in the request. For example, `review this document`, `create an
 A Command controls Fractal itself. There are four:
 
 - `assess`: run Two-Sided Review on one consequential idea;
-- `complete`: finish all eight New Blueprint System Review Steps after Project Completion;
+- `complete`: finish all eight New Blueprint System Review Flows after Project Completion;
 - `match`: run Perspective for an active formal Project;
 - `version`: apply, verify, record, activate, and publish one exact permitted System Version batch.
 
@@ -42,6 +42,14 @@ Before a route is used, the Action distinguishes four real situations: an exact 
 
 Every active Skill must be classified as either one visible Action or Command, or one hidden reusable dot connected to at least one workflow. A new unclassified Skill fails the candidate build. This default-hidden gate prevents a new Plugin or provider method from silently becoming a new user-facing job.
 
+## Adding an Action or Command
+
+Admitting a capability to the visible surface triggers the Blueprint-required `Select User-Surface Symbol` sub-step under `^ Naming System`. This is part of defining the user-facing identity, not optional visual polish and not a new Blueprint element.
+
+Before registration, the candidate must record one semantically justified and unique SF Symbol. Actions use circle-contained symbols; Commands use square-contained symbols. The canonical selection record includes the exact identifier, rationale, semantic search terms, and valid alternatives considered. Naming System then requires deterministic small and large assets, light/dark inspection at real Skill-list sizes, manifest and adapter agreement, and staged platform parsing. Missing evidence leaves the capability hidden and the candidate incomplete.
+
+The maintained procedure and current worked evidence are in `capabilities/skills/naming-system/references/user-surface-symbols.md`. Component Governance validates the resulting policy, hashes, assets, projection, and recovery path; it does not replace Naming System's semantic decision.
+
 ## Missing workflow
 
 When no maintained workflow fits, the selected Action uses Curiosity to study the current job, adjacent methods, and a genuinely different route. It may test one bounded provisional workflow for the current job. The missing route is recorded for System Review; it does not silently become part of a persistent System Version.
@@ -50,6 +58,6 @@ When no maintained workflow fits, the selected Action uses Curiosity to study th
 
 Generated internal Fractal methods are stored outside Codex Skill discovery roots. External and platform-owned Skill sources are retained but disabled in the selector through an exact `skills.config` plan. The prior config is recorded before change, source files are not deleted, and Codex must restart before the new selector surface is claimed as active.
 
-Codex does not currently provide a native default-deny rule for future Skill paths. Fractal therefore treats Plugin installation, removal, and update as governed component changes. A new Plugin version or Skill path invalidates the existing surface proof: the registry and disable plan must be rebuilt, and a fresh exact-path App Server audit must show only the ten registered entries before activation can continue. Duplicate old Action names and newly enabled provider paths both fail this audit.
+Codex does not currently provide a native default-deny rule for future Skill paths. Fractal therefore treats Plugin installation, removal, and update as governed component changes. A new Plugin version, Skill path, Action, or Command invalidates the existing surface proof: the registry and disable plan must be rebuilt, and a fresh exact-path App Server audit must show only the entries declared by the current canonical user surface before activation can continue. Duplicate old Action names and newly enabled provider paths both fail this audit.
 
 Building and testing this surface creates only a candidate. Activation and GitHub publication remain part of the explicit `version` Command.

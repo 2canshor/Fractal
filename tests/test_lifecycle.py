@@ -12,7 +12,8 @@ from fractal.lifecycle import (
     validate_plan_resources,
 )
 from fractal.models import Change, ProjectRecord, utc_now
-from fractal.storage import AuthorityError, ProjectStore
+from fractal.orchestrator import FractalOrchestrator
+from fractal.storage import AuthorityError, ProjectStore, value_sha256
 
 
 @pytest.fixture
@@ -229,6 +230,13 @@ def test_happy_path_requires_human_completion(
     assert completed.completion["completed_by"] == "primary-user"
     challenge = completed.lifecycle["success_criteria"]["post_work_challenges"][0]
     assert challenge["original_achievement_preserved"] is True
+    runtime = FractalOrchestrator(store)
+    review = runtime.state.review_for_snapshot(value_sha256(completed.to_dict()))
+    assert review is not None
+    assert review["trigger"] == "project-completion"
+    assert runtime.state.next_ready_action(review_id=review["review_id"])["stage"] == (
+        "project-assessment"
+    )
 
 
 def test_primary_user_can_reopen_awaiting_completion_after_correction(

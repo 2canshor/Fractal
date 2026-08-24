@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+from pathlib import Path
 
 import pytest
 
-from fractal.steal import load_steal_dry_runs, validate_steal_run
+from fractal.steal import (
+    load_steal_dry_runs,
+    select_donors_for_need,
+    stage_local_source_snapshot,
+    validate_steal_run,
+)
 
 
 def steal_run() -> dict:
@@ -56,6 +63,76 @@ def test_steal_requires_verified_licence_for_staged_adaptation() -> None:
 def test_steal_requires_blueprint_mapping_to_match_the_target() -> None:
     run = steal_run()
     run["target"]["blueprint_element_id"] = "fatigue"
-    run["target"]["current_assessment"] = "partial"
+    run["target"]["current_assessment"] = "verified-staged"
     with pytest.raises(ValueError, match="target disagree"):
         validate_steal_run(run)
+
+
+def test_donor_selection_comes_from_current_element_need_not_a_fixed_list() -> None:
+    greed = select_donors_for_need("greed")
+    cause = select_donors_for_need("cause-research")
+    assert {(item["donor_id"], item["capability_id"]) for item in greed} == {
+        ("mlflow", "metric-threshold-baseline-comparison")
+    }
+    assert {(item["donor_id"], item["capability_id"]) for item in cause} == {
+        ("gpt-researcher", "planned-provenance-first-retrieval"),
+        ("hermes-dojo", "dojo-weakness-analysis"),
+    }
+    assert all(item["architecture_authority"] is False for item in [*greed, *cause])
+
+
+def test_selected_source_snapshot_is_local_immutable_and_not_a_runtime_dependency(
+    tmp_path: Path,
+) -> None:
+    licence = b"Test licence evidence"
+    arguments = {
+        "snapshot_root": tmp_path / "snapshots",
+        "donor_id": "source-project",
+        "capability_id": "bounded-method",
+        "source_url": "https://github.com/example/source-project",
+        "commit": "a" * 40,
+        "acquired_at": "2026-08-24",
+        "licence_spdx": "MIT",
+        "licence_text": licence,
+        "expected_licence_sha256": hashlib.sha256(licence).hexdigest(),
+        "source_files": {"method/source.py": b"def source(): return True\n"},
+        "fractal_local_name": "Bounded Method",
+        "implementation_modules": ["fractal.steal"],
+        "target_element_id": "steal",
+    }
+    first = stage_local_source_snapshot(**arguments)
+    second = stage_local_source_snapshot(**arguments)
+    assert first["idempotent"] is False
+    assert second["idempotent"] is True
+    assert first["runtime_dependency_on_upstream"] is False
+    assert first["runtime_dependency_on_snapshot"] is False
+    assert first["active"] is False
+    assert (Path(first["path"]) / "method" / "source.py").is_file()
+
+    changed = {**arguments, "source_files": {"method/source.py": b"changed\n"}}
+    with pytest.raises(ValueError, match="Immutable donor source snapshot"):
+        stage_local_source_snapshot(**changed)
+
+
+def test_source_snapshot_rejects_licence_mismatch_and_path_escape(tmp_path: Path) -> None:
+    base = {
+        "snapshot_root": tmp_path / "snapshots",
+        "donor_id": "source-project",
+        "capability_id": "bounded-method",
+        "source_url": "https://github.com/example/source-project",
+        "commit": "b" * 40,
+        "acquired_at": "2026-08-24",
+        "licence_spdx": "MIT",
+        "licence_text": b"licence",
+        "expected_licence_sha256": "0" * 64,
+        "source_files": {"source.py": b"source"},
+        "fractal_local_name": "Bounded Method",
+        "implementation_modules": ["fractal.steal"],
+        "target_element_id": "steal",
+    }
+    with pytest.raises(ValueError, match="licence digest"):
+        stage_local_source_snapshot(**base)
+
+    safe = {**base, "expected_licence_sha256": hashlib.sha256(b"licence").hexdigest()}
+    with pytest.raises(ValueError, match="Unsafe donor source path"):
+        stage_local_source_snapshot(**{**safe, "source_files": {"../escape": b"source"}})

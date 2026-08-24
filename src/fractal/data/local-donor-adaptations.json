@@ -1,0 +1,169 @@
+{
+  "record_type": "local-donor-adaptation-set",
+  "record_version": 1,
+  "runtime_dependency_on_upstream": false,
+  "donor_set_fixed": false,
+  "select_from_current_element_need": true,
+  "adaptations": [
+    {
+      "capability_id": "post-work-learning-source",
+      "donor_id": "hermes-agent",
+      "local_name": "Post-Work Learning",
+      "implementation_modules": ["fractal.self_improvement"],
+      "evidence_ids": ["post-work-learning-focused-tests"],
+      "recovery": "Disable Post-Work Learning and retain the completed evidence."
+    },
+    {
+      "capability_id": "existing-method-first-escalation",
+      "donor_id": "hermes-agent",
+      "local_name": "Subtraction First Escalation",
+      "implementation_modules": ["fractal.system_review"],
+      "evidence_ids": ["subtraction-first-bypass-focused-tests"],
+      "recovery": "Restore the prior complete option-family order without the bypass gate."
+    },
+    {
+      "capability_id": "method-candidate-ledger-source",
+      "donor_id": "hermes-agent",
+      "local_name": "Method Candidate Ledger",
+      "implementation_modules": ["fractal.self_improvement"],
+      "evidence_ids": ["local-method-candidate-integrity-tests"],
+      "recovery": "Reject staged method candidates; active methods remain unchanged."
+    },
+    {
+      "capability_id": "hermes-bounded-investigation-loop",
+      "donor_id": "hermes-agent",
+      "local_name": "Review Investigation Loop",
+      "implementation_modules": ["fractal.orchestrator"],
+      "evidence_ids": ["canonical-evidence-investigator-focused-tests"],
+      "recovery": "Return to durable one-stage execution and retain review progress."
+    },
+    {
+      "capability_id": "hermes-durable-execution-ledger",
+      "donor_id": "hermes-agent",
+      "local_name": "Execution Ledger",
+      "implementation_modules": ["fractal.orchestrator"],
+      "evidence_ids": ["fractal-orchestrator-focused-tests"],
+      "recovery": "Remove the candidate Orchestrator database; canonical Project state remains."
+    },
+    {
+      "capability_id": "hermes-verification-evidence-ledger",
+      "donor_id": "hermes-agent",
+      "local_name": "Execution Evidence",
+      "implementation_modules": ["fractal.reality"],
+      "evidence_ids": ["reality-check-focused-tests"],
+      "recovery": "Discard candidate receipts and require a fresh verification run."
+    },
+    {
+      "capability_id": "dojo-session-signals",
+      "donor_id": "hermes-dojo",
+      "local_name": "Session Signal Capture",
+      "implementation_modules": ["fractal.donor_signals"],
+      "evidence_ids": ["donor-session-signal-focused-tests"],
+      "recovery": "Remove the signal adapter; no active Hook depends on it."
+    },
+    {
+      "capability_id": "dojo-weakness-analysis",
+      "donor_id": "hermes-dojo",
+      "local_name": "Weakness Triage",
+      "implementation_modules": ["fractal.self_improvement"],
+      "evidence_ids": ["weakness-triage-focused-tests"],
+      "recovery": "Return signals to unclassified review evidence."
+    },
+    {
+      "capability_id": "evey-status-and-cost",
+      "donor_id": "evey-hermes-plugins",
+      "local_name": "Learning Evidence",
+      "implementation_modules": ["fractal.self_improvement"],
+      "evidence_ids": ["learning-evidence-focused-tests"],
+      "recovery": "Drop the compact learning cost fields and retain review evidence."
+    },
+    {
+      "capability_id": "temporal-deterministic-workflow-activity-split",
+      "donor_id": "temporal-python-sdk",
+      "local_name": "Durable Review Orchestration",
+      "implementation_modules": ["fractal.orchestrator"],
+      "evidence_ids": ["bounded-multi-flow-loop-staged-test"],
+      "recovery": "Return to one-stage durable actions; no Temporal service is present."
+    },
+    {
+      "capability_id": "in-toto-command-material-product-link",
+      "donor_id": "in-toto",
+      "local_name": "Actual Result Receipt",
+      "implementation_modules": ["fractal.reality"],
+      "evidence_ids": ["actual-result-receipt-focused-tests"],
+      "recovery": "Invalidate the receipt and rerun the command against current materials."
+    },
+    {
+      "capability_id": "blind-spot-review-source",
+      "donor_id": "super-hermes",
+      "local_name": "Blind Spot Review",
+      "implementation_modules": ["fractal.self_improvement"],
+      "evidence_ids": ["blind-spot-review-focused-tests"],
+      "recovery": "Remove blind-spot carry-forward fields; prior evidence remains."
+    },
+    {
+      "capability_id": "checkpoint-inspection-source",
+      "donor_id": "hermes-workspace",
+      "local_name": "Checkpoint Inspection",
+      "implementation_modules": ["fractal.self_improvement"],
+      "evidence_ids": ["checkpoint-inspection-focused-tests"],
+      "recovery": "Remove checkpoint inspection fields without changing worker state."
+    },
+    {
+      "capability_id": "whole-project-checkpoint-review-routing",
+      "donor_id": "hermes-workspace",
+      "local_name": "Perspective Checkpoint Review",
+      "implementation_modules": ["fractal.lifecycle"],
+      "evidence_ids": ["perspective-whole-project-focused-tests"],
+      "recovery": "Remove checkpoint input fields and retain the prior whole-Project review record."
+    },
+    {
+      "capability_id": "work-method-extraction-source",
+      "donor_id": "distilly",
+      "local_name": "Work Method Extraction",
+      "implementation_modules": ["fractal.self_improvement"],
+      "evidence_ids": ["work-method-extraction-focused-tests"],
+      "recovery": "Reject generated method candidates; active capabilities remain unchanged."
+    },
+    {
+      "capability_id": "metric-threshold-baseline-comparison",
+      "donor_id": "mlflow",
+      "local_name": "Outcome Ratchet",
+      "implementation_modules": ["fractal.improvement"],
+      "evidence_ids": ["greed-outcome-ratchet-focused-tests"],
+      "recovery": "Discard the trial Candidate and retain the original successful result."
+    },
+    {
+      "capability_id": "multi-metric-regression-gate",
+      "donor_id": "mlflow",
+      "local_name": "Protected Global Outcome",
+      "implementation_modules": ["fractal.improvement"],
+      "evidence_ids": ["global-outcome-protected-dimension-focused-tests"],
+      "recovery": "Reject the trial and retain the prior global baseline."
+    },
+    {
+      "capability_id": "protected-dimension-feasibility",
+      "donor_id": "optuna",
+      "local_name": "Protected Global Outcome",
+      "implementation_modules": ["fractal.improvement"],
+      "evidence_ids": ["global-outcome-protected-dimension-focused-tests"],
+      "recovery": "Remove feasibility checking and require a fresh global review."
+    },
+    {
+      "capability_id": "perspective-guided-question-breadth",
+      "donor_id": "storm",
+      "local_name": "Evidence Exploration",
+      "implementation_modules": ["fractal.evidence_research"],
+      "evidence_ids": ["evidence-exploration-focused-tests"],
+      "recovery": "Discard the exploration plan and retain prior raw evidence."
+    },
+    {
+      "capability_id": "planned-provenance-first-retrieval",
+      "donor_id": "gpt-researcher",
+      "local_name": "Evidence Exploration",
+      "implementation_modules": ["fractal.evidence_research"],
+      "evidence_ids": ["evidence-exploration-focused-tests"],
+      "recovery": "Remove the retriever receipt adapter; no donor service remains."
+    }
+  ]
+}

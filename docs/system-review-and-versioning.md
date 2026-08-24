@@ -1,8 +1,8 @@
 # System Review and Versioning
 
-A genuine System Review begins only after primary-user Project Completion and runs the eight canonical Blueprint Steps.
+A genuine System Review begins only after primary-user Project Completion and follows the eight canonical Blueprint Flows. A Flow is a use rule, not an Element or Genre.
 
-| Step | Required outcome | Supporting implementation |
+| Flow | Required outcome | Supporting Library Elements |
 |---|---|---|
 | 1. Find Problems | Whole-Project Positive Delta, Negative Delta, and high-recall observation coverage | Project Assessment and Issue Scan |
 | 2. Find Local Patterns | Local Patterns with causal uncertainty and counterevidence | Project Patterns |
@@ -13,7 +13,7 @@ A genuine System Review begins only after primary-user Project Completion and ru
 | 7. Debate the Solutions for Every Global Pattern | Consequential mapped Candidates receive independent opposing cases | Two-Sided Review |
 | 8. Present Decisions One-by-One | One prepared handoff, Biggest Remaining Concern, and Carson decision at a time | Human Control |
 
-Reality Check is supporting Infrastructure across the workflow. It is not a ninth Step. Expected, Local, and Global Effect records support it.
+Reality Check is supporting Infrastructure across the workflow. It is not a ninth Flow. Expected, Local, and Global Effect records support it.
 
 No Change is valid. A complete whole-Project scan may honestly produce zero observations, zero Patterns, zero Candidates, and zero response units when a deterministic zero-pattern coverage receipt records the reason.
 
