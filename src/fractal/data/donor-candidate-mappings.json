@@ -1,0 +1,78 @@
+{
+  "record_type": "blueprint-candidate-mapping-set",
+  "record_version": 1,
+  "blueprint_version": "0.1.0-candidate.4",
+  "mappings": [
+    {
+      "record_type": "blueprint-candidate-mapping",
+      "candidate_id": "candidate-dojo-session-signals",
+      "status": "mapped-staged-not-active",
+      "global_pattern_id": "gap-fatigue-and-find-problems-live-session-signals",
+      "implementation_summary": "Adapt Hermes Dojo session monitoring into typed, privacy-bounded evidence signals without storage coupling or mutation authority.",
+      "change_action": "reconfigure",
+      "target": {
+        "existing_element_id": "find-problems",
+        "new_element_id": null,
+        "genre_id": "steps",
+        "element_type": "deuteragonist",
+        "marker": "$"
+      },
+      "core_concept_continuity": "The adaptation only supplies broader observations to Find Problems; it does not explain causes, choose responses or mutate the system.",
+      "relationships": [
+        {
+          "relationship": "serves",
+          "element_id": "find-problems"
+        },
+        {
+          "relationship": "informs",
+          "element_id": "fatigue"
+        }
+      ],
+      "visibility": "background-only",
+      "context_effect": {
+        "always_loaded_tokens_delta": 0,
+        "on_demand_tokens_delta": 0,
+        "duplicate_responsibility": false,
+        "summary": "The staged Python module is not loaded by Hooks or prompts and retains only typed digests and event ids."
+      },
+      "addition_priority_review": [],
+      "principle_effects": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "direction": "closer",
+          "summary": "Typed events and explicit error status outrank regex inference."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "direction": "closer",
+          "summary": "The adaptation widens observation capture while preserving uncertainty."
+        },
+        {
+          "element_id": "subtraction-first",
+          "direction": "closer",
+          "summary": "One bounded signal adapter replaces the donor's monitor, analyzer, fixer and cron loop for this responsibility."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "direction": "neutral",
+          "summary": "Signals remain evidence only; no local error can justify a global change."
+        }
+      ],
+      "donor_ids": [
+        "hermes-dojo"
+      ],
+      "evidence_ids": [
+        "evidence-dojo-commit-ee114e72",
+        "evidence-donor-signals-focused-tests"
+      ],
+      "authority": {
+        "scope": "proposal-only",
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Remove the unreferenced donor_signals module and its mapping; no active runtime or canonical state depends on it."
+    }
+  ]
+}

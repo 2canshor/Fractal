@@ -65,9 +65,7 @@ def validate_plan_resources(resources: list[dict[str, Any]]) -> None:
 def _validate_project_review_resources(resources: list[dict[str, Any]]) -> None:
     if not isinstance(resources, list):
         raise LifecycleError("Project Review requires planned-versus-actual resource records")
-    dimensions = {
-        item.get("dimension") for item in resources if isinstance(item, dict)
-    }
+    dimensions = {item.get("dimension") for item in resources if isinstance(item, dict)}
     if not dimensions >= PROJECT_RESOURCE_DIMENSIONS:
         missing = sorted(PROJECT_RESOURCE_DIMENSIONS.difference(dimensions))
         raise LifecycleError(f"Project Review resource comparison is missing: {missing}")
@@ -440,11 +438,15 @@ class LifecycleController:
         _validate_neglected_areas(neglected_areas)
         if not opportunity_cost.strip():
             raise LifecycleError("Project Review requires an explicit opportunity cost")
-        if continuation_decision.get("decision") not in {
-            "continue-as-planned",
-            "continue-with-plan-update",
-            "pause-and-request-decision",
-        } or not continuation_decision.get("justification", "").strip():
+        if (
+            continuation_decision.get("decision")
+            not in {
+                "continue-as-planned",
+                "continue-with-plan-update",
+                "pause-and-request-decision",
+            }
+            or not continuation_decision.get("justification", "").strip()
+        ):
             raise LifecycleError(
                 "Project Review requires a continuation decision and justification"
             )
@@ -723,7 +725,11 @@ class LifecycleController:
         plan = copy.deepcopy(record.plan)
         matching_phase = False
         for item in plan["items"]:
-            phase = int(item["id"].removeprefix("phase-"))
+            phase_label = item["id"].removeprefix("phase-")
+            phase_number = phase_label.split("-", 1)[0]
+            if not phase_number.isdigit():
+                raise LifecycleError(f"Invalid phase plan item id: {item['id']}")
+            phase = int(phase_number)
             if phase == reopen_phase:
                 item["status"] = "in_progress"
                 matching_phase = True

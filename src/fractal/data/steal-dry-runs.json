@@ -1,0 +1,112 @@
+{
+  "record_type": "steal-run-set",
+  "record_version": 1,
+  "blueprint_version": "0.1.0-candidate.4",
+  "runs": [
+    {
+      "record_type": "steal-run",
+      "run_id": "steal-dojo-session-signals",
+      "status": "completed-staged-not-active",
+      "target": {
+        "implementation_id": "find-problems-session-signals",
+        "blueprint_element_id": "find-problems",
+        "current_assessment": "implemented",
+        "desired_effect": "Increase privacy-bounded observation coverage for tool failures, retry loops and possible user corrections without granting mutation authority.",
+        "evidence_ids": ["evidence-blueprint-gap-audit-4"]
+      },
+      "research_routes": [
+        {
+          "action_id": "improve-current-method",
+          "effort_share": 60,
+          "status": "finding",
+          "summary": "Keep existing Work Signature and Find Problems routing; add only missing typed session signals.",
+          "source": "current Fractal implementation gap audit"
+        },
+        {
+          "action_id": "research-latest-findings",
+          "effort_share": 20,
+          "status": "finding",
+          "summary": "Hermes Dojo exposes bounded tool-failure, correction and retry detection at an exact MIT-licensed commit.",
+          "source": "https://github.com/Yonkoo11/hermes-dojo"
+        },
+        {
+          "action_id": "explore-related-fields",
+          "effort_share": 20,
+          "status": "finding",
+          "summary": "Operational telemetry suggests explicit typed status should outrank textual error heuristics.",
+          "source": "related field: observability and typed event processing"
+        }
+      ],
+      "donor_candidate": {
+        "donor_id": "hermes-dojo",
+        "capability_id": "dojo-session-signals",
+        "bounded_unit": "Tool-failure, possible-user-correction and same-session rapid-retry signal extraction.",
+        "licence_status": "verified-file",
+        "removed_authority": [
+          "Hermes state.db ownership",
+          "Skill patching",
+          "Skill creation",
+          "GEPA execution",
+          "cron scheduling",
+          "report delivery",
+          "automatic promotion"
+        ]
+      },
+      "comparison": [
+        {
+          "dimension": "blueprint-fidelity",
+          "result": "better",
+          "summary": "The adaptation routes signals to Find Problems and cannot perform later Steps.",
+          "evidence_ids": ["evidence-donor-candidate-mapping"]
+        },
+        {
+          "dimension": "authority-compatibility",
+          "result": "better",
+          "summary": "All donor mutation, activation and publication authority is removed.",
+          "evidence_ids": ["evidence-authority-recovery-audit"]
+        },
+        {
+          "dimension": "reliability",
+          "result": "unknown",
+          "summary": "Synthetic tests pass, but no live session integration has run.",
+          "evidence_ids": ["evidence-full-tests-255"]
+        },
+        {
+          "dimension": "privacy",
+          "result": "better",
+          "summary": "Signals retain event ids and content digests instead of raw session text.",
+          "evidence_ids": ["evidence-dojo-signals-adaptation"]
+        },
+        {
+          "dimension": "context-cost",
+          "result": "equal",
+          "summary": "The staged module adds no always-loaded prompt or Hook context.",
+          "evidence_ids": ["evidence-donor-candidate-mapping"]
+        },
+        {
+          "dimension": "maintainability",
+          "result": "better",
+          "summary": "A donor-neutral typed interface replaces direct Hermes database coupling.",
+          "evidence_ids": ["evidence-dojo-signals-adaptation"]
+        },
+        {
+          "dimension": "recovery",
+          "result": "equal",
+          "summary": "No active component depends on the module; removal is source-only.",
+          "evidence_ids": ["evidence-authority-recovery-audit"]
+        }
+      ],
+      "candidate_mapping_id": "candidate-dojo-session-signals",
+      "disposition": "staged-adaptation-candidate",
+      "automatic_replace": false,
+      "next_version_eligible": true,
+      "authority": {
+        "canonical_write": false,
+        "persistent_mutation": false,
+        "activation": false,
+        "publication": false
+      },
+      "recovery": "Remove the staged donor_signals source and mapping; active alpha.7 remains unchanged."
+    }
+  ]
+}

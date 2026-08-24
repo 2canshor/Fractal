@@ -8,6 +8,10 @@ The format follows Keep a Changelog, and system versions follow Semantic Version
 
 ### Added
 
+- A primary-user-directed New Blueprint candidate with independent Genre, role, and Signature Function Tag axes; explicit eight-Step target reasoning; Blueprint Mapping; and deterministic validation.
+- A governed Steal Method with donor provenance and licence gates, 60/20/20 research coverage, bounded comparison, authority stripping, staged dispositions, and no automatic replacement.
+- A first MIT-attributed Hermes Dojo session-signal adaptation that returns privacy-bounded observations without donor mutation authority.
+
 - Initial public package structure.
 - Public/private repository boundary.
 - Technical decision record for the first development release.
@@ -31,13 +35,15 @@ The format follows Keep a Changelog, and system versions follow Semantic Version
 
 ### Changed
 
+- The corrective development candidate is now `0.1.0-alpha.8`; the New Blueprint and Steal remain explicit staged foundations and do not claim that the active workflow already implements the target hierarchy.
+
 - Codex user-surface planning now loads installed Plugins before Skill discovery and waits for the Plugin/Skill catalogue to reach a fixed point. Lazy Google Drive, template, Figma, history, or future Plugin Skills can no longer be omitted from the deny-list audit and then appear in the user menu after a false pass.
 - Adapter capability metadata now describes the active-on-install projection instead of calling live-discoverable Skills inactive.
 - Component status separates registration, loading, callability, and successful execution evidence.
 - Persistent activation remains under primary-user authority; candidate builds cannot activate themselves. An explicit `/version` order now completes only after the exact candidate is activated and verified in a fresh session.
 - The product lifecycle now centres Project Review during active work and System Review after primary-user Project Completion; Fatigue, Curiosity, Greed, and other components feed those reviews.
 - Component records now separate user-surface audience from automatic and explicit invocation. Adapter build evidence no longer implies installation, active runtime, callability, or user execution.
-- The corrective development candidate is `0.1.0-alpha.7`; the active System Version remains unchanged until Carson explicitly invokes `/version`.
+- The active System Version remains unchanged until Carson explicitly invokes `/version`.
 
 ## [0.1.0-alpha.1] - 2026-08-22
 

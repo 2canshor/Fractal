@@ -309,6 +309,84 @@ def test_primary_user_can_reopen_awaiting_completion_after_correction(
     assert reopened.lifecycle["success_criteria"]["items"][0]["achieved"] is False
 
 
+def test_reopen_accepts_descriptive_phase_plan_item_ids(
+    lifecycle_project: tuple[LifecycleController, ProjectStore, str],
+) -> None:
+    controller, store, project_id = lifecycle_project
+    approve_project(controller, store, project_id)
+    record = store.read(project_id)
+    controller.record_criterion_achievement(
+        project_id,
+        expected_revision=record.revision,
+        criterion_id="criterion-a",
+        evidence_ids=["evidence-done"],
+        actor="main-agent",
+        platform="test-adapter",
+    )
+    record = store.read(project_id)
+    controller.record_post_work_challenge(
+        project_id,
+        expected_revision=record.revision,
+        higher_target_summary="Keep the correction route available",
+        higher_target_status="not_tested",
+        evidence_ids=["evidence-done"],
+        actor="main-agent",
+        platform="test-adapter",
+    )
+    record = store.read(project_id)
+    descriptive_plan = {
+        **record.plan,
+        "current_phase": 2,
+        "items": [
+            {
+                "id": "phase-1-blueprint",
+                "summary": "Blueprint",
+                "status": "completed",
+                "evidence_ids": [],
+            },
+            {
+                "id": "phase-2-verification",
+                "summary": "Verification",
+                "status": "completed",
+                "evidence_ids": [],
+            },
+        ],
+    }
+    controller.record_plan_update(
+        project_id,
+        expected_revision=record.revision,
+        plan=descriptive_plan,
+        reason="Use descriptive phase ids",
+        material=False,
+        actor="main-agent",
+        platform="test-adapter",
+    )
+    record = store.read(project_id)
+    controller.mark_awaiting_completion(
+        project_id,
+        expected_revision=record.revision,
+        actor="main-agent",
+        platform="test-adapter",
+    )
+    record = store.read(project_id)
+    controller.reopen_after_correction(
+        project_id,
+        expected_revision=record.revision,
+        reopen_phase=1,
+        criterion_ids=["criterion-a"],
+        reason="Correct the Blueprint",
+        actor="primary-user",
+        platform="test-adapter",
+        human_action=True,
+    )
+    reopened = store.read(project_id)
+    assert reopened.plan["current_phase"] == 1
+    assert [item["status"] for item in reopened.plan["items"]] == [
+        "in_progress",
+        "pending",
+    ]
+
+
 def test_post_work_challenge_runs_once_per_criteria_version(
     lifecycle_project: tuple[LifecycleController, ProjectStore, str],
 ) -> None:
@@ -481,13 +559,12 @@ def test_deviation_review_failure_and_goal_change_paths(
     assert first_review["whole_project_scope_receipt"]["assessed_dimensions"] == list(
         whole_project_assessment()
     )
-    assert {
-        item["dimension"] for item in first_review["planned_vs_actual_resources"]
-    } >= {"time", "attention"}
+    assert {item["dimension"] for item in first_review["planned_vs_actual_resources"]} >= {
+        "time",
+        "attention",
+    }
     assert first_review["neglected_areas"][0]["status"] == "watch"
-    assert first_review["continuation_decision"]["decision"] == (
-        "continue-with-plan-update"
-    )
+    assert first_review["continuation_decision"]["decision"] == ("continue-with-plan-update")
     assert all(point["status"] == "reviewed" for point in final.lifecycle["review_points"])
     assert final.requests[-1]["path"] == "/lifecycle/goal"
     assert final.lifecycle["goal"]["status"] == "provisional"

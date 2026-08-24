@@ -1,0 +1,346 @@
+{
+  "record_type": "fractal-blueprint",
+  "record_version": 1,
+  "blueprint_id": "new-architecture",
+  "blueprint_version": "0.1.0-candidate.4",
+  "lifecycle": {
+    "status": "candidate",
+    "active": false,
+    "authority": "primary-user",
+    "implementation_status": "partial",
+    "claim_boundary": "This target Blueprint overrides earlier plans but does not describe the active alpha.7 runtime until a separately verified System Version is activated."
+  },
+  "core": {
+    "philosophy": {
+      "element_id": "continuous-improvement",
+      "human_name": "Continuous Improvement",
+      "core_concept": "Use completed work and real outcomes to improve how future work is handled."
+    },
+    "protagonist": {
+      "element_id": "system-review",
+      "human_name": "System Review",
+      "marker": "#",
+      "core_concept": "The sole protagonist that turns completed Project evidence into governed improvement of Fractal."
+    }
+  },
+  "tag_definitions": [
+    {
+      "tag_id": "signature-function",
+      "human_name": "Signature Function",
+      "cross_genre": true,
+      "meaning": "A recognisable Fractal function that should retain its core concept without becoming a Genre or changing the element's primary classification."
+    }
+  ],
+  "role_definitions": [
+    {
+      "role_id": "deuteragonist",
+      "human_name": "Deuteragonist",
+      "marker": "$"
+    },
+    {
+      "role_id": "extra",
+      "human_name": "Extra",
+      "marker": "^"
+    },
+    {
+      "role_id": "prop",
+      "human_name": "Prop",
+      "marker": "¢"
+    },
+    {
+      "role_id": "principle",
+      "human_name": "Principle",
+      "marker": "%"
+    }
+  ],
+  "genres": [
+    {
+      "genre_id": "steps",
+      "human_name": "Steps",
+      "marker": "*",
+      "allowed_markers": ["$"],
+      "decision_status": "primary-user-confirmed",
+      "elements": [
+        {
+          "element_id": "find-problems",
+          "human_name": "Find Problems",
+          "marker": "$",
+          "sequence": 1,
+          "core_concept": "Collect the broad Project evidence before narrowing or explaining it."
+        },
+        {
+          "element_id": "find-local-patterns",
+          "human_name": "Find Local Patterns",
+          "marker": "$",
+          "sequence": 2,
+          "core_concept": "Identify meaningful local recurrence without confusing surface similarity with cause."
+        },
+        {
+          "element_id": "find-global-patterns",
+          "human_name": "Find Global Patterns",
+          "marker": "$",
+          "sequence": 3,
+          "core_concept": "Compare patterns across the relevant Project and improvement history before treating them as isolated."
+        },
+        {
+          "element_id": "find-global-pattern-reasons",
+          "human_name": "Find the Reasons for Every Global Pattern",
+          "marker": "$",
+          "sequence": 4,
+          "core_concept": "Make the causal reasoning for every Global Pattern explicit, including uncertainty and counterevidence."
+        },
+        {
+          "element_id": "find-global-pattern-solutions",
+          "human_name": "Find Solutions for Every Global Pattern",
+          "marker": "$",
+          "sequence": 5,
+          "core_concept": "Search for possible responses to every Global Pattern without allowing one preferred implementation to end the search."
+        },
+        {
+          "element_id": "map-implementations-to-blueprint",
+          "human_name": "Map New Implementations into the Blueprint",
+          "marker": "$",
+          "sequence": 6,
+          "core_concept": "Classify every Candidate implementation by its true Blueprint role and apply the rules of its Genre before debate."
+        },
+        {
+          "element_id": "debate-global-pattern-solutions",
+          "human_name": "Debate the Solutions for Every Global Pattern",
+          "marker": "$",
+          "sequence": 7,
+          "core_concept": "Challenge the mapped solutions for every Global Pattern before Carson is asked to decide."
+        },
+        {
+          "element_id": "present-decisions-one-by-one",
+          "human_name": "Present Decisions One-by-One",
+          "marker": "$",
+          "sequence": 8,
+          "core_concept": "Present one fully prepared human-scale decision at a time without hiding the remaining decision set."
+        }
+      ]
+    },
+    {
+      "genre_id": "values",
+      "human_name": "Values",
+      "marker": "*",
+      "allowed_markers": ["$"],
+      "elements": [
+        {
+          "element_id": "fatigue",
+          "human_name": "Fatigue",
+          "marker": "$",
+          "tags": ["signature-function"],
+          "core_concept": "Treat repeated effort and diminishing return as pressure to investigate a better way."
+        },
+        {
+          "element_id": "curiosity",
+          "human_name": "Curiosity",
+          "marker": "$",
+          "tags": ["signature-function"],
+          "core_concept": "Search beyond the obvious current approach for relevant adjacent and structurally similar ideas."
+        },
+        {
+          "element_id": "greed",
+          "human_name": "Greed",
+          "marker": "$",
+          "tags": ["signature-function"],
+          "core_concept": "After genuine success, keep testing whether a materially stronger global outcome is achievable."
+        }
+      ]
+    },
+    {
+      "genre_id": "principles",
+      "human_name": "Principles",
+      "marker": "*",
+      "allowed_markers": ["%"],
+      "elements": [
+        {
+          "element_id": "deterministic-over-probabilistic",
+          "human_name": "Deterministic over Probabilistic",
+          "marker": "%",
+          "core_concept": "Move repeatable and unambiguous work toward deterministic, testable execution."
+        },
+        {
+          "element_id": "quantity-over-quality",
+          "human_name": "Quantity over Quality",
+          "marker": "%",
+          "core_concept": "Protect high-recall discovery before later reasoning narrows the evidence."
+        },
+        {
+          "element_id": "subtraction-first",
+          "human_name": "Subtraction First",
+          "marker": "%",
+          "core_concept": "Reduce context and system growth by preferring removal, reuse and simplification before addition."
+        },
+        {
+          "element_id": "global-outcome-over-local-optimisation",
+          "human_name": "Global Outcome over Local Optimisation",
+          "marker": "%",
+          "core_concept": "Judge improvement by its global effect instead of a convenient local win."
+        }
+      ]
+    },
+    {
+      "genre_id": "infrastructure",
+      "human_name": "Infrastructure",
+      "marker": "*",
+      "allowed_markers": ["^"],
+      "elements": [
+        {
+          "element_id": "work-signature",
+          "human_name": "Work Signature",
+          "marker": "^",
+          "core_concept": "Retain compact evidence about completed work without becoming a product promise."
+        },
+        {
+          "element_id": "naming-system",
+          "human_name": "Naming System",
+          "marker": "^",
+          "core_concept": "Keep Fractal-controlled identities intelligible and governed in the background."
+        },
+        {
+          "element_id": "capability-check",
+          "human_name": "Capability Check",
+          "marker": "^",
+          "core_concept": "Distinguish existence, loading, callability and successful execution of capabilities."
+        },
+        {
+          "element_id": "hooks",
+          "human_name": "Hooks",
+          "marker": "^",
+          "core_concept": "Connect bounded runtime events to existing Fractal responsibilities without owning them."
+        },
+        {
+          "element_id": "reality-check",
+          "human_name": "Reality Check",
+          "marker": "^",
+          "core_concept": "Support Fractal in distinguishing claimed improvement from observed reality.",
+          "implementation_instruction": null
+        },
+        {
+          "element_id": "experiment",
+          "human_name": "Experiment",
+          "marker": "^",
+          "core_concept": "Run a bounded and recoverable trial when evidence is insufficient to judge a Candidate implementation."
+        },
+        {
+          "element_id": "component-governance",
+          "human_name": "Component Governance",
+          "marker": "^",
+          "core_concept": "Keep every active component identified, classified, permission-bounded, evidenced and recoverable."
+        },
+        {
+          "element_id": "human-control",
+          "human_name": "Human Control",
+          "marker": "^",
+          "core_concept": "Provide operator-visible control and evidence without becoming a product-facing headline."
+        },
+        {
+          "element_id": "donor-quarantine",
+          "human_name": "Donor Quarantine",
+          "marker": "^",
+          "core_concept": "Keep unclassified donor capabilities inspectable but unable to become persistent Fractal dependencies."
+        },
+        {
+          "element_id": "donor-registry",
+          "human_name": "Donor Registry",
+          "marker": "^",
+          "core_concept": "Retain donor source, licence, provenance, mapping, evidence and recovery metadata."
+        },
+        {
+          "element_id": "environment-adapters",
+          "human_name": "Environment Adapters",
+          "marker": "^",
+          "core_concept": "Let replaceable environments execute Fractal without receiving architecture or canonical-state authority."
+        }
+      ]
+    },
+    {
+      "genre_id": "methods",
+      "human_name": "Methods",
+      "marker": "*",
+      "allowed_markers": ["$", "¢"],
+      "elements": [
+        {
+          "element_id": "project-review",
+          "human_name": "Perspective",
+          "marker": "$",
+          "tags": ["signature-function"],
+          "core_concept": "See From The Big Picture: prevent Agent tunnel vision and harmful local over-investment during a Project.",
+          "naming_status": "primary-user-confirmed",
+          "historical_names": ["Project Review"]
+        },
+        {
+          "element_id": "cause-research",
+          "human_name": "Cause Research",
+          "marker": "¢",
+          "core_concept": "Use bounded internal and external evidence to improve causal understanding without becoming its own lifecycle."
+        },
+        {
+          "element_id": "two-sided-review",
+          "human_name": "Two-Sided Review",
+          "marker": "¢",
+          "core_concept": "Challenge a consequential mapped Candidate through genuinely opposing cases before synthesis."
+        },
+        {
+          "element_id": "steal",
+          "human_name": "Steal",
+          "technical_id": "donor-implementation-reuse",
+          "marker": "¢",
+          "core_concept": "Reuse bounded donor implementations while stripping donor authority and remapping the result to Fractal.",
+          "does_not_own": [
+            "architecture decisions",
+            "canonical state",
+            "persistent mutation",
+            "activation",
+            "publication"
+          ]
+        }
+      ]
+    }
+  ],
+  "modification_rules": {
+    "one_protagonist": true,
+    "new_protagonist_peers_allowed": false,
+    "persistent_elements_require_exactly_one_genre": true,
+    "deuteragonist_contract": "Preserve the core concept; freely improve, replace, merge or subtract its implementation without losing the responsibility.",
+    "extra_contract": "Keep it outside the product emphasis; add it only when a Protagonist or Deuteragonist needs supporting infrastructure.",
+    "prop_contract": "Keep it reusable, callable where relevant and replaceable by a stronger method; it never owns an Action, lifecycle or authority boundary.",
+    "principle_contract": "Treat it as an asymptotic direction that cannot be claimed complete; add one only after accumulated Global Patterns and repeated causal work.",
+    "addition_priority": [
+      "extra",
+      "prop",
+      "principle",
+      "deuteragonist"
+    ],
+    "addition_priority_markers": [
+      "^",
+      "¢",
+      "%",
+      "$"
+    ],
+    "truthful_classification_required": true,
+    "blueprint_mapping_before_debate": true,
+    "old_plan_authority": "superseded"
+  },
+  "donor_policy": {
+    "every_external_environment_is_a_donor": true,
+    "hermes_is_a_donor": true,
+    "donor_implementation_may_be_reused": true,
+    "donor_architecture_has_authority": false,
+    "donor_mutation_authority_may_be_inherited": false,
+    "unclassified_capability_status": "quarantined",
+    "bulk_import_allowed": false,
+    "required_intake": [
+      "bounded capability decomposition",
+      "source and exact version",
+      "licence and provenance",
+      "hidden authority analysis",
+      "Blueprint pre-mapping",
+      "full Blueprint mapping before debate",
+      "evidence and recovery"
+    ]
+  },
+  "unclassified_elements": [],
+  "open_questions": []
+}

@@ -1,0 +1,208 @@
+{
+  "record_type": "donor-inventory",
+  "record_version": 1,
+  "observed_at": "2026-08-24",
+  "blueprint_version": "0.1.0-candidate.4",
+  "claim_boundary": "Repository contents were inspected at exact commits. Inventory status does not install, approve or activate donor code.",
+  "donors": [
+    {
+      "donor_id": "hermes-agent",
+      "human_name": "Hermes Agent",
+      "source_url": "https://github.com/NousResearch/hermes-agent",
+      "commit": "91e867631e9d2eb9fbd69edd4459475d38070979",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "MIT",
+        "status": "verified-file",
+        "evidence": "LICENSE"
+      },
+      "architecture_authority": false,
+      "donor_role": "environment-and-implementation-source",
+      "capabilities": [
+        {
+          "capability_id": "hermes-runtime",
+          "summary": "Agent runtime, provider abstraction, Tool transport and multiple terminal backends.",
+          "blueprint_target": "environment-adapters",
+          "disposition": "future-migration-source",
+          "reason": "Potential Hermes environment foundation; requires a Fractal adapter and portability proof."
+        },
+        {
+          "capability_id": "hermes-session-memory",
+          "summary": "Local session history, FTS5 search, memory and skill persistence.",
+          "blueprint_target": "environment-adapters",
+          "disposition": "research-only",
+          "reason": "Useful runtime storage, but Hermes state cannot become Fractal canonical authority."
+        },
+        {
+          "capability_id": "hermes-cron",
+          "summary": "Scheduled and background jobs with platform delivery.",
+          "blueprint_target": "environment-adapters",
+          "disposition": "future-migration-source",
+          "reason": "Potential Infrastructure implementation; job execution cannot inherit system-change authority."
+        },
+        {
+          "capability_id": "hermes-autonomous-skill-change",
+          "summary": "Autonomous skill creation and self-improvement during use.",
+          "blueprint_target": "steal",
+          "disposition": "quarantined",
+          "reason": "Detection and candidate generation may be decomposed; automatic mutation and promotion conflict with Fractal authority."
+        }
+      ]
+    },
+    {
+      "donor_id": "hermes-agent-self-evolution",
+      "human_name": "Hermes Agent Self-Evolution",
+      "source_url": "https://github.com/NousResearch/hermes-agent-self-evolution",
+      "commit": "0a929e3aa20e15cf04dc7c28492a7d41a5139125",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "MIT",
+        "status": "declared-no-licence-file",
+        "evidence": "pyproject.toml declares MIT; no root LICENSE file was present at the observed commit"
+      },
+      "architecture_authority": false,
+      "donor_role": "method-and-implementation-source",
+      "capabilities": [
+        {
+          "capability_id": "evolution-dataset-builder",
+          "summary": "Synthetic, golden and session-derived evaluation datasets with train, validation and holdout splits.",
+          "blueprint_target": "steal",
+          "disposition": "research-only",
+          "reason": "Relevant evaluation design, but licence packaging and dataset integrity require resolution before code reuse."
+        },
+        {
+          "capability_id": "evolution-constraint-validator",
+          "summary": "Artifact size, growth, structure and test-suite constraints.",
+          "blueprint_target": "capability-check",
+          "disposition": "research-only",
+          "reason": "Potential bounded validation logic; current repository issues document critical pipeline gaps and the licence file is absent."
+        },
+        {
+          "capability_id": "evolution-fitness",
+          "summary": "DSPy and GEPA fitness and reflective mutation pipeline.",
+          "blueprint_target": "experiment",
+          "disposition": "quarantined",
+          "reason": "Observed source still uses keyword overlap as the optimizer metric; Experiment remains unclassified in the Blueprint."
+        }
+      ]
+    },
+    {
+      "donor_id": "hermes-dojo",
+      "human_name": "Hermes Dojo",
+      "source_url": "https://github.com/Yonkoo11/hermes-dojo",
+      "commit": "ee114e72e18b13d3aeb4b76a8d1ade0916972248",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "MIT",
+        "status": "verified-file",
+        "evidence": "LICENSE, Copyright (c) 2026 Yonkoo11"
+      },
+      "architecture_authority": false,
+      "donor_role": "method-and-implementation-source",
+      "capabilities": [
+        {
+          "capability_id": "dojo-session-signals",
+          "summary": "Detect tool failures, user corrections and rapid retry loops from session events.",
+          "blueprint_target": "find-problems",
+          "disposition": "staged-adaptation-candidate",
+          "reason": "Fills a partial evidence gap when adapted to typed, privacy-bounded signals without automatic change."
+        },
+        {
+          "capability_id": "dojo-weakness-analysis",
+          "summary": "Rank tool and skill weaknesses and distinguish some infrastructure and authentication failures.",
+          "blueprint_target": "find-global-pattern-reasons",
+          "disposition": "research-only",
+          "reason": "Useful categories, but heuristic recommendations do not establish Fractal causal evidence."
+        },
+        {
+          "capability_id": "dojo-auto-fixer",
+          "summary": "Patch or create Skills and invoke self-evolution automatically.",
+          "blueprint_target": "steal",
+          "disposition": "reject-authority",
+          "reason": "Mutation authority and automatic promotion conflict with Blueprint Mapping and Carson control."
+        },
+        {
+          "capability_id": "dojo-reporter",
+          "summary": "Generate performance reports and retain learning-curve metrics.",
+          "blueprint_target": "human-control",
+          "disposition": "research-only",
+          "reason": "Potential operator-facing Infrastructure after its metrics and claims are independently validated."
+        }
+      ]
+    },
+    {
+      "donor_id": "evey-hermes-plugins",
+      "human_name": "Evey Hermes Plugins",
+      "source_url": "https://github.com/42-evey/hermes-plugins",
+      "commit": "b96aa74a44519bcc930b235a43d4e43824af9433",
+      "repository_status": "observed",
+      "licence": {
+        "spdx": "MIT",
+        "status": "verified-file",
+        "evidence": "LICENSE"
+      },
+      "architecture_authority": false,
+      "donor_role": "plugin-implementation-source",
+      "capabilities": [
+        {
+          "capability_id": "evey-council",
+          "summary": "Three-model debate and consensus extraction.",
+          "blueprint_target": "two-sided-review",
+          "disposition": "research-only",
+          "reason": "Potential implementation source, but consensus is not proof of independent Case For and Case Against."
+        },
+        {
+          "capability_id": "evey-model-routing",
+          "summary": "Task-sensitive model routing, retries, fallback and privacy filtering.",
+          "blueprint_target": "environment-adapters",
+          "disposition": "research-only",
+          "reason": "Potential Infrastructure implementation after deterministic routing and privacy behaviour are verified."
+        },
+        {
+          "capability_id": "evey-status-and-cost",
+          "summary": "Unified status and cost-control plugins.",
+          "blueprint_target": "human-control",
+          "disposition": "research-only",
+          "reason": "Potential operator Infrastructure; external telemetry and budget semantics require separate review."
+        },
+        {
+          "capability_id": "evey-autonomy",
+          "summary": "Autonomous decision, planning and reflection tools.",
+          "blueprint_target": "system-review",
+          "disposition": "reject-authority",
+          "reason": "The donor autonomy engine cannot replace Fractal's Protagonist or Human authority."
+        }
+      ]
+    },
+    {
+      "donor_id": "super-hermes",
+      "human_name": "Super Hermes",
+      "source_url": null,
+      "commit": null,
+      "repository_status": "no-primary-source-finding",
+      "licence": {
+        "spdx": null,
+        "status": "unknown",
+        "evidence": "No exact primary repository was identified in the bounded search."
+      },
+      "architecture_authority": false,
+      "donor_role": "unresolved-source",
+      "capabilities": []
+    },
+    {
+      "donor_id": "dot-skill",
+      "human_name": "dot-skill",
+      "source_url": null,
+      "commit": null,
+      "repository_status": "no-primary-source-finding",
+      "licence": {
+        "spdx": null,
+        "status": "unknown",
+        "evidence": "No exact primary repository was identified in the bounded search."
+      },
+      "architecture_authority": false,
+      "donor_role": "unresolved-source",
+      "capabilities": []
+    }
+  ]
+}

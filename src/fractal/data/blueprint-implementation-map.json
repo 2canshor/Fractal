@@ -1,0 +1,233 @@
+{
+  "record_type": "blueprint-implementation-map",
+  "record_version": 1,
+  "blueprint_version": "0.1.0-candidate.4",
+  "active_system_version": "0.1.0-alpha.7-778bab7",
+  "claim_boundary": "This audit describes source and retained execution evidence. It does not promote the Blueprint candidate or any donor implementation.",
+  "mappings": [
+    {
+      "element_id": "continuous-improvement",
+      "current_node_ids": ["continuous-improvement"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-blueprint-projection",
+      "gap": "The philosophy has existing orchestration evidence, but the active registry still projects the old five-step and Mechanisms hierarchy."
+    },
+    {
+      "element_id": "system-review",
+      "current_node_ids": ["system-review"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-workflow-redesign",
+      "gap": "The active implementation enforces the old five-step workflow rather than the explicit Blueprint Steps."
+    },
+    {
+      "element_id": "find-problems",
+      "current_node_ids": ["find-problems"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "aligned-core-concept",
+      "gap": "The core behaviour exists; it still needs projection through the New Blueprint."
+    },
+    {
+      "element_id": "find-local-patterns",
+      "current_node_ids": ["find-local-patterns"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "aligned-core-concept",
+      "gap": "The core behaviour exists; it still needs projection through the New Blueprint."
+    },
+    {
+      "element_id": "find-global-patterns",
+      "current_node_ids": ["compare-history"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-step-extraction",
+      "gap": "Cross-Project comparison exists, but Find Global Patterns is not an explicit target Step with its own contract."
+    },
+    {
+      "element_id": "find-global-pattern-reasons",
+      "current_node_ids": ["cause-research"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-step-extraction",
+      "gap": "Cause Research exists as a supporting method, but causal reasoning for every Global Pattern is not an explicit enforced Step."
+    },
+    {
+      "element_id": "find-global-pattern-solutions",
+      "current_node_ids": ["choose-system-response", "curiosity"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-step-extraction",
+      "gap": "Solution search exists inside older Improvement Options and Curiosity contracts, not as one explicit Step per Global Pattern."
+    },
+    {
+      "element_id": "map-implementations-to-blueprint",
+      "current_node_ids": [],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-workflow-redesign",
+      "gap": "A deterministic Candidate Mapping contract and staged donor record now exist, but the active System Review workflow does not invoke them."
+    },
+    {
+      "element_id": "debate-global-pattern-solutions",
+      "current_node_ids": ["two-sided-review"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-step-extraction",
+      "gap": "Two-Sided Review exists, but debate is not yet an explicit Step covering every relevant Global Pattern solution."
+    },
+    {
+      "element_id": "present-decisions-one-by-one",
+      "current_node_ids": ["system-review", "human-control"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-step-extraction",
+      "gap": "Plain-language handoff exists, but the target one-prepared-decision-at-a-time Step is not represented or enforced."
+    },
+    {
+      "element_id": "fatigue",
+      "current_node_ids": ["fatigue"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-reclassification",
+      "gap": "Work Signature and live repetition evaluation exist, while the full Value remains partially defined."
+    },
+    {
+      "element_id": "curiosity",
+      "current_node_ids": ["curiosity"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-reclassification",
+      "gap": "The Value has staged synthetic evidence and open design questions rather than verified live end-to-end behaviour."
+    },
+    {
+      "element_id": "greed",
+      "current_node_ids": ["greed"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-reclassification",
+      "gap": "The Value has staged synthetic evidence and open design questions rather than verified live end-to-end behaviour."
+    },
+    {
+      "element_id": "project-review",
+      "current_node_ids": ["project-review"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-reclassification",
+      "gap": "Whole-Project review exists, but the active system still projects the historical Project Review name and Secondary Mechanism role instead of Perspective."
+    },
+    {
+      "element_id": "component-governance",
+      "current_node_ids": ["component-governance"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-reclassification",
+      "gap": "The implementation has verified-live evidence; the active architecture must reclassify Component Governance as Infrastructure Extra."
+    },
+    {
+      "element_id": "deterministic-over-probabilistic",
+      "current_node_ids": ["deterministic-over-probabilistic"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-reclassification",
+      "gap": "The implementation has verified-live evidence; the active architecture still calls it a Mechanism instead of a Principle."
+    },
+    {
+      "element_id": "quantity-over-quality",
+      "current_node_ids": ["quantity-over-quality"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-reclassification",
+      "gap": "High-recall collection is staged and synthetic rather than verified live as a Principle across the target Step."
+    },
+    {
+      "element_id": "subtraction-first",
+      "current_node_ids": ["subtraction-first"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-reclassification",
+      "gap": "The option order exists, but context-effect evidence and the target addition priority are not implemented."
+    },
+    {
+      "element_id": "global-outcome-over-local-optimisation",
+      "current_node_ids": ["global-outcome-over-local-optimisation"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-reclassification",
+      "gap": "Local and Global Effect records exist, but the Principle remains staged and synthetic."
+    },
+    {
+      "element_id": "work-signature",
+      "current_node_ids": ["work-signature"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-reclassification",
+      "gap": "The implementation has verified-live evidence; only its Blueprint role changes to Infrastructure."
+    },
+    {
+      "element_id": "naming-system",
+      "current_node_ids": ["naming-system"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-reclassification",
+      "gap": "The implementation is active with synthetic evidence; live end-to-end outcome proof remains limited."
+    },
+    {
+      "element_id": "capability-check",
+      "current_node_ids": ["capability-check"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-reclassification",
+      "gap": "The implementation has verified-live evidence; only its Blueprint role changes to Infrastructure."
+    },
+    {
+      "element_id": "hooks",
+      "current_node_ids": ["hooks"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-reclassification",
+      "gap": "The implementation has verified-live evidence; only its Blueprint role changes to Infrastructure."
+    },
+    {
+      "element_id": "reality-check",
+      "current_node_ids": ["reality-check"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-role-redesign",
+      "gap": "Reality Check is implemented as old Step 5. The target only classifies the core concept as Infrastructure and deliberately leaves its implementation open."
+    },
+    {
+      "element_id": "experiment",
+      "current_node_ids": ["experiment"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-reclassification",
+      "gap": "A reversible trial implementation exists with synthetic evidence; the active architecture must reclassify it from Mechanism to Infrastructure Extra."
+    },
+    {
+      "element_id": "human-control",
+      "current_node_ids": ["human-control"],
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-reclassification",
+      "gap": "A staged Human Control view exists; it must stop reinforcing the old hierarchy before target alignment is complete."
+    },
+    {
+      "element_id": "donor-quarantine",
+      "current_node_ids": ["component-governance"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-donor-specialisation",
+      "gap": "General component quarantine exists, but donor capability intake and architecture-authority stripping are not explicit."
+    },
+    {
+      "element_id": "donor-registry",
+      "current_node_ids": ["component-governance", "capability-check"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-donor-specialisation",
+      "gap": "Component source and evidence are registered, but bounded donor capability, licence, hidden-authority and Blueprint mapping fields are missing."
+    },
+    {
+      "element_id": "environment-adapters",
+      "current_node_ids": [],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-blueprint-contract",
+      "gap": "Platform adapters exist in source, but the donor-neutral environment boundary and Hermes adapter do not yet implement the target contract."
+    },
+    {
+      "element_id": "cause-research",
+      "current_node_ids": ["cause-research"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-reclassification",
+      "gap": "The method has staged synthetic evidence and must be reclassified from Mechanism to Prop without owning a Step."
+    },
+    {
+      "element_id": "two-sided-review",
+      "current_node_ids": ["two-sided-review"],
+      "implementation_assessment": "partial",
+      "target_alignment": "needs-reclassification",
+      "gap": "The method has staged synthetic evidence and must be reclassified from Mechanism to Prop without owning the debate Step."
+    },
+    {
+      "element_id": "steal",
+      "current_node_ids": [],
+      "implementation_assessment": "implemented",
+      "target_alignment": "needs-blueprint-projection",
+      "gap": "A complete validated dry run now covers baseline, research, donor intake, comparison, Blueprint Mapping, disposition and recovery; Steal is not registered or active."
+    }
+  ]
+}
