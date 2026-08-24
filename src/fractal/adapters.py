@@ -551,6 +551,10 @@ class AdapterBuilder:
                 if source["kind"] in roots
                 else Path(locator).expanduser()
             )
+            if source["kind"] in roots and not path.exists():
+                raise AdapterError(
+                    f"Registered canonical source is missing: {component['component_id']}"
+                )
             if not path.exists() or source["kind"] in {"platform", "protocol"}:
                 continue
             actual = (

@@ -126,6 +126,86 @@ def test_adapter_rejects_multiple_non_completed_projects(tmp_path: Path) -> None
         builder._select_project_snapshot()
 
 
+def test_adapter_rejects_missing_registered_canonical_source(tmp_path: Path) -> None:
+    private = private_workspace(tmp_path / "private-missing-source")
+    registry_path = private / "system" / "components" / "registry.json"
+    registry_path.parent.mkdir(parents=True)
+    registry_path.write_text(
+        json.dumps(
+            {
+                "record_type": "component-registry",
+                "record_version": 3,
+                "system_version": "0.1.0-alpha.8-r1",
+                "candidate_status": "candidate",
+                "components": [
+                    {
+                        "component_id": "missing-canonical-source",
+                        "human_name": "Missing Canonical Source",
+                        "kind": "platform-capability",
+                        "disposition": "fractal-owned-canonical",
+                        "external_identifier": None,
+                        "dependencies": [],
+                        "owner": {
+                            "owner_id": "2canshor/fractal",
+                            "source_controlled_by_owner": True,
+                        },
+                        "source": {
+                            "kind": "fractal-public",
+                            "locator": "missing.py",
+                            "version": "0.1.0-alpha.8-r1",
+                            "content_sha256": "a" * 64,
+                        },
+                        "naming": {
+                            "registry_key_status": "passed",
+                            "external_identifier_status": "not-applicable",
+                            "exemption_reason": None,
+                        },
+                        "permissions": {
+                            "profile": "test",
+                            "operations": ["test"],
+                            "secret_boundary": "none",
+                        },
+                        "trigger": {"mode": "explicit", "description": "test"},
+                        "invocation": {
+                            "automatic_matching": False,
+                            "explicit_invocation": True,
+                        },
+                        "surface_audience": "supporting-capability",
+                        "job_contract": None,
+                        "status": {
+                            "discoverable": True,
+                            "active": True,
+                            "execution": "verified-staged",
+                            "evidence_ids": ["test"],
+                            "claim_receipt": None,
+                        },
+                        "platforms": ["codex"],
+                        "projection": {
+                            "mode": "platform-reference",
+                            "target": "missing.py",
+                            "expected_sha256": "a" * 64,
+                        },
+                        "overlap": {"decision": "none", "with": []},
+                        "recovery": {"removal": "remove", "restore": "restore"},
+                        "verification_evidence": ["test"],
+                    }
+                ],
+            }
+        )
+    )
+    with pytest.raises(AdapterError, match="canonical source is missing"):
+        AdapterBuilder(
+            public_root=ROOT,
+            private_root=private,
+            output_root=tmp_path / "missing-source-output",
+            public_commit="a" * 40,
+            private_commit="b" * 40,
+            system_version="0.1.0-alpha.8-r1-test",
+            legacy_root=None,
+            verify_source_commits=False,
+        )
+
+
 def add_claude_model_route(root: Path) -> None:
     route = root / "adapters" / "claude" / "model-route.json"
     route.parent.mkdir(parents=True)
