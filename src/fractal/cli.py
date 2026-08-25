@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -48,6 +49,13 @@ from fractal.user_surface import (
     load_user_surface,
 )
 from fractal.views import render_project_summary
+from fractal.workplace import (
+    WorkplaceError,
+    ensure_workplace,
+    load_workplace,
+    resolve_workplace_root,
+)
+from fractal.workplace_status import build_workplace_status, render_workplace_status
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -58,6 +66,105 @@ def build_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="action", required=True)
     subparsers.add_parser("version", help="Show the active Fractal system version.")
+    workplace_parser = subparsers.add_parser(
+        "workplace", help="Ensure, validate, or migrate the durable Workplace."
+    )
+    workplace_actions = workplace_parser.add_subparsers(
+        dest="workplace_action", required=True
+    )
+    workplace_ensure = workplace_actions.add_parser(
+        "ensure", help="Load, safely migrate, or create a neutral Workplace."
+    )
+    _add_workplace_root_arguments(workplace_ensure)
+    workplace_validate = workplace_actions.add_parser(
+        "validate", help="Validate the canonical Workplace without changing it."
+    )
+    _add_workplace_root_arguments(workplace_validate)
+    workplace_migrate = workplace_actions.add_parser(
+        "migrate", help="Explicitly migrate the complete legacy Workplace tree."
+    )
+    _add_workplace_root_arguments(workplace_migrate)
+    workplace_migrate.add_argument(
+        "--active-pointer", required=True, type=Path,
+        help="Verified active System Version pointer JSON.",
+    )
+    workplace_migrate.add_argument(
+        "--live-state", required=True, type=Path,
+        help="Verified live runtime state JSON.",
+    )
+    workplace_migrate.add_argument(
+        "--runtime-root", required=True, type=Path,
+        help="Explicit external runtime root used for migration.",
+    )
+    workplace_migrate.add_argument(
+        "--event-root", required=True, type=Path,
+        help="Explicit event-journal root used for migration.",
+    )
+    workplace_migrate.add_argument(
+        "--context-root", action="append", default=[], metavar="NAME=PATH",
+        help="Explicit context source mapping; repeat for each external root.",
+    )
+
+    status_parser = subparsers.add_parser(
+        "status", help="Show the current Workplace and Perspective status."
+    )
+    _add_workplace_root_arguments(status_parser, positional_name="status_root")
+    status_parser.add_argument(
+        "--details", action="store_true", help="Include evidence and component details."
+    )
+    status_parser.add_argument(
+        "--json", action="store_true", help="Render the complete status model as JSON."
+    )
+    status_parser.add_argument(
+        "--public-system",
+        "--public-version",
+        dest="public_system",
+        type=str,
+        help="Optional canonical public System record or version identity.",
+    )
+    status_parser.add_argument(
+        "--active-system",
+        "--active-system-path",
+        dest="active_system",
+        type=Path,
+        help="Optional canonical active System record or pointer.",
+    )
+    status_parser.add_argument(
+        "--candidate-system",
+        "--candidate-system-path",
+        dest="candidate_system",
+        type=Path,
+        help="Optional canonical candidate System record or pointer.",
+    )
+    status_parser.add_argument(
+        "--projects",
+        "--project-root",
+        dest="projects",
+        type=Path,
+        help="Optional canonical Project record or directory.",
+    )
+    status_parser.add_argument(
+        "--live-state",
+        "--runtime-state",
+        "--runtime-root",
+        dest="live_state",
+        type=Path,
+        help="Optional rebuildable live runtime state record.",
+    )
+    status_parser.add_argument(
+        "--components",
+        "--component-registry",
+        dest="components",
+        type=Path,
+        help="Optional Workplace component registry.",
+    )
+    status_parser.add_argument(
+        "--decisions",
+        "--decision-records",
+        dest="decisions",
+        type=Path,
+        help="Optional Workplace decision records.",
+    )
     live_state_parser = subparsers.add_parser(
         "live-state", help="Rebuild or verify the mutable runtime read model."
     )
@@ -104,6 +211,16 @@ def build_parser() -> argparse.ArgumentParser:
     rebuild_parser.add_argument("--catalogue", required=True, type=Path)
     rebuild_parser.add_argument("--database", required=True, type=Path)
     rebuild_parser.add_argument("--maximum-file-bytes", type=int, default=2_000_000)
+    rebuild_parser.add_argument(
+        "--context-root",
+        action="append",
+        default=[],
+        metavar="SCHEME=PATH",
+        help=(
+            "Explicit runtime mapping for a logical context URI; repeat for "
+            "workplace=, system=, or local=."
+        ),
+    )
 
     search_parser = context_actions.add_parser("search", help="Build an auditable context package.")
     search_parser.add_argument("--database", required=True, type=Path)
@@ -239,6 +356,57 @@ def _add_storage_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--runtime-root", required=True, type=Path)
 
 
+def _parse_context_roots(values: Sequence[str]) -> dict[str, Path]:
+    """Parse explicit ``NAME=PATH`` context mappings without path guessing."""
+
+    roots: dict[str, Path] = {}
+    for value in values:
+        if "=" not in value:
+            raise ValueError(f"Invalid --context-root {value!r}; expected scheme=path")
+        scheme, raw_path = value.split("=", 1)
+        scheme = scheme.strip().lower().removesuffix("://")
+        if scheme.endswith("_root"):
+            scheme = scheme[:-5]
+        raw_path = raw_path.strip()
+        if not scheme or not re.fullmatch(r"[a-z][a-z0-9._-]{0,63}", scheme):
+            raise ValueError(
+                f"Invalid --context-root name {scheme!r}; use a lowercase logical name"
+            )
+        if not raw_path:
+            raise ValueError(f"Missing path for --context-root {scheme}=...")
+        if scheme in roots:
+            raise ValueError(f"Duplicate --context-root mapping for {scheme}")
+        roots[scheme] = Path(raw_path).expanduser()
+    return roots
+
+
+def _add_workplace_root_arguments(
+    parser: argparse.ArgumentParser,
+    *,
+    positional_name: str = "workplace_root_argument",
+) -> None:
+    """Add a portable Workplace root without defaulting to a user path early.
+
+    The positional spelling keeps the small ``fractal workplace ensure ROOT``
+    command convenient, while the option aliases make scripts explicit and
+    allow ``status`` to share the same path contract.  Resolution itself is
+    deferred to :func:`resolve_workplace_root`, which honours
+    ``FRACTAL_WORKPLACE``.
+    """
+
+    parser.add_argument(positional_name, nargs="?", type=Path)
+    parser.add_argument(
+        "--root",
+        "--path",
+        "--workplace",
+        "--workplace-root",
+        "--workspace-root",
+        dest="workplace_root",
+        type=Path,
+        help="Explicit Workplace root (otherwise FRACTAL_WORKPLACE or the default is used).",
+    )
+
+
 def _add_codex_runtime_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--registry", required=True, type=Path)
     parser.add_argument("--cwd", type=Path, default=Path.cwd())
@@ -260,12 +428,372 @@ def _write_optional_json(path: Path | None, value: dict) -> None:
     )
 
 
+def _argument_workplace_root(args: argparse.Namespace, *, positional_name: str) -> Path:
+    """Resolve a command's explicit/positional/env Workplace root."""
+
+    explicit = getattr(args, "workplace_root", None)
+    positional = getattr(args, positional_name, None)
+    return resolve_workplace_root(explicit or positional)
+
+
+def _first_existing_path(root: Path, *relative_paths: str) -> Path:
+    """Choose the first known canonical location, retaining a useful fallback."""
+
+    candidates = [root / relative for relative in relative_paths]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
+def _workplace_version_input(
+    root: Path,
+    workplace: object | None,
+    kind: str,
+) -> tuple[object | None, list[str]]:
+    """Read a pointer target so candidate lifecycle state is not guessed.
+
+    The canonical Workplace stores compact pointers while the status model
+    accepts a version record.  Resolving the target here lets an activated or
+    historical candidate disappear from the unresolved decision view, while a
+    genuine candidate remains visible.  If a pointer target is broken, the
+    pointer is still passed through so the renderer can show its evidence.
+    """
+
+    pointer_names = (
+        ("active-version.json", "active.json")
+        if kind == "active"
+        else ("candidate-version.json", "candidate.json")
+    )
+    pointer_path = next(
+        (root / "system" / name for name in pointer_names if (root / "system" / name).is_file()),
+        root / "system" / pointer_names[0],
+    )
+    if not pointer_path.is_file():
+        return None, []
+    try:
+        pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return pointer_path, []
+    if not isinstance(pointer, dict):
+        return pointer_path, []
+    uri = pointer.get("record_uri")
+    target: Path | None = None
+    if isinstance(uri, str) and uri.startswith("workplace://"):
+        relative = uri.removeprefix("workplace://").lstrip("/")
+        if relative:
+            if workplace is not None and hasattr(workplace, "resolve"):
+                try:
+                    target = workplace.resolve(uri)
+                except (OSError, ValueError):
+                    return pointer_path, [
+                        f"Workplace {kind} System pointer is invalid: {pointer_path.resolve()}"
+                    ]
+            else:
+                candidate = root / relative
+                try:
+                    candidate.resolve().relative_to(root.resolve())
+                except ValueError:
+                    return pointer_path, [
+                        f"Workplace {kind} System pointer is invalid: {pointer_path.resolve()}"
+                    ]
+                target = candidate
+    if target is None and isinstance(pointer.get("version"), str):
+        target = root / "system" / "versions" / f"{pointer['version']}.json"
+    if target is None or not target.is_file():
+        missing = target or root / "system" / "versions"
+        return pointer_path, [
+            f"Workplace {kind} System record is missing: {missing.resolve()}"
+        ]
+    try:
+        record = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return pointer_path, [
+            f"Workplace {kind} System record is invalid: {target.resolve()}"
+        ]
+    if not isinstance(record, dict):
+        return pointer_path, [
+            f"Workplace {kind} System record is not an object: {target.resolve()}"
+        ]
+    record = dict(record)
+    record["source_path"] = str(target.resolve())
+    return record, []
+
+
+def _status_inputs(
+    args: argparse.Namespace,
+    root: Path,
+    workplace: object | None,
+) -> tuple[dict, list[str]]:
+    """Resolve canonical status inputs while keeping all reads side-effect free."""
+
+    setup_issues: list[str] = []
+    explicit_public = getattr(args, "public_system", None)
+    public_system: object = explicit_public or SYSTEM_VERSION
+    if explicit_public is None:
+        for relative in (
+            "system/public-version.json",
+            "system/public.json",
+            "public-version.json",
+            "public.json",
+        ):
+            candidate = root / relative
+            if candidate.is_file():
+                public_system = candidate
+                break
+
+    active = getattr(args, "active_system", None)
+    candidate = getattr(args, "candidate_system", None)
+    if active is None:
+        active, active_issues = _workplace_version_input(root, workplace, "active")
+        setup_issues.extend(active_issues)
+    if candidate is None:
+        candidate, candidate_issues = _workplace_version_input(root, workplace, "candidate")
+        setup_issues.extend(candidate_issues)
+
+    projects = getattr(args, "projects", None)
+    if projects is None:
+        projects_path = _first_existing_path(root, "projects", "project-records")
+        projects = projects_path if projects_path.exists() else []
+    live_state = getattr(args, "live_state", None)
+    if live_state is not None and live_state.is_dir():
+        live_state = live_state / "live-state" / "current.json"
+    if live_state is None:
+        live_state_path = _first_existing_path(
+            root,
+            ".runtime/live-state/current.json",
+            ".runtime/current.json",
+            "runtime/live-state/current.json",
+            "runtime/current.json",
+            "live-state/current.json",
+        )
+        live_state = live_state_path if live_state_path.is_file() else None
+    components = getattr(args, "components", None)
+    if components is None:
+        components_path = _first_existing_path(
+            root,
+            "system/components/registry.json",
+            "components/registry.json",
+        )
+        components = components_path if components_path.is_file() else None
+    decisions = getattr(args, "decisions", None)
+    if decisions is None:
+        decisions_path = _first_existing_path(root, "decisions", "system/decisions")
+        decisions = decisions_path if decisions_path.exists() else None
+
+    status = build_workplace_status(
+        public_system=public_system,
+        workplace_active=active,
+        workplace_candidate=candidate,
+        projects=projects,
+        live_state=live_state,
+        components=components,
+        decisions=decisions,
+        workplace_root=root,
+    )
+    return status, setup_issues
+
+
+def _append_status_issue(status: dict, issue: str) -> None:
+    """Append one CLI setup issue to the read-only status projection."""
+
+    if issue not in status.setdefault("issues", []):
+        status["issues"].append(issue)
+    workplace = status.setdefault("workplace", {})
+    workplace_issues = workplace.setdefault("issues", [])
+    if issue not in workplace_issues:
+        workplace_issues.append(issue)
+    workplace["status"] = "issue"
+
+
+def _neutral_first_run(status: dict, root: Path, workplace: object | None) -> bool:
+    """Return whether only expected missing optional state exists on first run."""
+
+    if workplace is None or getattr(workplace, "record", {}).get("identity") != {"kind": "neutral"}:
+        return False
+    if any(
+        (root / "system" / name).exists()
+        for name in (
+            "active-version.json",
+            "active.json",
+            "candidate-version.json",
+            "candidate.json",
+        )
+    ):
+        return False
+    expected_prefixes = (
+        "Workplace active System record is missing",
+        "Project record is missing:",
+        "Live runtime state is missing",
+    )
+    issues = status.get("issues", [])
+    return bool(issues) and all(
+        isinstance(issue, str) and issue.startswith(expected_prefixes) for issue in issues
+    )
+
+
+def _render_cli_status(status: dict, *, details: bool, as_json: bool) -> str:
+    """Render the status model with the human-facing Workplace/Perspective label."""
+
+    if as_json:
+        return render_workplace_status(status, format="json")
+    rendered = render_workplace_status(status, details=details)
+    lines = rendered.rstrip("\n").split("\n")
+    project = status.get("project", {}).get("current")
+    perspective = (
+        project.get("title") or project.get("project_id")
+        if isinstance(project, dict)
+        else "None"
+    )
+    for index, line in enumerate(lines):
+        if line.startswith("Project "):
+            lines.insert(index, f"Perspective {perspective}")
+            break
+    return "\n".join(lines) + "\n"
+
+
+def _status_requires_nonzero(
+    status: dict,
+    *,
+    setup_error: Exception | None,
+    setup_issues: list[str],
+    neutral_first_run: bool,
+) -> bool:
+    """Keep exit codes truthful without making an absent runtime cache fatal."""
+
+    if setup_error is not None or setup_issues:
+        return True
+    for issue in status.get("issues", []):
+        if not isinstance(issue, str):
+            return True
+        if neutral_first_run and issue.startswith(
+            ("Workplace active System record is missing", "Live runtime state is missing")
+        ):
+            continue
+        # The live cache is rebuildable and may legitimately be absent before
+        # the first real Project run.  Integrity, ambiguity, stale canonical
+        # sources, and malformed durable records remain blocking.
+        lower = issue.casefold()
+        if lower == "live runtime state is missing":
+            continue
+        if "missing" in lower:
+            return True
+        if lower.startswith(("project record", "project records")):
+            return True
+        if any(
+            marker in lower
+            for marker in (
+                "ambiguous",
+                "invalid",
+                "integrity",
+                "stale",
+                "does not match",
+                "not explicitly identify",
+                "not explicitly active",
+                "missing system version",
+                "digest mismatch",
+                "missing system record:",
+                "missing project record",
+                "not an object",
+            )
+        ):
+            return True
+    return False
+
+
+def _run_workplace_command(args: argparse.Namespace) -> int:
+    root = _argument_workplace_root(args, positional_name="workplace_root_argument")
+    try:
+        if args.workplace_action == "ensure":
+            workplace = ensure_workplace(root)
+            print(f"Workplace ready: {workplace.record_path}")
+            return 0
+        if args.workplace_action == "validate":
+            # Validation is deliberately read-only: a legacy source remains
+            # untouched until the explicit migrate route is selected.
+            workplace = load_workplace(root, migrate_legacy=False)
+            workplace.validate_version_state()
+            print(f"Workplace valid: {workplace.record_path}")
+            return 0
+        if args.workplace_action == "migrate":
+            # The user-facing route is the transactional whole-tree migration.
+            # Keep the legacy single-file helper available only to compatibility
+            # callers; it must never be selected by this command.
+            from fractal.workplace_migration import migrate_workplace_tree
+
+            result = migrate_workplace_tree(
+                root,
+                active_pointer_path=args.active_pointer,
+                live_state_path=args.live_state,
+                runtime_root=args.runtime_root,
+                event_root=args.event_root,
+                context_roots=_parse_context_roots(args.context_root),
+            )
+            print(
+                "Workplace migration verified: "
+                f"changed={result.changed} idempotent={result.idempotent} "
+                f"operations={','.join(result.operations) or 'none'}"
+            )
+            return 0
+    except (OSError, WorkplaceError, ValueError, RuntimeError) as error:
+        print(f"Workplace issue: {error}")
+        return 2
+    raise AssertionError(f"Unhandled Workplace action: {args.workplace_action}")
+
+
+def _run_status_command(args: argparse.Namespace) -> int:
+    root = _argument_workplace_root(args, positional_name="status_root")
+    workplace = None
+    setup_error: Exception | None = None
+    try:
+        # Status has one intentionally narrow first-run write: ensure_workplace
+        # creates a neutral canonical root and verifies its read-back.  All
+        # status-source reads and rendering below remain read-only.
+        workplace = ensure_workplace(root)
+    except (OSError, WorkplaceError, ValueError) as error:
+        setup_error = error
+
+    try:
+        status, setup_issues = _status_inputs(args, root, workplace)
+    except (OSError, ValueError, TypeError) as error:
+        print(f"Workplace status issue: {error}")
+        return 2
+    for issue in setup_issues:
+        _append_status_issue(status, issue)
+    if setup_error is not None:
+        _append_status_issue(status, str(setup_error))
+
+    print(
+        _render_cli_status(
+            status,
+            details=args.details,
+            as_json=args.json,
+        ),
+        end="",
+    )
+    neutral_first_run = _neutral_first_run(status, root, workplace)
+    return (
+        2
+        if _status_requires_nonzero(
+            status,
+            setup_error=setup_error,
+            setup_issues=setup_issues,
+            neutral_first_run=neutral_first_run,
+        )
+        else 0
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the Fractal command-line interface."""
     args = build_parser().parse_args(argv)
     if args.action == "version":
         print(SYSTEM_VERSION)
         return 0
+    if args.action == "workplace":
+        return _run_workplace_command(args)
+    if args.action == "status":
+        return _run_status_command(args)
     if args.action == "live-state":
         state_path = args.state.expanduser()
         store = LiveRuntimeStateStore(state_path.parent.parent, state_path=state_path)
@@ -311,11 +839,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
     if args.action == "context":
         if args.context_action == "rebuild":
-            report = rebuild_context_index(
-                args.catalogue,
-                args.database,
-                maximum_file_bytes=args.maximum_file_bytes,
-            )
+            try:
+                context_roots = _parse_context_roots(args.context_root)
+                report = rebuild_context_index(
+                    args.catalogue,
+                    args.database,
+                    maximum_file_bytes=args.maximum_file_bytes,
+                    roots=context_roots,
+                )
+            except (OSError, TypeError, ValueError) as error:
+                print(f"Context rebuild issue: {error}")
+                return 2
             print(json.dumps(report, ensure_ascii=False, sort_keys=True))
             return 0
         if args.context_action == "search":

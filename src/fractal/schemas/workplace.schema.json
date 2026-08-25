@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/2canshor/fractal/schemas/workplace.schema.json",
+  "title": "Fractal Workplace",
+  "description": "Portable neutral root record for durable Workplace state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "record_type",
+    "record_version",
+    "workplace_id",
+    "identity",
+    "locations",
+    "system",
+    "runtime"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "record_type": {
+      "const": "fractal-workplace"
+    },
+    "record_version": {
+      "const": 1
+    },
+    "workplace_id": {
+      "const": "neutral"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "const": "neutral"
+        }
+      }
+    },
+    "locations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record",
+        "projects",
+        "project_records",
+        "active_projects",
+        "completed_projects",
+        "profile",
+        "authority",
+        "memory",
+        "decisions",
+        "system",
+        "system_versions",
+        "system_reviews",
+        "components",
+        "runtime"
+      ],
+      "properties": {
+        "record": {"$ref": "#/$defs/workplace_uri"},
+        "projects": {"$ref": "#/$defs/workplace_uri"},
+        "project_records": {"$ref": "#/$defs/workplace_uri"},
+        "active_projects": {"$ref": "#/$defs/workplace_uri"},
+        "completed_projects": {"$ref": "#/$defs/workplace_uri"},
+        "profile": {"$ref": "#/$defs/workplace_uri"},
+        "authority": {"$ref": "#/$defs/workplace_uri"},
+        "memory": {"$ref": "#/$defs/workplace_uri"},
+        "decisions": {"$ref": "#/$defs/workplace_uri"},
+        "system": {"$ref": "#/$defs/workplace_uri"},
+        "system_versions": {"$ref": "#/$defs/workplace_uri"},
+        "system_reviews": {"$ref": "#/$defs/workplace_uri"},
+        "components": {"$ref": "#/$defs/workplace_uri"},
+        "runtime": {"$ref": "#/$defs/workplace_uri"}
+      }
+    },
+    "system": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version_records",
+        "active_pointer",
+        "candidate_pointer",
+        "decisions",
+        "reviews",
+        "components"
+      ],
+      "properties": {
+        "version_records": {"$ref": "#/$defs/workplace_uri"},
+        "active_pointer": {"$ref": "#/$defs/workplace_uri"},
+        "candidate_pointer": {"$ref": "#/$defs/workplace_uri"},
+        "decisions": {"$ref": "#/$defs/workplace_uri"},
+        "reviews": {"$ref": "#/$defs/workplace_uri"},
+        "components": {"$ref": "#/$defs/workplace_uri"}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["storage_class", "committed", "rebuildable"],
+      "properties": {
+        "storage_class": {"const": "local-ephemeral"},
+        "committed": {"const": false},
+        "rebuildable": {"const": true}
+      }
+    },
+    "migration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_record_type",
+        "source_record_version",
+        "source_sha256",
+        "candidate_duplicate_resolved"
+      ],
+      "properties": {
+        "source_record_type": {"type": "string", "minLength": 1},
+        "source_record_version": {"type": "integer", "minimum": 1},
+        "source_sha256": {"$ref": "#/$defs/sha256"},
+        "candidate_duplicate_resolved": {"type": "boolean"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "workplace_uri": {
+      "type": "string",
+      "pattern": "^workplace://(?:[A-Za-z0-9._~/-]+)?$"
+    }
+  }
+}

@@ -6,11 +6,35 @@
   "additionalProperties": false,
   "required": ["record_type", "record_version", "sources"],
   "properties": {
+    "$schema": {"type": "string", "format": "uri"},
     "record_type": {"const": "context-catalogue"},
     "record_version": {"const": 1},
     "sources": {
       "type": "array",
       "items": {"$ref": "#/$defs/source"}
+    },
+    "migration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_record_type",
+        "source_record_version",
+        "source_sha256",
+        "legacy_path_sources",
+        "destination"
+      ],
+      "properties": {
+        "source_record_type": {"type": "string", "minLength": 1},
+        "source_record_version": {"type": "integer", "minimum": 1},
+        "source_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "legacy_path_sources": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        },
+        "destination": {"const": "context/sources.json"},
+        "read_compatibility": {"const": true}
+      }
     }
   },
   "$defs": {
@@ -19,7 +43,6 @@
       "additionalProperties": false,
       "required": [
         "root_id",
-        "path",
         "source_type",
         "sensitivity",
         "instruction_authority",
@@ -28,8 +51,22 @@
         "applicability",
         "include_suffixes"
       ],
+      "oneOf": [
+        {
+          "required": ["locator"],
+          "not": {"required": ["path"]}
+        },
+        {
+          "required": ["path"],
+          "not": {"required": ["locator"]}
+        }
+      ],
       "properties": {
         "root_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+        "locator": {
+          "type": "string",
+          "pattern": "^(workplace|system|local)://(?:[A-Za-z0-9._~!$&'()*+,;=:@%/-]+)?$"
+        },
         "path": {"type": "string", "minLength": 1},
         "source_type": {
           "enum": ["guide", "canonical_record", "accepted_policy", "memory_candidate", "reference"]

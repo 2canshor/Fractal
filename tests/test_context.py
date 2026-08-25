@@ -3,11 +3,16 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from fractal.cli import main
 from fractal.context import (
+    ContextSourceResolver,
     RetrievalRequest,
     assemble_context_package,
+    migrate_context_catalogue,
     rebuild_context_index,
+    resolve_context_source,
 )
 
 
@@ -198,3 +203,195 @@ def test_context_cli_rebuilds_and_searches(tmp_path: Path, capsys) -> None:
     )
     package = json.loads(capsys.readouterr().out)
     assert package["matches"][0]["source_id"] == "guides:retrieval.txt"
+
+
+def test_context_cli_requires_explicit_logical_root_mapping(tmp_path: Path, capsys) -> None:
+    local = tmp_path / "local"
+    local.mkdir()
+    (local / "source.txt").write_text("Title: Explicit mapping\nLogical context")
+    catalogue = tmp_path / "logical-catalogue.json"
+    catalogue.write_text(
+        json.dumps(
+            {
+                "record_type": "context-catalogue",
+                "record_version": 1,
+                "sources": [
+                    {
+                        "root_id": "local-source",
+                        "locator": "local://",
+                        "source_type": "guide",
+                        "sensitivity": "public",
+                        "instruction_authority": "reference_only",
+                        "personalisation": False,
+                        "topics": ["logical"],
+                        "applicability": {
+                            "task_types": [],
+                            "keywords": [],
+                            "project_ids": [],
+                        },
+                        "include_suffixes": [".txt"],
+                    }
+                ],
+            }
+        )
+    )
+    database = tmp_path / "logical.sqlite"
+    database.write_bytes(b"existing-index")
+
+    assert main(
+        [
+            "context",
+            "rebuild",
+            "--catalogue",
+            str(catalogue),
+            "--database",
+            str(database),
+        ]
+    ) == 2
+    assert "No local resolution root configured for local://" in capsys.readouterr().out
+    assert database.read_bytes() == b"existing-index"
+
+    assert main(
+        [
+            "context",
+            "rebuild",
+            "--catalogue",
+            str(catalogue),
+            "--database",
+            str(database),
+            "--context-root",
+            f"local={local}",
+        ]
+    ) == 0
+    assert json.loads(capsys.readouterr().out)["indexed"] == 1
+
+
+def test_named_local_context_root_resolves_nested_logical_locator(tmp_path: Path, capsys) -> None:
+    guides = tmp_path / "guides"
+    guides.mkdir()
+    (guides / "reference.txt").write_text("Title: Named root\nPortable source")
+    catalogue = tmp_path / "named-catalogue.json"
+    catalogue.write_text(
+        json.dumps(
+            {
+                "record_type": "context-catalogue",
+                "record_version": 1,
+                "sources": [
+                    {
+                        "root_id": "guides",
+                        "locator": "local://guides",
+                        "source_type": "guide",
+                        "sensitivity": "public",
+                        "instruction_authority": "reference_only",
+                        "personalisation": False,
+                        "topics": ["named"],
+                        "applicability": {
+                            "task_types": [],
+                            "keywords": [],
+                            "project_ids": [],
+                        },
+                        "include_suffixes": [".txt"],
+                    }
+                ],
+            }
+        )
+    )
+    database = tmp_path / "named.sqlite"
+    assert main(
+        [
+            "context",
+            "rebuild",
+            "--catalogue",
+            str(catalogue),
+            "--database",
+            str(database),
+            "--context-root",
+            f"guides={guides}",
+        ]
+    ) == 0
+    assert json.loads(capsys.readouterr().out)["indexed"] == 1
+
+
+def test_logical_source_locators_resolve_from_one_explicit_root_set(
+    tmp_path: Path,
+) -> None:
+    workplace = tmp_path / "workplace"
+    system = tmp_path / "system"
+    local = tmp_path / "local"
+    for root in (workplace, system, local):
+        root.mkdir()
+    (workplace / "docs").mkdir()
+    (workplace / "docs" / "portable.txt").write_text("portable context")
+    (system / "policy.json").write_text("{}")
+    (local / "runtime.txt").write_text("derived state")
+
+    resolver = ContextSourceResolver.from_roots(
+        {"workplace": workplace, "system": system, "local": local}
+    )
+    assert resolver.resolve("workplace://docs") == workplace / "docs"
+    assert resolve_context_source("system://policy.json", resolver.roots) == (
+        system / "policy.json"
+    )
+    assert resolver.resolve("local://runtime.txt") == local / "runtime.txt"
+    assert resolver.resolve("local://local/runtime.txt") == local / "runtime.txt"
+    with pytest.raises(ValueError, match="parent traversal"):
+        resolver.resolve("workplace://../outside")
+    with pytest.raises(ValueError, match="No local resolution root"):
+        resolve_context_source("system://policy.json", {"workplace": workplace})
+
+
+def test_legacy_catalogue_migration_is_portable_and_idempotent(tmp_path: Path) -> None:
+    workplace = tmp_path / "workplace"
+    guides = workplace / "guides"
+    guides.mkdir(parents=True)
+    (guides / "portable.txt").write_text("portable context")
+    legacy = workplace / "memory" / "catalogue" / "context-catalogue.json"
+    legacy.parent.mkdir(parents=True)
+    write_catalogue(legacy, guides, workplace / "profile.json")
+    (workplace / "profile.json").write_text("{}")
+
+    migrated = migrate_context_catalogue(legacy, roots={"workplace": workplace})
+    target = workplace / "context" / "sources.json"
+    serialized = target.read_text(encoding="utf-8")
+    assert target.exists()
+    assert "locator" in migrated["sources"][0]
+    assert "path" not in migrated["sources"][0]
+    assert str(workplace) not in serialized
+    assert migrated == migrate_context_catalogue(legacy, roots={"workplace": workplace})
+    assert legacy.exists()
+
+
+def test_legacy_external_context_migration_uses_named_local_locator(tmp_path: Path) -> None:
+    guides = tmp_path / "guides"
+    guides.mkdir()
+    source = guides / "portable.txt"
+    source.write_text("Title: External guide\nMapped explicitly")
+    legacy = tmp_path / "legacy.json"
+    legacy.write_text(
+        json.dumps(
+            {
+                "record_type": "context-catalogue",
+                "record_version": 1,
+                "sources": [
+                    {
+                        "root_id": "guides",
+                        "path": str(guides),
+                        "source_type": "guide",
+                        "sensitivity": "public",
+                        "instruction_authority": "reference_only",
+                        "personalisation": False,
+                        "topics": ["external"],
+                        "applicability": {
+                            "task_types": [],
+                            "keywords": [],
+                            "project_ids": [],
+                        },
+                        "include_suffixes": [".txt"],
+                    }
+                ],
+            }
+        )
+    )
+
+    migrated = migrate_context_catalogue(legacy, roots={"guides": guides})
+    assert migrated["sources"][0]["locator"] == "local://guides"

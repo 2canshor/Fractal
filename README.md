@@ -30,7 +30,7 @@ The public repository contains only reusable architecture, schemas, deterministi
 
 ## Current Status
 
-The current correction compiles the New Blueprint into the active workflow and retains the complete reusable Steal Method without starting Initialized Steal or a Hermes environment. Provider and Tool Skills remain available as maintained internal methods without becoming separate user jobs. A correction remains a candidate until an explicit `/version` order completes build, activation, fresh-turn verification, and exact publication. The repository does not yet make a stability or compatibility promise.
+Corrections follow one general lifecycle: a correction remains a candidate until an explicit `/version` order completes build, activation, fresh-turn verification, and exact publication. Provider and Tool Skills remain available as maintained internal methods without becoming separate user jobs. The repository does not yet make a stability or compatibility promise.
 
 Fractal registers every active or discoverable Skill, Hook, agent role, MCP, Plugin, App, Tool, and adapter individually. Use `fractal components show` for the human-readable registered view and `fractal codex inspect` to compare it with the live Codex runtime. Registration, loading, callability, and successful execution are reported separately. A component being installed or present in a cache is not proof that it is active or working.
 
