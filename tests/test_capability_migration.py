@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import json
 from importlib.resources import files
-from pathlib import Path
 
 import pytest
 
@@ -162,19 +161,28 @@ def current_blueprint_mapping() -> dict:
     )
 
 
-def user_surface_policy() -> dict:
-    return json.loads(
-        (
-            Path("/")
-            / "Users"
-            / "carsonchan"
-            / "Fractal Workspace"
-            / "system"
-            / "components"
-            / "user-surface-policy.json"
-        )
-        .read_text(encoding="utf-8")
-    )
+def legacy_user_surface_fixture() -> dict:
+    """Return the policy shape needed by migration without reading private state."""
+
+    return {
+        "record_type": "user-surface-policy",
+        "record_version": 1,
+        "platform": "codex",
+        "entries": [
+            {"entry_id": "align", "component_id": "align", "interface_type": "command"},
+            {"entry_id": "assess", "component_id": "assess", "interface_type": "command"},
+            {"entry_id": "build", "component_id": "build", "interface_type": "action"},
+            {"entry_id": "find", "component_id": "find", "interface_type": "action"},
+            {"entry_id": "fix", "component_id": "fix", "interface_type": "action"},
+            {"entry_id": "learn", "component_id": "learn", "interface_type": "command"},
+            {"entry_id": "version", "component_id": "version", "interface_type": "command"},
+        ],
+        "workflows": [],
+        "dot_groups": [
+            {"group_id": "assurance"},
+            {"group_id": "lifecycle"},
+        ],
+    }
 
 
 def test_full_legacy_action_list_is_removed_or_independently_reinduced() -> None:
@@ -406,7 +414,7 @@ def test_compiler_graph_rejects_raw_sources_and_true_boundary_receipts() -> None
 
 def test_actual_user_surface_fallback_audits_actions_commands_and_old_counts() -> None:
     graph = compiled_graph()
-    policy = user_surface_policy()
+    policy = legacy_user_surface_fixture()
     policy["workflows"] = [
         {"workflow_id": "legacy-one", "status": "active"},
         {"workflow_id": "legacy-two", "status": "active"},
