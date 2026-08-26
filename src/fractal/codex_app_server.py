@@ -273,6 +273,15 @@ def _canonical_hook_event_label(value: str) -> str:
     return canonical
 
 
+def _canonical_hook_hash(value: str) -> str:
+    canonical = value.removeprefix("sha256:")
+    if len(canonical) != 64 or any(
+        character not in "0123456789abcdef" for character in canonical.casefold()
+    ):
+        raise CodexAppServerError("Live Hook returned an invalid current hash")
+    return canonical.casefold()
+
+
 def _all_mcp_status(client: CodexAppServerClient) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     cursor: str | None = None
@@ -1035,7 +1044,9 @@ def trust_registered_codex_hooks(
         "hook_events": sorted(
             {_canonical_hook_event_label(hook["eventName"]) for hook in verified_hooks}
         ),
-        "trusted_hashes": sorted(hook["currentHash"] for hook in verified_hooks),
+        "trusted_hashes": sorted(
+            {_canonical_hook_hash(hook["currentHash"]) for hook in verified_hooks}
+        ),
         "transaction": transaction,
         "persistent_system_version_activated": False,
     }

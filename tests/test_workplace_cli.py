@@ -406,16 +406,8 @@ def test_status_suppresses_activated_candidate_and_rejects_ambiguous_state(
     tmp_path: Path, capsys
 ) -> None:
     root = tmp_path / "candidate"
+    _healthy_workplace(root)
     workplace = create_workplace(root)
-    workplace.write_version_record(
-        {
-            "record_type": "system-version",
-            "record_version": 1,
-            "version": SYSTEM_VERSION,
-            "status": "active",
-        }
-    )
-    workplace.set_version_pointer("active", SYSTEM_VERSION)
     workplace.set_version_pointer("candidate", SYSTEM_VERSION)
 
     assert main(["status", "--root", str(root), "--details"]) == 0

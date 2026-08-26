@@ -399,7 +399,7 @@ def test_hook_trust_report_uses_canonical_event_labels(tmp_path: Path) -> None:
         "sourcePath": str(codex_home / "hooks.json"),
         "enabled": True,
         "trustStatus": "trusted",
-        "currentHash": "a" * 64,
+        "currentHash": "sha256:" + "a" * 64,
     }
     before = {
         "config": {"hooks": {"state": {}}},
@@ -408,7 +408,9 @@ def test_hook_trust_report_uses_canonical_event_labels(tmp_path: Path) -> None:
     after = {
         "config": {
             "hooks": {
-                "state": {"pre-tool-use-a": {"trusted_hash": "a" * 64}}
+                "state": {
+                    "pre-tool-use-a": {"trusted_hash": "sha256:" + "a" * 64}
+                }
             }
         },
         "layers": [{"name": {"type": "user"}, "version": "v2"}],
@@ -447,6 +449,7 @@ def test_hook_trust_report_uses_canonical_event_labels(tmp_path: Path) -> None:
     )
 
     assert report["hook_events"] == ["PreToolUse"]
+    assert report["trusted_hashes"] == ["a" * 64]
 
 
 def test_config_projection_audit_exposes_only_activation_flags() -> None:
