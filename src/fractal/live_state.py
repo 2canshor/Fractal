@@ -174,6 +174,8 @@ class LiveRuntimeStateStore:
             "current_phase": record["plan"].get("current_phase"),
             "source_path": str(record_path),
             "source_sha256": actual,
+            "source_hash_method": "canonical-json-value-sha256",
+            "source_file_sha256": _file_sha256(record_path),
         }
 
     @staticmethod
@@ -218,6 +220,7 @@ class LiveRuntimeStateStore:
             "manifest_sha256": expected_manifest_sha,
             "source_path": str(active_pointer_path),
             "source_sha256": _file_sha256(active_pointer_path),
+            "source_hash_method": "raw-file-sha256",
         }
 
     def _verify_sources(
@@ -229,9 +232,21 @@ class LiveRuntimeStateStore:
     ) -> None:
         observed_project = self._project_state(project_record_path)
         observed_version = self._system_version_state(active_pointer_path)
-        if state.get("project") != observed_project:
+        stored_project = state.get("project")
+        legacy_project = {
+            key: value
+            for key, value in observed_project.items()
+            if key not in {"source_hash_method", "source_file_sha256"}
+        }
+        if stored_project != observed_project and stored_project != legacy_project:
             raise LiveRuntimeStateError("Live Project state became stale during verification")
-        if state.get("system_version") != observed_version:
+        stored_version = state.get("system_version")
+        legacy_version = {
+            key: value
+            for key, value in observed_version.items()
+            if key != "source_hash_method"
+        }
+        if stored_version != observed_version and stored_version != legacy_version:
             raise LiveRuntimeStateError(
                 "Live System Version state became stale during verification"
             )

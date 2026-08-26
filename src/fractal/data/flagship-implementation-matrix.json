@@ -282,12 +282,12 @@
     },
     {
       "element_id": "steal",
-      "local_name": "Steal",
+      "local_name": "Adapt",
       "decision": "adopted-local-adaptation",
       "adopted_source_ids": ["distilly", "hermes-agent"],
       "evaluated_source_ids": ["hermes-agent-self-evolution", "hermes-dojo"],
       "implementation_modules": ["fractal.steal", "fractal.self_improvement"],
-      "comparison_summary": "Portable method extraction plus need-led immutable source snapshots fit Steal; persona recreation, autonomous mutation and unlicensed evolution code do not.",
+      "comparison_summary": "Portable method extraction plus need-led immutable source snapshots fit Adapt; persona recreation, autonomous mutation and unlicensed evolution code do not.",
       "rejected_behaviour": ["persona recreation", "automatic fixer", "automatic promotion", "runtime installer dependency"],
       "context_cost_tokens": 0,
       "recovery": "Delete inactive source snapshots and reject staged method candidates; active Fractal remains."

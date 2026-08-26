@@ -5,12 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 from fractal.blueprint import load_blueprint
+from fractal.blueprint_audit import load_blueprint_implementation_map
 from fractal.flagship import load_flagship_implementation_matrix
 
 
 def build_continuous_improvement_purpose_receipt() -> dict[str, Any]:
     """Return the exact Element-to-Flow-to-Protagonist-to-purpose paths."""
     blueprint = load_blueprint()
+    implementation = load_blueprint_implementation_map()
     flagship = load_flagship_implementation_matrix()
     source_decisions = {
         entry["element_id"]: entry["decision"] for entry in flagship["entries"]
@@ -34,6 +36,17 @@ def build_continuous_improvement_purpose_receipt() -> dict[str, Any]:
         }
         for element_id, flow_ids in downstream.items()
     }
+    responsibility_paths = {
+        item["responsibility_id"]: {
+            "human_name": item["human_name"],
+            "primary_element_id": item["primary_element_id"],
+            "flows": item["flow_ids"],
+            "path": item["continuous_improvement_path"],
+            "apple_alignment": "deterministic-validated-human-delight-pending",
+            "claim_boundary": item["claim_boundary"],
+        }
+        for item in implementation["responsibility_mappings"]
+    }
     return {
         "record_type": "continuous-improvement-purpose-receipt",
         "record_version": 1,
@@ -41,6 +54,7 @@ def build_continuous_improvement_purpose_receipt() -> dict[str, Any]:
         "sole_protagonist": "system-review",
         "flow_owner": blueprint["flows"]["owner"],
         "element_paths": element_paths,
+        "responsibility_paths": responsibility_paths,
         "blueprint_change_path": [
             "blueprint-change-rules",
             "map-implementations-to-blueprint",
@@ -90,6 +104,10 @@ def render_continuous_improvement_purpose_audit() -> str:
         f"- One purpose: `{receipt['purpose']}`",
         f"- Sole Protagonist: `{receipt['sole_protagonist']}`",
         f"- Classified Library Elements with a Flow path: `{len(receipt['element_paths'])}`",
+        (
+            "- Persistent responsibilities with the same purpose path: "
+            f"`{len(receipt['responsibility_paths'])}`"
+        ),
         f"- Unrelated retained change groups: `{len(receipt['unrelated_change_groups'])}`",
         "",
         "## Element paths",
@@ -101,6 +119,22 @@ def render_continuous_improvement_purpose_audit() -> str:
         lines.append(
             f"| `{element_id}` | {', '.join(path['flows'])} | "
             f"`{path['flagship_decision']}` | `{path['owner']}` | `{path['purpose']}` |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Persistent responsibility paths",
+            "",
+            "| Responsibility | Primary Element | Flows | Review path | Apple | Claim boundary |",
+            "|---|---|---|---|---|---|",
+        ]
+    )
+    for responsibility_id, path in receipt["responsibility_paths"].items():
+        lines.append(
+            f"| `{responsibility_id}` {path['human_name']} | "
+            f"`{path['primary_element_id']}` | {', '.join(path['flows'])} | "
+            f"{' → '.join(path['path'])} | `{path['apple_alignment']}` | "
+            f"{path['claim_boundary']} |"
         )
     lines.extend(
         [

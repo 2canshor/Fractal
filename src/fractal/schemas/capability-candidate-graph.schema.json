@@ -1,0 +1,902 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fractal.local/schemas/capability-candidate-graph.schema.json",
+  "title": "Fractal Capability Candidate Graph",
+  "description": "A detached, inactive graph produced by genesis. Source records are represented only by references; Candidate Dot, Workflow, and Action records are embedded using compatible forms of their maintained schemas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "record_type",
+    "record_version",
+    "schema_version",
+    "version",
+    "compiler",
+    "input_digest",
+    "candidate_only",
+    "source_refs",
+    "extraction_evidence",
+    "comparison_evidence",
+    "dots",
+    "workflows",
+    "actions",
+    "unresolved_conflicts",
+    "metrics",
+    "gates",
+    "pipeline",
+    "persistence",
+    "execution",
+    "activation"
+  ],
+  "properties": {
+    "$schema": {"const": "https://fractal.local/schemas/capability-candidate-graph.schema.json"},
+    "record_type": {"const": "capability-candidate-graph"},
+    "record_version": {"const": 1},
+    "schema_version": {"const": 1},
+    "version": {"$ref": "#/$defs/version"},
+    "compiler": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "version"],
+      "properties": {
+        "method": {"const": "deterministic-bottom-up-genesis-compiler"},
+        "version": {"$ref": "#/$defs/version"}
+      }
+    },
+    "input_digest": {"$ref": "#/$defs/sha256"},
+    "candidate_only": {"const": true},
+    "source_refs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/source_ref"}
+    },
+    "extraction_evidence": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/extraction_evidence"}
+    },
+    "comparison_evidence": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/comparison_evidence"}
+    },
+    "dots": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/capability_dot"}
+    },
+    "workflows": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/capability_workflow"}
+    },
+    "actions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/capability_action"}
+    },
+    "unresolved_conflicts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/evidence_value"}
+    },
+    "metrics": {"$ref": "#/$defs/metrics"},
+    "gates": {"$ref": "#/$defs/gates"},
+    "pipeline": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/pipeline_stage"}
+    },
+    "persistence": {"$ref": "#/$defs/persistence"},
+    "execution": {"$ref": "#/$defs/execution"},
+    "activation": {"$ref": "#/$defs/activation_boundary"},
+    "trial_evaluation": {"$ref": "#/$defs/trial_evaluation"},
+    "trial_metrics": {"$ref": "#/$defs/trial_metrics"},
+    "evaluation_metrics": {"$ref": "#/$defs/trial_metrics"}
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._:@/+~=,-]{0,127}$"
+    },
+    "nonblank": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "provenance_refs"],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/id"},
+        "provenance_refs": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/id"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "evidence_value": {
+      "anyOf": [
+        {"type": ["string", "number", "boolean", "null"]},
+        {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence_value"}
+        },
+        {"$ref": "#/$defs/evidence_object"}
+      ]
+    },
+    "evidence_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "not": {
+        "allOf": [
+          {"required": ["record_type"]},
+          {"properties": {"record_type": {"const": "capability-source"}}}
+        ]
+      },
+      "patternProperties": {
+        ".*": {"$ref": "#/$defs/evidence_value"}
+      }
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/id"},
+      "uniqueItems": true
+    },
+    "port": {
+      "oneOf": [
+        {"$ref": "#/$defs/nonblank"},
+        {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["id", "type", "required"],
+          "properties": {
+            "id": {"$ref": "#/$defs/id"},
+            "name": {"$ref": "#/$defs/nonblank"},
+            "type": {"$ref": "#/$defs/nonblank"},
+            "required": {"type": "boolean"}
+          }
+        }
+      ]
+    },
+    "port_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/port"}
+    },
+    "contract_item": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "type", "required"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "type": {"$ref": "#/$defs/nonblank"},
+        "required": {"type": "boolean"}
+      }
+    },
+    "provider_free_value": {
+      "anyOf": [
+        {"type": ["string", "number", "boolean", "null"]},
+        {
+          "type": "array",
+          "items": {"$ref": "#/$defs/provider_free_value"}
+        },
+        {
+          "type": "object",
+          "additionalProperties": true,
+          "not": {
+            "allOf": [
+              {"required": ["record_type"]},
+              {"properties": {"record_type": {"const": "capability-source"}}}
+            ]
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "(?i)^(?:provider|vendor|connector|platform[_-]?skill)(?:[_-]|$)"
+            }
+          },
+          "patternProperties": {
+            ".*": {"$ref": "#/$defs/provider_free_value"}
+          }
+        }
+      ]
+    },
+    "candidate_lifecycle": {
+      "type": "object",
+      "required": ["candidate", "active", "active_surface"],
+      "anyOf": [
+        {"required": ["status"]},
+        {"required": ["state"]}
+      ],
+      "properties": {
+        "status": {"const": "candidate"},
+        "state": {"const": "candidate"},
+        "candidate": {"const": true},
+        "active": {"const": false},
+        "active_surface": {"const": false},
+        "supersedes": {"type": ["string", "null"]},
+        "material_change": {"type": "boolean"},
+        "transition_evidence": {"$ref": "#/$defs/evidence_ids"},
+        "changed_at": {"type": "string", "minLength": 1},
+        "change_reason": {"$ref": "#/$defs/nonblank"}
+      },
+      "additionalProperties": true
+    },
+    "inactive_activation": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"const": "inactive"},
+        "authorised": {"const": false},
+        "authorized": {"const": false},
+        "activated_version": {"type": "null"},
+        "activation_evidence": {"type": "array", "maxItems": 0},
+        "evidence_ids": {"$ref": "#/$defs/evidence_ids"}
+      },
+      "additionalProperties": true
+    },
+    "status_record": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"$ref": "#/$defs/nonblank"}
+      },
+      "additionalProperties": true
+    },
+    "implementation": {
+      "type": "object",
+      "additionalProperties": true,
+      "allOf": [
+        {"$ref": "#/$defs/evidence_object"}
+      ],
+      "required": [
+        "implementation_id",
+        "version",
+        "provider",
+        "dependencies",
+        "capability_requirements",
+        "permissions",
+        "provenance",
+        "compatibility",
+        "verification",
+        "recovery",
+        "evidence"
+      ],
+      "properties": {
+        "implementation_id": {"$ref": "#/$defs/id"},
+        "version": {"$ref": "#/$defs/version"},
+        "provider": {"$ref": "#/$defs/nonblank"},
+        "dependencies": {"type": "array"},
+        "capability_requirements": {"type": "array"},
+        "permissions": {"type": "object"},
+        "provenance": {"type": "object"},
+        "compatibility": {"type": "object"},
+        "verification": {"type": "object"},
+        "recovery": {"type": "object"},
+        "evidence": {"type": "array"}
+      },
+      "oneOf": [
+        {
+          "required": ["procedure_ref"],
+          "not": {"required": ["executable_target"]}
+        },
+        {
+          "required": ["executable_target"],
+          "not": {"required": ["procedure_ref"]}
+        }
+      ]
+    },
+    "capability_dot": {
+      "$comment": "Compatible embedded form of capability-dot.schema.json; Dot provider details remain below the Dot boundary.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "record_version",
+        "dot_id",
+        "version",
+        "human_name",
+        "responsibility",
+        "inputs",
+        "outputs",
+        "preconditions",
+        "side_effects",
+        "lifecycle",
+        "evidence",
+        "recovery",
+        "coherence",
+        "implementations",
+        "trial",
+        "verification",
+        "system_review",
+        "human_decision",
+        "activation"
+      ],
+      "properties": {
+        "record_type": {"const": "capability-dot"},
+        "record_version": {"const": 1},
+        "dot_id": {"$ref": "#/$defs/id"},
+        "version": {"$ref": "#/$defs/version"},
+        "human_name": {"$ref": "#/$defs/nonblank"},
+        "responsibility": {"$ref": "#/$defs/nonblank"},
+        "inputs": {"$ref": "#/$defs/port_list"},
+        "outputs": {"$ref": "#/$defs/port_list"},
+        "preconditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/nonblank"}
+        },
+        "side_effects": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/nonblank"}
+        },
+        "lifecycle": {"$ref": "#/$defs/candidate_lifecycle"},
+        "evidence": {"$ref": "#/$defs/evidence_object"},
+        "recovery": {"$ref": "#/$defs/evidence_object"},
+        "coherence": {"$ref": "#/$defs/evidence_object"},
+        "implementations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/implementation"}
+        },
+        "trial": {"$ref": "#/$defs/status_record"},
+        "verification": {"$ref": "#/$defs/status_record"},
+        "system_review": {"$ref": "#/$defs/status_record"},
+        "human_decision": {"$ref": "#/$defs/status_record"},
+        "activation": {"$ref": "#/$defs/inactive_activation"},
+        "lineage": {"$ref": "#/$defs/evidence_object"},
+        "provider_specific": {"$ref": "#/$defs/evidence_object"},
+        "execution_authority": {"not": {}}
+      }
+    },
+    "dot_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "dot_id", "version", "lifecycle"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "dot_id": {"$ref": "#/$defs/id"},
+        "version": {"$ref": "#/$defs/version"},
+        "lifecycle": {"const": "candidate"}
+      }
+    },
+    "provider_semantics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["is_outcome", "outcome"],
+      "properties": {
+        "is_outcome": {"const": true},
+        "outcome": {"$ref": "#/$defs/nonblank"}
+      }
+    },
+    "provider_specific_workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider_id", "intrinsic_provider_responsibility"],
+      "properties": {
+        "provider_id": {"$ref": "#/$defs/id"},
+        "intrinsic_provider_responsibility": {"$ref": "#/$defs/provider_free_value"}
+      }
+    },
+    "capability_workflow": {
+      "$comment": "Compatible embedded form of capability-workflow.schema.json; provider-specific details require explicit outcome semantics.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "record_version",
+        "workflow_id",
+        "version",
+        "human_name",
+        "match_contract",
+        "inputs",
+        "outputs",
+        "dot_refs",
+        "success_contract",
+        "side_effect_contract",
+        "recovery",
+        "lifecycle",
+        "trial",
+        "verification",
+        "system_review",
+        "human_decision",
+        "activation",
+        "provenance"
+      ],
+      "properties": {
+        "record_type": {"const": "capability-workflow"},
+        "record_version": {"const": 1},
+        "workflow_id": {"$ref": "#/$defs/id"},
+        "version": {"$ref": "#/$defs/version"},
+        "human_name": {"$ref": "#/$defs/nonblank"},
+        "match_contract": {"$ref": "#/$defs/provider_free_value"},
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/contract_item"}
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/contract_item"}
+        },
+        "dot_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/dot_ref"}
+        },
+        "success_contract": {"$ref": "#/$defs/provider_free_value"},
+        "side_effect_contract": {"$ref": "#/$defs/provider_free_value"},
+        "recovery": {"$ref": "#/$defs/provider_free_value"},
+        "lifecycle": {"$ref": "#/$defs/candidate_lifecycle"},
+        "trial": {"$ref": "#/$defs/status_record"},
+        "verification": {"$ref": "#/$defs/status_record"},
+        "system_review": {"$ref": "#/$defs/status_record"},
+        "human_decision": {"$ref": "#/$defs/status_record"},
+        "activation": {"$ref": "#/$defs/inactive_activation"},
+        "provenance": {"$ref": "#/$defs/provider_free_value"},
+        "provider_semantics": {"$ref": "#/$defs/provider_semantics"},
+        "provider_specific": {"$ref": "#/$defs/provider_specific_workflow"}
+      },
+      "allOf": [
+        {
+          "if": {"required": ["provider_specific"]},
+          "then": {
+            "required": ["provider_semantics"],
+            "properties": {
+              "provider_semantics": {"$ref": "#/$defs/provider_semantics"}
+            }
+          }
+        }
+      ]
+    },
+    "workflow_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "workflow_id", "version", "lifecycle"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "workflow_id": {"$ref": "#/$defs/id"},
+        "version": {"$ref": "#/$defs/version"},
+        "lifecycle": {"const": "candidate"}
+      }
+    },
+    "human_intent": {
+      "allOf": [
+        {"$ref": "#/$defs/provider_free_value"},
+        {
+          "type": "object",
+          "required": ["statement", "familiar", "stable"],
+          "properties": {
+            "statement": {"$ref": "#/$defs/nonblank"},
+            "familiar": {"$ref": "#/$defs/nonblank"},
+            "stable": {"const": true},
+            "stable_id": {"$ref": "#/$defs/id"}
+          }
+        }
+      ]
+    },
+    "anti_seed_attestation": {
+      "type": "object",
+      "required": [
+        "attested",
+        "independent",
+        "no_inherited_action",
+        "no_legacy_action"
+      ],
+      "properties": {
+        "attested": {"const": true},
+        "independent": {"const": true},
+        "no_inherited_action": {"const": true},
+        "no_legacy_action": {"const": true},
+        "no_preserve_old_logic": {"const": true},
+        "basis": {"$ref": "#/$defs/nonblank"},
+        "evidence_ids": {"$ref": "#/$defs/evidence_ids"}
+      },
+      "additionalProperties": true
+    },
+    "induction_evidence": {
+      "allOf": [
+        {"$ref": "#/$defs/provider_free_value"},
+        {
+          "type": "object",
+          "required": ["anti_seed_attestation"],
+          "properties": {
+            "anti_seed_attestation": {"$ref": "#/$defs/anti_seed_attestation"}
+          }
+        }
+      ]
+    },
+    "capability_action": {
+      "$comment": "Compatible embedded form of capability-action.schema.json; platform projections and provider/source references are excluded.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "record_version",
+        "action_id",
+        "version",
+        "human_name",
+        "human_intent",
+        "match_contract",
+        "inputs",
+        "outputs",
+        "workflow_refs",
+        "success_family",
+        "lifecycle",
+        "verification",
+        "system_review",
+        "human_decision",
+        "activation",
+        "recovery",
+        "induction_evidence"
+      ],
+      "properties": {
+        "record_type": {"const": "capability-action"},
+        "record_version": {"const": 1},
+        "action_id": {"$ref": "#/$defs/id"},
+        "version": {"$ref": "#/$defs/version"},
+        "human_name": {"$ref": "#/$defs/nonblank"},
+        "human_intent": {"$ref": "#/$defs/human_intent"},
+        "match_contract": {"$ref": "#/$defs/provider_free_value"},
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/contract_item"}
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/contract_item"}
+        },
+        "workflow_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/workflow_ref"}
+        },
+        "success_family": {
+          "oneOf": [
+            {"$ref": "#/$defs/nonblank"},
+            {"$ref": "#/$defs/provider_free_value"}
+          ]
+        },
+        "lifecycle": {"$ref": "#/$defs/candidate_lifecycle"},
+        "verification": {"$ref": "#/$defs/status_record"},
+        "system_review": {"$ref": "#/$defs/status_record"},
+        "human_decision": {"$ref": "#/$defs/status_record"},
+        "activation": {"$ref": "#/$defs/inactive_activation"},
+        "recovery": {"$ref": "#/$defs/provider_free_value"},
+        "induction_evidence": {"$ref": "#/$defs/induction_evidence"},
+        "lineage": {"$ref": "#/$defs/provider_free_value"},
+        "name_reuse_evidence": {"$ref": "#/$defs/provider_free_value"},
+        "distinct_intent_evidence": {"$ref": "#/$defs/provider_free_value"}
+      }
+    },
+    "extraction_evidence": {
+      "allOf": [
+        {"$ref": "#/$defs/evidence_object"},
+        {
+          "required": [
+            "record_type",
+            "record_version",
+            "responsibility",
+            "inputs",
+            "outputs",
+            "source_refs"
+          ]
+        },
+        {
+          "properties": {
+            "record_type": {"const": "responsibility-extraction"},
+            "record_version": {"const": 1},
+            "responsibility": {"$ref": "#/$defs/nonblank"},
+            "inputs": {"type": "array"},
+            "outputs": {"type": "array"},
+            "source_refs": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/id"}
+            }
+          }
+        }
+      ]
+    },
+    "comparison_evidence": {
+      "allOf": [
+        {"$ref": "#/$defs/evidence_object"},
+        {
+          "required": ["record_type", "record_version", "comparison_id", "relation"]
+        },
+        {
+          "properties": {
+            "record_type": {"const": "capability-comparison"},
+            "record_version": {"const": 1},
+            "comparison_id": {"$ref": "#/$defs/id"},
+            "relation": {
+              "enum": ["duplicate", "superset", "complementary", "conflicting", "distinct"]
+            }
+          }
+        }
+      ]
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_count",
+        "responsibility_count",
+        "candidate_contributing_responsibilities",
+        "blocked_findings",
+        "dot_count",
+        "duplicate_collapses",
+        "relation_edge_counts",
+        "workflow_count",
+        "action_count",
+        "average_responsibilities_per_dot",
+        "average_dots_per_workflow",
+        "average_workflows_per_action",
+        "reuse",
+        "provider_leakage",
+        "provider_leakage_paths",
+        "unresolved_conflicts",
+        "unverified_implementations",
+        "lookup_estimate",
+        "lookup_estimate_detail",
+        "counts_are_evidence",
+        "optimisation_target"
+      ],
+      "properties": {
+        "source_count": {"type": "integer", "minimum": 0},
+        "responsibility_count": {"type": "integer", "minimum": 0},
+        "candidate_contributing_responsibilities": {"type": "integer", "minimum": 0},
+        "blocked_findings": {"type": "integer", "minimum": 0},
+        "dot_count": {"type": "integer", "minimum": 0},
+        "duplicate_collapses": {"type": "integer", "minimum": 0},
+        "relation_edge_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "duplicate",
+            "superset",
+            "complementary",
+            "conflicting",
+            "distinct"
+          ],
+          "properties": {
+            "duplicate": {"type": "integer", "minimum": 0},
+            "superset": {"type": "integer", "minimum": 0},
+            "complementary": {"type": "integer", "minimum": 0},
+            "conflicting": {"type": "integer", "minimum": 0},
+            "distinct": {"type": "integer", "minimum": 0}
+          }
+        },
+        "workflow_count": {"type": "integer", "minimum": 0},
+        "action_count": {"type": "integer", "minimum": 0},
+        "average_responsibilities_per_dot": {"type": "number", "minimum": 0},
+        "average_dots_per_workflow": {"type": "number", "minimum": 0},
+        "average_workflows_per_action": {"type": "number", "minimum": 0},
+        "reuse": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "responsibilities_per_dot",
+            "dots_per_workflow",
+            "workflows_per_action",
+            "repeated_observations"
+          ],
+          "properties": {
+            "responsibilities_per_dot": {"type": "number", "minimum": 0},
+            "dots_per_workflow": {"type": "number", "minimum": 0},
+            "workflows_per_action": {"type": "number", "minimum": 0},
+            "repeated_observations": {"type": "integer", "minimum": 0}
+          }
+        },
+        "provider_leakage": {"type": "integer", "minimum": 0},
+        "provider_leakage_paths": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/nonblank"}
+        },
+        "unresolved_conflicts": {"type": "integer", "minimum": 0},
+        "unverified_implementations": {"type": "integer", "minimum": 0},
+        "lookup_estimate": {"type": "integer", "minimum": 0},
+        "lookup_estimate_detail": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_lookups",
+            "responsibility_lookups",
+            "responsibility_pair_comparisons",
+            "candidate_record_lookups",
+            "unit"
+          ],
+          "properties": {
+            "source_lookups": {"type": "integer", "minimum": 0},
+            "responsibility_lookups": {"type": "integer", "minimum": 0},
+            "responsibility_pair_comparisons": {"type": "integer", "minimum": 0},
+            "possible_responsibility_pairs": {"type": "integer", "minimum": 0},
+            "candidate_record_lookups": {"type": "integer", "minimum": 0},
+            "unit": {"$ref": "#/$defs/nonblank"}
+          }
+        },
+        "counts_are_evidence": {"const": true},
+        "optimisation_target": {"type": ["string", "null"]},
+        "trial": {"$ref": "#/$defs/trial_metrics"}
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed", "reason"],
+      "properties": {
+        "passed": {"type": "boolean"},
+        "enabled": {"type": "boolean"},
+        "allowed_findings": {"type": "integer", "minimum": 0},
+        "blocked_findings": {"type": "integer", "minimum": 0},
+        "reason": {"$ref": "#/$defs/nonblank"}
+      }
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_only",
+        "no_persistence",
+        "no_execution",
+        "no_activation",
+        "no_provider_leakage",
+        "candidate_contribution",
+        "automatic_runtime_invocation",
+        "required_evidence",
+        "stage_order"
+      ],
+      "properties": {
+        "candidate_only": {"$ref": "#/$defs/gate"},
+        "no_persistence": {"$ref": "#/$defs/gate"},
+        "no_execution": {"$ref": "#/$defs/gate"},
+        "no_activation": {"$ref": "#/$defs/gate"},
+        "no_provider_leakage": {"$ref": "#/$defs/gate"},
+        "candidate_contribution": {"$ref": "#/$defs/gate"},
+        "automatic_runtime_invocation": {"$ref": "#/$defs/gate"},
+        "required_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "passed",
+            "source_documents_supplied",
+            "responsibility_evidence",
+            "execution_composition_evidence",
+            "human_intent_evidence",
+            "naming_evidence",
+            "semantic_comparison_evidence"
+          ],
+          "properties": {
+            "passed": {"type": "boolean"},
+            "source_documents_supplied": {"type": "boolean"},
+            "responsibility_evidence": {"type": "boolean"},
+            "execution_composition_evidence": {"type": "boolean"},
+            "human_intent_evidence": {"type": "boolean"},
+            "naming_evidence": {"type": "boolean"},
+            "semantic_comparison_evidence": {"type": "boolean"}
+          }
+        },
+        "stage_order": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["passed", "stages"],
+          "properties": {
+            "passed": {"type": "boolean"},
+            "stages": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/nonblank"}
+            }
+          }
+        }
+      }
+    },
+    "pipeline_stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "status", "count"],
+      "properties": {
+        "stage": {"$ref": "#/$defs/nonblank"},
+        "status": {"enum": ["completed", "skipped"]},
+        "count": {"type": "integer", "minimum": 0},
+        "output_digest": {"$ref": "#/$defs/sha256"},
+        "reason": {"$ref": "#/$defs/nonblank"}
+      }
+    },
+    "trial_metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verified_implementations",
+        "unverified_implementations",
+        "covered_dots",
+        "covered_workflows",
+        "covered_actions",
+        "failures",
+        "failure_count",
+        "trial_count"
+      ],
+      "properties": {
+        "verified_implementations": {"type": "integer", "minimum": 0},
+        "unverified_implementations": {"type": "integer", "minimum": 0},
+        "covered_dots": {"type": "integer", "minimum": 0},
+        "covered_workflows": {"type": "integer", "minimum": 0},
+        "covered_actions": {"type": "integer", "minimum": 0},
+        "failures": {"type": "integer", "minimum": 0},
+        "failure_count": {"type": "integer", "minimum": 0},
+        "trial_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "trial_evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "record_version",
+        "status",
+        "base_graph_input_digest",
+        "base_graph_content_digest",
+        "receipt_ids",
+        "covered_implementation_refs",
+        "covered_dot_refs",
+        "covered_workflow_refs",
+        "covered_action_refs",
+        "failures",
+        "metrics",
+        "persistence_state_change",
+        "activation",
+        "publication"
+      ],
+      "properties": {
+        "record_type": {"const": "capability-trial-evaluation"},
+        "record_version": {"const": 1},
+        "status": {"enum": ["unverified", "verified-staged"]},
+        "base_graph_input_digest": {"$ref": "#/$defs/sha256"},
+        "base_graph_content_digest": {"$ref": "#/$defs/sha256"},
+        "receipt_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+        "covered_implementation_refs": {"type": "array", "items": {"$ref": "#/$defs/nonblank"}, "uniqueItems": true},
+        "covered_dot_refs": {"type": "array", "items": {"$ref": "#/$defs/nonblank"}, "uniqueItems": true},
+        "covered_workflow_refs": {"type": "array", "items": {"$ref": "#/$defs/nonblank"}, "uniqueItems": true},
+        "covered_action_refs": {"type": "array", "items": {"$ref": "#/$defs/nonblank"}, "uniqueItems": true},
+        "failures": {"type": "array", "items": {"$ref": "#/$defs/evidence_object"}},
+        "metrics": {"$ref": "#/$defs/trial_metrics"},
+        "persistence_state_change": {"const": false},
+        "activation": {"$ref": "#/$defs/evidence_object"},
+        "publication": {"$ref": "#/$defs/evidence_object"}
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["created", "workplace_write", "registry_write"],
+      "properties": {
+        "created": {"const": false},
+        "workplace_write": {"const": false},
+        "registry_write": {"const": false}
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["performed", "source_execution", "provider_execution"],
+      "properties": {
+        "performed": {"const": false},
+        "source_execution": {"const": false},
+        "provider_execution": {"const": false}
+      }
+    },
+    "activation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["performed", "authorised", "active_surface"],
+      "properties": {
+        "performed": {"const": false},
+        "authorised": {"const": false},
+        "active_surface": {"const": false}
+      }
+    }
+  }
+}

@@ -68,15 +68,12 @@ def test_design_sources_are_merged_instead_of_competing() -> None:
 @pytest.mark.parametrize(
     "skill_id",
     [
+        "align",
         "assess",
-        "automate",
-        "complete",
-        "create",
-        "edit",
-        "match",
-        "publish",
-        "research",
-        "review",
+        "build",
+        "find",
+        "fix",
+        "learn",
         "version",
     ],
 )

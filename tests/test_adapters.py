@@ -634,6 +634,177 @@ def test_component_management_tool_cannot_bypass_fractal_route() -> None:
     assert "permissionDecision" not in ordinary["hookSpecificOutput"]
 
 
+@pytest.mark.parametrize(
+    "command",
+    [
+        "git push origin main",
+        "git send-pack origin refs/heads/main",
+        "gh api repos/2canshor/Fractal/git/refs/heads/main --method PATCH",
+        "gh ref write refs/heads/main",
+    ],
+)
+def test_fractal_owned_raw_publication_is_denied(command: str) -> None:
+    context = {
+        "protected_legacy_roots": [],
+        "authority": {"legacy_removal_enabled": True},
+        "component_governance": {"managed_roots": []},
+        "publication_governance": {
+            "repository_roots": ["/work/Fractal"],
+            "repository_ids": ["2canshor/Fractal"],
+            "trust_receipt_id": "trusted-live-hook-a",
+        },
+    }
+    result = handle_hook(
+        "pre-tool-use",
+        context,
+        {
+            "tool_name": "exec_command",
+            "tool_input": {"command": command, "workdir": "/work/Fractal"},
+        },
+    )
+    assert result["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_publication_guard_allows_reads_wrong_repo_and_exact_governed_route() -> None:
+    context = {
+        "protected_legacy_roots": [],
+        "authority": {"legacy_removal_enabled": True},
+        "component_governance": {"managed_roots": []},
+        "publication_governance": {
+            "repository_roots": ["/work/Fractal"],
+            "repository_ids": ["2canshor/Fractal"],
+            "trust_receipt_id": "trusted-live-hook-a",
+        },
+    }
+    for payload in (
+        {"tool_input": {"command": "git status", "workdir": "/work/Fractal"}},
+        {"tool_input": {"command": "gh api repos/2canshor/Fractal/git/refs/heads/main"}},
+        {"tool_input": {"command": "git push origin main", "workdir": "/work/Other"}},
+    ):
+        result = handle_hook("pre-tool-use", context, payload)
+        assert "permissionDecision" not in result["hookSpecificOutput"]
+    governed = handle_hook(
+        "pre-tool-use",
+        context,
+        {
+            "tool_name": "exec_command",
+            "tool_input": {
+                "command": (
+                    "fractal version publish --order order.json "
+                    f"--order-sha256 {'a' * 64}"
+                ),
+                "workdir": "/work/Fractal",
+            },
+        },
+    )
+    assert governed["hookSpecificOutput"]["permissionDecision"] == "allow"
+    assert (
+        governed["hookSpecificOutput"]["fractalObservation"]["decision"]
+        == "allow-governed-publication"
+    )
+    compound = handle_hook(
+        "pre-tool-use",
+        context,
+        {
+            "tool_input": {
+                "command": (
+                    "fractal version publish --order order.json "
+                    f"--order-sha256 {'a' * 64}; git push origin main"
+                ),
+                "workdir": "/work/Fractal",
+            }
+        },
+    )
+    assert compound["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+@pytest.mark.parametrize(
+    ("command", "workdir"),
+    [
+        ("/usr/bin/git push origin main", "/work/Fractal/subdirectory"),
+        ('git -C "/work/Fractal/subdirectory" push origin main', "/work/Other"),
+    ],
+)
+def test_publication_guard_denies_absolute_git_and_descendant_workdirs(
+    command: str, workdir: str
+) -> None:
+    context = {
+        "protected_legacy_roots": [],
+        "authority": {"legacy_removal_enabled": True},
+        "component_governance": {"managed_roots": []},
+        "publication_governance": {
+            "repository_roots": ["/work/Fractal"],
+            "repository_ids": ["2canshor/Fractal"],
+            "trust_receipt_id": "trusted-live-hook-a",
+        },
+    }
+    result = handle_hook(
+        "pre-tool-use",
+        context,
+        {
+            "tool_name": "exec_command",
+            "tool_input": {"command": command, "workdir": workdir},
+        },
+    )
+    assert result["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_adapter_built_context_can_observe_publication_before_post_activation_trust(
+    tmp_path: Path,
+) -> None:
+    builder(tmp_path, "publication-observation").build_all()
+    context = json.loads(
+        (
+            tmp_path
+            / "publication-observation"
+            / "codex"
+            / "fractal"
+            / "context.json"
+        ).read_text()
+    )
+    assert "trust_receipt_id" not in context["publication_governance"]
+    result = handle_hook(
+        "pre-tool-use",
+        context,
+        {
+            "tool_name": "exec_command",
+            "tool_input": {
+                "command": (
+                    "fractal version publish --order order.json "
+                    f"--order-sha256 {'a' * 64}"
+                ),
+                "workdir": str(Path.home() / "Fractal"),
+            },
+        },
+    )
+    assert result["hookSpecificOutput"]["permissionDecision"] == "allow"
+    observation = result["hookSpecificOutput"]["fractalObservation"]
+    assert observation["trust_status"] == "requires-version-store-validation"
+    assert "trust_receipt_id" not in observation
+
+
+def test_low_level_provider_ref_mutation_is_denied_for_fractal_repo() -> None:
+    context = {
+        "protected_legacy_roots": [],
+        "authority": {"legacy_removal_enabled": True},
+        "component_governance": {"managed_roots": []},
+        "publication_governance": {
+            "repository_roots": [],
+            "repository_ids": ["2canshor/Fractal"],
+            "trust_receipt_id": "trusted-live-hook-a",
+        },
+    }
+    result = handle_hook(
+        "pre-tool-use",
+        context,
+        {
+            "tool_name": "mcp__github__update_ref",
+            "tool_input": {"repository": "2canshor/Fractal", "ref": "heads/main"},
+        },
+    )
+    assert result["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
 def test_real_stop_payload_captures_and_evaluates_work_signature(tmp_path: Path) -> None:
     transcript = tmp_path / "transcript.jsonl"
     transcript.write_text(

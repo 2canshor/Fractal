@@ -14,7 +14,7 @@ from fractal.cli import main as cli_main
 from fractal.live_state import LiveRuntimeStateError, LiveRuntimeStateStore
 from fractal.models import ProjectRecord
 from fractal.reality import ExecutionGate
-from fractal.storage import ProjectStore
+from fractal.storage import ProjectStore, value_sha256
 from fractal.versioning import VersionStore
 
 PROJECT_ID = "current-project"
@@ -48,6 +48,58 @@ def authority_evidence(store: VersionStore, label: str) -> dict[str, str]:
         "message_id": message_id,
         "message_sha256": hashlib.sha256((text + "\n").encode()).hexdigest(),
     }
+
+
+def apple_acceptance(version: str) -> dict[str, object]:
+    value: dict[str, object] = {
+        "record_type": "apple-system-version-acceptance",
+        "record_version": 1,
+        "apple_registry": {
+            "source_count": 171,
+            "source_manifest_sha256": (
+                "40308dfd08e1c7ad3acdf05b659463b1984c69f7dbff96d2c752de0f169bec1c"
+            ),
+            "index_sha256": (
+                "94b10ebc13cbb5dd7542487e8a232b315c191b6fc2e801f15cec5081c502d1d1"
+            ),
+        },
+        "responsibilities": {
+            "count": 20,
+            "responsibility_ids": [f"RESP-{index:02d}" for index in range(20)],
+            "deterministic_alignment_passed": True,
+            "active_live_claimed": False,
+        },
+        "components": {
+            "count": 1,
+            "deterministic_audit_passed": True,
+            "human_acceptance_was_pending_before_this_receipt": True,
+            "audit_sha256": "1" * 64,
+        },
+        "user_surface": {
+            "deterministic_audit_clean": True,
+            "human_acceptance_was_pending_before_this_receipt": True,
+            "audit_sha256": "2" * 64,
+        },
+        "continuous_improvement": {
+            "core": "continuous-improvement",
+            "sole_protagonist": "system-review",
+            "parallel_lifecycle": False,
+        },
+        "human_delight": {
+            "status": "accepted",
+            "accepted_by": "primary-user",
+            "scope": "exact-version-batch",
+            "evidence_ids": ["primary-user-delight-acceptance"],
+        },
+        "authority_scope": {
+            "project_id": PROJECT_ID,
+            "project_revision": PROJECT_REVISION,
+            "decision_batch_id": f"batch-{version}",
+        },
+        "evidence_ids": ["apple-source-audit", "responsibility-audit", "human-walkthrough"],
+    }
+    value["receipt_sha256"] = value_sha256(value)
+    return value
 
 
 def build_version(store: VersionStore, version: str) -> None:
@@ -94,6 +146,7 @@ def build_version(store: VersionStore, version: str) -> None:
                 "receipt_sha256": "f" * 64,
             },
         },
+        "apple_acceptance_audit": apple_acceptance(version),
     }
     target, expected_state = store.build_authority_scope(
         store.candidate_input(**inputs)
@@ -179,12 +232,42 @@ def test_session_start_reconciles_canonical_sources_not_stale_adapter_snapshot(
     assert "current-project" in summary
     assert "revision 0" in summary
     assert "old-project" not in summary
+    stored = json.loads((tmp_path / "runtime" / "live-state" / "current.json").read_text())
+    assert stored["project"]["source_hash_method"] == "canonical-json-value-sha256"
+    assert stored["project"]["source_file_sha256"] == hashlib.sha256(
+        record_path.read_bytes()
+    ).hexdigest()
+    assert stored["system_version"]["source_hash_method"] == "raw-file-sha256"
     assert (
-        json.loads((tmp_path / "runtime" / "live-state" / "current.json").read_text())["project"][
-            "revision"
-        ]
+        stored["project"]["revision"]
         == 0
     )
+
+
+def test_live_state_verifier_accepts_previous_read_model_without_hash_method_labels(
+    tmp_path: Path,
+) -> None:
+    _, _, record_path, pointer_path = live_fixture(tmp_path)
+    store = LiveRuntimeStateStore(tmp_path / "runtime")
+    state = store.reconcile(
+        project_record_path=record_path,
+        active_pointer_path=pointer_path,
+    )
+    state["project"].pop("source_hash_method")
+    state["project"].pop("source_file_sha256")
+    state["system_version"].pop("source_hash_method")
+    state.pop("state_sha256")
+    state["state_sha256"] = hashlib.sha256(
+        json.dumps(
+            state,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    store.state_path.write_text(json.dumps(state), encoding="utf-8")
+
+    assert store.verify_current() == state
 
 
 def test_session_start_fails_closed_when_canonical_project_digest_is_invalid(

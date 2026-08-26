@@ -4,14 +4,14 @@ A Project begins with Direction, Goal, Success Criteria, priorities, and a Plan.
 
 After Carson declares Project Completion, System Review follows these Flows:
 
-1. **Find Problems:** inspect the entire Project and record both improvements and difficulties.
-2. **Find Local Patterns:** explain which observations may share local behaviour without overstating cause.
-3. **Find Global Patterns:** compare those Patterns with prior Projects, decisions, versions, reversals, and outcomes.
-4. **Find the Reasons for Every Global Pattern:** state the causal case, counterevidence, and uncertainty. Cause Research may help.
-5. **Find Solutions for Every Global Pattern:** inspect existing capabilities, apply Subtraction First, and use Curiosity when a solution is needed.
-6. **Map New Implementations into the Blueprint:** show exactly where each Candidate belongs and what authority, context, donor, evidence, and recovery it carries.
-7. **Debate the Solutions for Every Global Pattern:** run independent opposing cases for consequential mapped Candidates.
-8. **Present Decisions One-by-One:** explain the problem, proposed solution, and one Carson decision in ordinary language.
+1. **Observe:** inspect the entire Project and record both improvements and difficulties.
+2. **Group:** explain which observations may share local behaviour without overstating cause.
+3. **Connect:** compare those Patterns with prior Projects, decisions, versions, reversals, and outcomes.
+4. **Explain:** state the causal case, counterevidence, and uncertainty for every Global Pattern. Cause Research may help.
+5. **Explore:** inspect existing capabilities, apply Subtraction First, and find solutions for every Global Pattern. Use Curiosity when a solution is needed.
+6. **Map:** show exactly where each Candidate belongs in the Blueprint and what authority, context, donor, evidence, and recovery it carries.
+7. **Challenge:** run independent opposing cases for consequential mapped Candidates.
+8. **Decide:** explain the problem, proposed solution, and one Carson decision at a time in ordinary language.
 
 Reality Check, Experiment, Component Governance, Human Control, and other Infrastructure are Library Elements used by these Flows without becoming Flows themselves.
 

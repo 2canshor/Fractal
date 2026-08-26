@@ -13,7 +13,7 @@ The [Blueprint](blueprint.md) defines meaning. This map explains implementation 
 | Infrastructure | ^ | deterministic programs, Hooks, adapters | operator views |
 | Cause Research | ¢ Method | independent reasoning branches | research Tools |
 | Two-Sided Review | ¢ Method | independent opposing branches | Main Agent synthesis |
-| Steal | ¢ Method | governed donor intake | Blueprint Mapping and Component Governance |
+| Adapt | ¢ Method | governed donor intake | Blueprint Mapping and Component Governance |
 
 Flows 1–8 are not Blueprint Elements and therefore do not receive roles in this table. They are ordered rules telling System Review which registered Elements to use. The runtime preserves smaller internal records for evidence, effects, debate, and decisions, and every record names the canonical Blueprint Flow it supports. Reality Check effect records remain supporting Infrastructure rather than becoming a Flow or Element.
 

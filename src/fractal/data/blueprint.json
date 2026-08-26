@@ -223,7 +223,7 @@
         },
       {
         "element_id": "steal",
-        "human_name": "Steal",
+        "human_name": "Adapt",
         "technical_id": "donor-implementation-reuse",
         "marker": "¢",
         "core_concept": "Reuse bounded donor implementations while stripping donor authority and remapping the result to Fractal.",
@@ -259,7 +259,7 @@
     "entries": [
       {
         "flow_id": "find-problems",
-        "human_name": "Find Problems",
+        "human_name": "Observe",
         "sequence": 1,
         "activation_boundary": "System Review starts from completed Project evidence or a verified improvement opportunity.",
         "uses_elements": [
@@ -274,7 +274,7 @@
       },
       {
         "flow_id": "find-local-patterns",
-        "human_name": "Find Local Patterns",
+        "human_name": "Group",
         "sequence": 2,
         "activation_boundary": "Flow 1 has persisted a valid observation set.",
         "uses_elements": [
@@ -287,7 +287,7 @@
       },
       {
         "flow_id": "find-global-patterns",
-        "human_name": "Find Global Patterns",
+        "human_name": "Connect",
         "sequence": 3,
         "activation_boundary": "Flow 2 has persisted local patterns and comparison scope.",
         "uses_elements": [
@@ -300,7 +300,7 @@
       },
       {
         "flow_id": "find-global-pattern-reasons",
-        "human_name": "Find the Reasons for Every Global Pattern",
+        "human_name": "Explain",
         "sequence": 4,
         "activation_boundary": "Flow 3 has persisted every Global Pattern candidate.",
         "uses_elements": [
@@ -313,7 +313,7 @@
       },
       {
         "flow_id": "find-global-pattern-solutions",
-        "human_name": "Find Solutions for Every Global Pattern",
+        "human_name": "Explore",
         "sequence": 5,
         "activation_boundary": "Flow 4 has persisted a causal account for every Global Pattern.",
         "uses_elements": [
@@ -329,7 +329,7 @@
       },
       {
         "flow_id": "map-implementations-to-blueprint",
-        "human_name": "Map New Implementations into the Blueprint",
+        "human_name": "Map",
         "sequence": 6,
         "activation_boundary": "Flow 5 has persisted its complete Candidate set.",
         "uses_elements": [
@@ -348,7 +348,7 @@
       },
       {
         "flow_id": "debate-global-pattern-solutions",
-        "human_name": "Debate the Solutions for Every Global Pattern",
+        "human_name": "Challenge",
         "sequence": 7,
         "activation_boundary": "Flow 6 has mapped or honestly rejected every Candidate.",
         "uses_elements": [
@@ -363,7 +363,7 @@
       },
       {
         "flow_id": "present-decisions-one-by-one",
-        "human_name": "Present Decisions One-by-One",
+        "human_name": "Decide",
         "sequence": 8,
         "activation_boundary": "Flow 7 has completed both opposing cases and reconciliation.",
         "uses_elements": [

@@ -260,6 +260,8 @@ def _safe_decision_summary(value: Any) -> dict[str, Any] | None:
         ("summary", _safe_text),
         ("status", _safe_status_value),
         ("project_id", _safe_identifier),
+        ("project_status", _safe_status_value),
+        ("history_role", _safe_status_value),
         ("source_path", _safe_path_value),
     ):
         candidate = normaliser(value.get(key))
@@ -288,6 +290,9 @@ def _safe_project_summary(value: Any) -> dict[str, Any] | None:
         result["revision"] = value["revision"]
     if system_version is not None:
         result["system_version"] = system_version
+        # ``system_version`` belongs to the Project record.  It is provenance,
+        # never evidence that this version is the currently active pointer.
+        result["system_version_role"] = "project-provenance"
     if isinstance(value.get("current_phase"), int) and not isinstance(
         value.get("current_phase"), bool
     ):
@@ -386,6 +391,7 @@ def _safe_status_model(value: Mapping[str, Any]) -> dict[str, Any]:
     evidence = value.get("evidence") if isinstance(value.get("evidence"), Mapping) else {}
 
     system_version = _safe_version_value(system.get("version"))
+    current_system_version = _safe_version_value(system.get("current_version"))
     system_state = _safe_status_value(system.get("state"))
     active = _safe_version_summary(workplace.get("active_system_version"))
     candidate = _safe_version_summary(workplace.get("unresolved_candidate"))
@@ -435,6 +441,7 @@ def _safe_status_model(value: Mapping[str, Any]) -> dict[str, Any]:
         "system": {
             "name": "Fractal",
             "version": system_version,
+            "current_version": current_system_version,
             "state": system_state,
             "issues": _safe_issue_values(system.get("issues")),
         },
@@ -596,6 +603,7 @@ def _project_summary(
         "status": status,
         "revision": record.get("revision"),
         "system_version": _text(record.get("system_version")),
+        "system_version_role": "project-provenance",
         "current_phase": current_phase,
     }
     if isinstance(record.get("decisions"), list):
@@ -731,6 +739,17 @@ def _active_record_summary(
     summary = {
         "version": version,
         "status": status,
+        "source_role": (
+            "active-pointer"
+            if _normalise_status(record.get("record_type")) == "active-system-version"
+            or _normalise_status(record.get("pointer_kind")) == "active"
+            or (
+                source_path is not None
+                and Path(source_path).name == "active.json"
+                and _text(record.get("manifest_sha256")) is not None
+            )
+            else "version-record"
+        ),
     }
     if source_path:
         summary["source_path"] = source_path
@@ -787,6 +806,8 @@ def _decision_item(
     item: Mapping[str, Any],
     *,
     project_id: str | None = None,
+    project_status: str | None = None,
+    history_role: str | None = None,
     source_path: str | None = None,
 ) -> dict[str, Any] | None:
     status = _normalise_status(item.get("status"))
@@ -808,6 +829,10 @@ def _decision_item(
     }
     if project_id:
         result["project_id"] = project_id
+    if project_status:
+        result["project_status"] = project_status
+    if history_role:
+        result["history_role"] = history_role
     if source_path:
         result["source_path"] = source_path
     return result
@@ -818,11 +843,25 @@ def _collect_decisions(
     explicit: Any,
     candidate: Mapping[str, Any] | None,
     *,
+    current_project_id: str | None,
     issues: list[str],
 ) -> list[dict[str, Any]]:
     decisions: list[dict[str, Any]] = []
+    projects_by_id = {
+        project_id: project
+        for project in projects
+        if (project_id := _text(project.get("project_id"))) is not None
+    }
     for project in projects:
         project_id = _text(project.get("project_id"))
+        project_status = _normalise_status(project.get("status"))
+        history_role = (
+            "current"
+            if project_id is not None and project_id == current_project_id
+            else "historical"
+            if project_status in _COMPLETED_STATUSES
+            else "other-project"
+        )
         source_path = _text(project.get("source_path"))
         # Project summaries intentionally omit large canonical arrays.  Explicit
         # records passed through this route are handled below; this loop is for
@@ -832,7 +871,13 @@ def _collect_decisions(
         )
         for item in project_decisions:
             if isinstance(item, Mapping):
-                decision = _decision_item(item, project_id=project_id, source_path=source_path)
+                decision = _decision_item(
+                    item,
+                    project_id=project_id,
+                    project_status=project_status,
+                    history_role=history_role,
+                    source_path=source_path,
+                )
                 if decision:
                     decisions.append(decision)
         project_requests = (
@@ -840,7 +885,13 @@ def _collect_decisions(
         )
         for item in project_requests:
             if isinstance(item, Mapping):
-                decision = _decision_item(item, project_id=project_id, source_path=source_path)
+                decision = _decision_item(
+                    item,
+                    project_id=project_id,
+                    project_status=project_status,
+                    history_role=history_role,
+                    source_path=source_path,
+                )
                 if decision:
                     decisions.append(decision)
     if explicit is not None:
@@ -863,6 +914,9 @@ def _collect_decisions(
             explicit_values.append((loaded, source_path))
         for loaded, source_path in explicit_values:
             values: Any = loaded
+            container_project_id = (
+                _text(loaded.get("project_id")) if isinstance(loaded, Mapping) else None
+            )
             if isinstance(loaded, Mapping):
                 values = loaded.get("decisions", loaded.get("items", []))
             if isinstance(values, Mapping):
@@ -870,7 +924,29 @@ def _collect_decisions(
             if isinstance(values, list):
                 for item in values:
                     if isinstance(item, Mapping):
-                        decision = _decision_item(item, source_path=source_path)
+                        project_id = _text(item.get("project_id")) or container_project_id
+                        source_project = projects_by_id.get(project_id) if project_id else None
+                        project_status = (
+                            _normalise_status(source_project.get("status"))
+                            if isinstance(source_project, Mapping)
+                            else None
+                        )
+                        history_role = (
+                            "current"
+                            if project_id is not None and project_id == current_project_id
+                            else "historical"
+                            if project_status in _COMPLETED_STATUSES
+                            else "other-project"
+                            if source_project is not None
+                            else "unscoped"
+                        )
+                        decision = _decision_item(
+                            item,
+                            project_id=project_id,
+                            project_status=project_status,
+                            history_role=history_role,
+                            source_path=source_path,
+                        )
                         if decision:
                             decisions.append(decision)
             elif loaded is not None:
@@ -882,6 +958,7 @@ def _collect_decisions(
                 "id": "system-version-candidate",
                 "summary": f"Resolve System Version candidate {candidate_version}",
                 "status": "candidate",
+                "history_role": "current-system",
                 "source_path": candidate.get("source_path"),
             }
         )
@@ -1035,6 +1112,19 @@ def _validate_live_sources(
     source_digest = _source_digest(live_system)
     if source_path:
         pointer_path = Path(source_path).expanduser()
+        selected_active_path = _text(active.get("source_path")) if active else None
+        if selected_active_path and active.get("source_role") == "active-pointer":
+            try:
+                source_is_selected = (
+                    pointer_path.resolve() == Path(selected_active_path).expanduser().resolve()
+                )
+            except OSError:
+                source_is_selected = False
+            if not source_is_selected:
+                _append_issue(
+                    issues,
+                    "Live System Version source does not match the selected current pointer",
+                )
         if not pointer_path.is_file():
             _append_issue(
                 issues,
@@ -1150,41 +1240,23 @@ def build_workplace_status(
     # A Workplace root is a convenience only: deriving these paths remains
     # read-only and does not invoke migration/bootstrap.  Explicit arguments
     # always win over the derived locations.
+    rejected_legacy_current = False
     if workplace_root is not None:
         root = Path(workplace_root).expanduser()
         active_path = root / "system" / "active-version.json"
         candidate_path = root / "system" / "candidate-version.json"
         legacy_path = root / "workspace.json"
-        if legacy_path.is_file() and not active_path.is_file():
-            legacy_value, legacy_source, _, legacy_issues = _load_json_input(
-                legacy_path,
-                label="Legacy Workplace record",
-            )
-            # The legacy record is retained as evidence, but its active and
-            # candidate fields are projected into the same status shape as the
-            # newer pointer records.
-            if isinstance(legacy_value, Mapping):
-                legacy_system = legacy_value.get("system")
-                if isinstance(legacy_system, Mapping):
-                    if workplace_active is None:
-                        workplace_active = {
-                            "record_type": "active-system-version",
-                            "system_version": legacy_system.get("active_version"),
-                            "activation_status": "active",
-                            "source_path": legacy_source,
-                        }
-                    if workplace_candidate is None and legacy_system.get("candidate_version"):
-                        workplace_candidate = {
-                            "record_type": "candidate-system-version",
-                            "system_version": legacy_system.get("candidate_version"),
-                            "candidate_status": "candidate",
-                            "source_path": legacy_source,
-                        }
-            elif legacy_issues and workplace_active is None:
-                workplace_active = legacy_path
-        if workplace_active is None and active_path.is_file():
+        legacy_root = legacy_path.is_file()
+        if legacy_root and workplace_active is None:
+            # ``workspace.json`` describes a superseded architecture.  Its
+            # version fields are historical provenance and must never become
+            # the current pointer merely because no canonical pointer was
+            # supplied.  CLI callers may still discover a separately verified
+            # runtime route and pass it explicitly.
+            rejected_legacy_current = True
+        if not legacy_root and workplace_active is None and active_path.is_file():
             workplace_active = active_path
-        if workplace_candidate is None and candidate_path.is_file():
+        if not legacy_root and workplace_candidate is None and candidate_path.is_file():
             workplace_candidate = candidate_path
         if projects is None:
             projects = root / "projects"
@@ -1204,6 +1276,11 @@ def build_workplace_status(
     runtime_issues: list[str] = []
     evidence_paths: set[str] = set()
     evidence_digests: dict[str, str] = {}
+    if rejected_legacy_current:
+        _append_issue(
+            workplace_issues,
+            "Legacy Workplace System pointers are historical and cannot identify current state",
+        )
 
     # Public System identity is intentionally not treated as activation proof.
     public_version = _default_public_version(public_system)
@@ -1311,6 +1388,7 @@ def build_workplace_status(
             issues=runtime_issues,
         )
 
+    verified_current_version: str | None = None
     if public_version and isinstance(live_record, Mapping):
         live_system = live_record.get("system_version")
         live_version = _version(live_system) if isinstance(live_system, Mapping) else None
@@ -1324,14 +1402,26 @@ def build_workplace_status(
             and live_version is not None
             and _version_matches(public_version, live_version)
         )
+        live_matches_active = (
+            active_summary is not None
+            and active_summary.get("status")
+            in {"active", "activated", "current", "promoted", "live"}
+            and live_version is not None
+            and _version_matches(_text(active_summary.get("version")), live_version)
+        )
         if live_status in {"active", "activated"} and live_version and not live_matches_public:
             _append_issue(
                 system_issues,
                 "Public Fractal System does not match verified live System Version",
             )
-        system_state = "active" if live_matches_public else (
-            "mismatch" if live_status in {"active", "activated"} else "unknown"
-        )
+        has_system_runtime_issue = any("System Version" in issue for issue in runtime_issues)
+        if live_matches_public and live_matches_active and not has_system_runtime_issue:
+            system_state = "active"
+            verified_current_version = live_version
+        else:
+            system_state = (
+                "mismatch" if live_status in {"active", "activated"} else "unknown"
+            )
     else:
         system_state = "unknown"
     if public_record:
@@ -1351,6 +1441,9 @@ def build_workplace_status(
         project_summaries,
         decisions,
         candidate_summary,
+        current_project_id=(
+            _text(current_project.get("project_id")) if current_project is not None else None
+        ),
         issues=issues,
     )
     # A current Project's canonical record may be supplied as a mapping with a
@@ -1364,6 +1457,17 @@ def build_workplace_status(
                     decision = _decision_item(
                         item,
                         project_id=_text(projects["record"].get("project_id")),
+                        project_status=_normalise_status(projects["record"].get("status")),
+                        history_role=(
+                            "current"
+                            if current_project is not None
+                            and _text(projects["record"].get("project_id"))
+                            == _text(current_project.get("project_id"))
+                            else "historical"
+                            if _normalise_status(projects["record"].get("status"))
+                            in _COMPLETED_STATUSES
+                            else "other-project"
+                        ),
                         source_path=_source_path(projects["record"]),
                     )
                     if decision:
@@ -1391,7 +1495,15 @@ def build_workplace_status(
         else "issue"
     )
     runtime_status = "healthy" if not runtime_issues else "issue"
-    next_decision = decisions_list[0] if decisions_list else None
+    # Only the verified current Project (or a current System candidate) can own
+    # the global next decision.  Historical and unscoped decisions remain
+    # visible as evidence without impersonating current work.
+    current_decisions = [
+        item
+        for item in decisions_list
+        if item.get("history_role") in {"current", "current-system"}
+    ]
+    next_decision = current_decisions[0] if current_decisions else None
 
     return _safe_status_model({
         "record_type": "workplace-human-control-status",
@@ -1399,6 +1511,7 @@ def build_workplace_status(
         "system": {
             "name": "Fractal",
             "version": public_version,
+            "current_version": verified_current_version,
             "state": system_state,
             "issues": sorted(system_issues),
         },
@@ -1456,7 +1569,8 @@ def render_workplace_status(
     project = status.get("project", {}) if isinstance(status, Mapping) else {}
     runtime = status.get("runtime", {}) if isinstance(status, Mapping) else {}
     decisions = status.get("decisions", {}) if isinstance(status, Mapping) else {}
-    version = system.get("version") or "unknown"
+    version = system.get("current_version") or "unknown"
+    public_version = system.get("version") or "unknown"
     state = system.get("state") or "unknown"
     workplace_label = (
         "Healthy"
@@ -1470,14 +1584,80 @@ def render_workplace_status(
     )
     current = project.get("current")
     project_label = current.get("project_id") if isinstance(current, Mapping) else "None"
+    project_status = current.get("status") if isinstance(current, Mapping) else None
+    project_phase = current.get("current_phase") if isinstance(current, Mapping) else None
+    project_version = current.get("system_version") if isinstance(current, Mapping) else None
     next_decision = decisions.get("next") if isinstance(decisions, Mapping) else None
     decision_label = next_decision.get("summary") if isinstance(next_decision, Mapping) else "None"
+    issue_values = status.get("issues", []) if isinstance(status, Mapping) else []
+    if isinstance(next_decision, Mapping):
+        next_action = f"Review current decision: {decision_label}"
+    elif any(
+        isinstance(issue, str)
+        and (
+            "could not be discovered safely" in issue
+            or "runtime routes are incomplete" in issue
+        )
+        for issue in issue_values
+    ):
+        next_action = (
+            "Run fractal status --active-system PATH --live-state PATH with verified "
+            "current records"
+        )
+    elif any(
+        isinstance(issue, str) and "fractal workplace migrate" in issue
+        for issue in issue_values
+    ):
+        next_action = "Run the explicit fractal workplace migrate command shown above"
+    elif any(
+        isinstance(issue, str) and issue == "Live runtime state is missing"
+        for issue in issue_values
+    ):
+        next_action = (
+            "Provide verified current routes with fractal status --active-system PATH "
+            "--live-state PATH"
+        )
+    elif issue_values:
+        next_action = "Resolve the first reported issue, then run fractal status again"
+    elif isinstance(current, Mapping):
+        # This is navigation from verified Project state, not a human decision
+        # and not permission to mutate anything.  It prevents an active Project
+        # from being presented as if no work remained.
+        if project_status in {"in-progress", "in_progress"}:
+            next_action = "Continue current Project"
+            if isinstance(project_phase, int) and not isinstance(project_phase, bool):
+                next_action += f" phase {project_phase}"
+        elif project_status == "planning":
+            next_action = "Continue current Project planning"
+        elif project_status in {"awaiting-completion", "awaiting_completion"}:
+            next_action = "Review current Project completion state"
+        elif project_status == "blocked":
+            next_action = "Review current Project blocker"
+        else:
+            next_action = "Continue current Project"
+    else:
+        next_action = "No action required"
+    project_context = project_label
+    if project_status:
+        project_context += f" ({project_status}"
+        if isinstance(project_phase, int) and not isinstance(project_phase, bool):
+            project_context += f", phase {project_phase}"
+        project_context += ")"
     lines = [
-        "Fractal",
+        "Fractal status",
+        "Current state",
         f"System {version} · {state}",
+        f"Public System provenance {public_version}",
         f"Workplace {workplace_label}",
-        f"Project {project_label}",
+        f"Project {project_context}",
+        f"Project provenance System {project_version or 'unknown'}",
         f"Runtime {runtime_label}",
+        "",
+        "What you can do",
+        "Run fractal status --details to inspect source evidence and all decisions",
+        "",
+        "Next action",
+        next_action,
         f"Needs your decision {decision_label}",
     ]
     if not details:

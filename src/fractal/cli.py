@@ -40,7 +40,7 @@ from fractal.component_inventory import (
 from fractal.context import RetrievalRequest, assemble_context_package, rebuild_context_index
 from fractal.live_state import LiveRuntimeStateStore
 from fractal.models import ProjectRecord
-from fractal.storage import ProjectStore
+from fractal.storage import ProjectStore, value_sha256
 from fractal.user_surface import (
     audit_codex_skill_path_surface,
     audit_codex_skill_surface,
@@ -48,6 +48,7 @@ from fractal.user_surface import (
     build_user_surface,
     load_user_surface,
 )
+from fractal.versioning import PublicationExecutor, VersionStore
 from fractal.views import render_project_summary
 from fractal.workplace import (
     WorkplaceError,
@@ -65,7 +66,28 @@ def build_parser() -> argparse.ArgumentParser:
         description="Operate a Fractal continuous-improvement workspace.",
     )
     subparsers = parser.add_subparsers(dest="action", required=True)
-    subparsers.add_parser("version", help="Show the active Fractal system version.")
+    version_parser = subparsers.add_parser(
+        "version", help="Show the active version or execute its governed publication route."
+    )
+    version_actions = version_parser.add_subparsers(dest="version_action")
+    version_publish = version_actions.add_parser(
+        "publish", help="Publish one exact activated commit through the governed executor."
+    )
+    version_publish.add_argument("--runtime-root", required=True, type=Path)
+    version_publish.add_argument("--repository-root", required=True, type=Path)
+    version_publish.add_argument("--order", required=True, type=Path)
+    version_publish.add_argument("--order-sha256", required=True)
+    version_publish.add_argument("--fresh-session-receipt-id", required=True)
+    version_publish.add_argument("--runtime-route-receipt-id", required=True)
+    version_publish.add_argument("--authority-receipt-id", required=True)
+    version_publish.add_argument("--project-id", required=True)
+    version_publish.add_argument("--project-revision", required=True, type=int)
+    version_publish.add_argument("--bypass-audit", type=Path)
+    version_publish.add_argument(
+        "--reconcile",
+        action="store_true",
+        help="Inspect remote and close an indeterminate exact acknowledgement; never push.",
+    )
     workplace_parser = subparsers.add_parser(
         "workplace", help="Ensure, validate, or migrate the durable Workplace."
     )
@@ -346,6 +368,7 @@ def build_parser() -> argparse.ArgumentParser:
         "trust-hooks", help="Trust only the current registered generated Hook hashes."
     )
     _add_codex_runtime_arguments(codex_trust)
+    codex_trust.add_argument("--runtime-root", required=True, type=Path)
     codex_trust.add_argument("--recovery", required=True, type=Path)
     codex_trust.add_argument("--output", type=Path)
     return parser
@@ -446,6 +469,77 @@ def _first_existing_path(root: Path, *relative_paths: str) -> Path:
     return candidates[0]
 
 
+def _verified_external_runtime_routes(
+    root: Path,
+    workplace: object | None,
+) -> tuple[Path | None, Path | None, bool, list[str]]:
+    """Discover the default current runtime from a verified Workplace route.
+
+    A legacy Workplace version field is historical.  The one legacy field that
+    remains useful for discovery is its storage-class declaration: the
+    ``local-application-support`` class has one deterministic runtime root.
+
+    A loaded canonical Workplace is already schema-verified.  When it has an
+    explicit canonical active pointer but no committed runtime, the same local
+    Application Support runtime is its rebuildable current-state source.  A
+    neutral first-run Workplace has no active pointer and is intentionally not
+    attached to unrelated machine-global state.  Cross-source digests and
+    identities are verified by the status model before anything is called
+    current.
+    """
+
+    legacy_path = root / "workspace.json"
+    recognised = False
+    discovery_issues: list[str] = []
+    if legacy_path.is_file():
+        try:
+            legacy = json.loads(legacy_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            legacy = None
+            discovery_issues.append(
+                "Current runtime routes could not be discovered safely; pass "
+                "--active-system PATH and --live-state PATH"
+            )
+        runtime = legacy.get("runtime") if isinstance(legacy, dict) else None
+        recognised = (
+            isinstance(legacy, dict)
+            and legacy.get("record_type") == "fractal-workspace"
+            and legacy.get("record_version") == 1
+            and isinstance(runtime, dict)
+            and runtime.get("storage_class") == "local-application-support"
+            and runtime.get("committed") is False
+        )
+    else:
+        record = getattr(workplace, "record", None)
+        runtime = record.get("runtime") if isinstance(record, dict) else None
+        recognised = (
+            isinstance(record, dict)
+            and record.get("record_type") == "fractal-workplace"
+            and record.get("record_version") == 1
+            and isinstance(runtime, dict)
+            and runtime.get("storage_class") == "local-ephemeral"
+            and runtime.get("committed") is False
+            and runtime.get("rebuildable") is True
+            and (root / "system" / "active-version.json").is_file()
+        )
+    if not recognised:
+        if legacy_path.is_file() and not discovery_issues:
+            discovery_issues.append(
+                "Current runtime routes could not be discovered safely; pass "
+                "--active-system PATH and --live-state PATH"
+            )
+        return None, None, False, discovery_issues
+    runtime_root = Path("~/Library/Application Support/Fractal/runtime").expanduser()
+    active_path = runtime_root / "system-version" / "active.json"
+    live_path = runtime_root / "live-state" / "current.json"
+    return (
+        active_path if active_path.is_file() else None,
+        live_path if live_path.is_file() else None,
+        True,
+        discovery_issues,
+    )
+
+
 def _workplace_version_input(
     root: Path,
     workplace: object | None,
@@ -528,6 +622,16 @@ def _status_inputs(
     """Resolve canonical status inputs while keeping all reads side-effect free."""
 
     setup_issues: list[str] = []
+    runtime_active: Path | None = None
+    runtime_live: Path | None = None
+    legacy_root = workplace is None and (root / "workspace.json").is_file()
+    (
+        runtime_active,
+        runtime_live,
+        external_route_recognised,
+        runtime_route_issues,
+    ) = _verified_external_runtime_routes(root, workplace)
+    setup_issues.extend(runtime_route_issues)
     explicit_public = getattr(args, "public_system", None)
     public_system: object = explicit_public or SYSTEM_VERSION
     if explicit_public is None:
@@ -545,9 +649,17 @@ def _status_inputs(
     active = getattr(args, "active_system", None)
     candidate = getattr(args, "candidate_system", None)
     if active is None:
-        active, active_issues = _workplace_version_input(root, workplace, "active")
-        setup_issues.extend(active_issues)
-    if candidate is None:
+        if legacy_root and runtime_active is not None:
+            active = runtime_active
+        elif not legacy_root:
+            active, active_issues = _workplace_version_input(root, workplace, "active")
+            setup_issues.extend(active_issues)
+            if active is None and runtime_active is not None:
+                active = runtime_active
+    # A candidate pointer below a legacy root is historical state.  Only a
+    # caller-supplied candidate or a canonical Workplace pointer can be
+    # represented as unresolved current work.
+    if candidate is None and not legacy_root:
         candidate, candidate_issues = _workplace_version_input(root, workplace, "candidate")
         setup_issues.extend(candidate_issues)
 
@@ -567,7 +679,17 @@ def _status_inputs(
             "runtime/current.json",
             "live-state/current.json",
         )
-        live_state = live_state_path if live_state_path.is_file() else None
+        live_state = live_state_path if live_state_path.is_file() else runtime_live
+    if external_route_recognised and (active is None or live_state is None):
+        missing_routes = []
+        if active is None:
+            missing_routes.append("active System pointer")
+        if live_state is None:
+            missing_routes.append("live runtime state")
+        setup_issues.append(
+            "Current runtime routes are incomplete; pass --active-system PATH and "
+            "--live-state PATH (missing: " + ", ".join(missing_routes) + ")"
+        )
     components = getattr(args, "components", None)
     if components is None:
         components_path = _first_existing_path(
@@ -788,6 +910,33 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the Fractal command-line interface."""
     args = build_parser().parse_args(argv)
     if args.action == "version":
+        if args.version_action == "publish":
+            order = json.loads(args.order.expanduser().read_text(encoding="utf-8"))
+            if value_sha256(order) != args.order_sha256:
+                raise ValueError("Publication order digest does not match --order-sha256")
+            bypass_audit = (
+                json.loads(args.bypass_audit.expanduser().read_text(encoding="utf-8"))
+                if args.bypass_audit is not None
+                else None
+            )
+            executor = PublicationExecutor(
+                VersionStore(args.runtime_root.expanduser() / "system-version"),
+                args.repository_root.expanduser(),
+            )
+            common = {
+                "order": order,
+                "fresh_session_receipt_id": args.fresh_session_receipt_id,
+                "runtime_route_receipt_id": args.runtime_route_receipt_id,
+                "project_id": args.project_id,
+                "project_revision": args.project_revision,
+                "authority_receipt_id": args.authority_receipt_id,
+            }
+            if args.reconcile:
+                result = executor.reconcile(**common)
+            else:
+                result = executor.publish(**common, bypass_audit=bypass_audit)
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            return 0
         print(SYSTEM_VERSION)
         return 0
     if args.action == "workplace":
@@ -998,6 +1147,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     codex_home=args.codex_home.expanduser().resolve(),
                     recovery_path=args.recovery.expanduser(),
                 )
+                trust_receipt = VersionStore(
+                    args.runtime_root.expanduser() / "system-version"
+                ).record_hook_trust_evidence(report)
+                report = {
+                    **report,
+                    "canonical_trust_receipt_id": trust_receipt["receipt_id"],
+                    "canonical_trust_receipt_sha256": trust_receipt["receipt_sha256"],
+                }
                 _write_optional_json(args.output, report)
                 print(json.dumps(report, ensure_ascii=False, sort_keys=True))
                 return 0

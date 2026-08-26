@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fractal.local/schemas/execution-composition.schema.json",
+  "title": "Fractal Temporary Execution Composition",
+  "description": "A bounded Project/task-local combination of active Workflows and Dots.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_type",
+    "record_version",
+    "composition_id",
+    "scope",
+    "persistent",
+    "inputs",
+    "outputs",
+    "steps",
+    "verification",
+    "expiry",
+    "allowed_side_effects",
+    "recovery",
+    "evidence_refs",
+    "execution_authority"
+  ],
+  "properties": {
+    "record_type": {"const": "execution-composition"},
+    "record_version": {"const": 1},
+    "composition_id": {"$ref": "#/$defs/id"},
+    "scope": {"$ref": "#/$defs/scope"},
+    "persistent": {"const": false},
+    "inputs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/contract_item"}
+    },
+    "outputs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/contract_item"}
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/step"}
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checks", "success_effect", "persistent"],
+      "properties": {
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {"type": "string", "minLength": 1},
+              {"$ref": "#/$defs/generic_contract"}
+            ]
+          }
+        },
+        "success_effect": {"const": "evidence-only"},
+        "persistent": {"const": false}
+      }
+    },
+    "expiry": {"$ref": "#/$defs/expiry"},
+    "allowed_side_effects": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "recovery": {"$ref": "#/$defs/generic_contract"},
+    "evidence_refs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/id"},
+      "uniqueItems": true
+    },
+    "execution_authority": {"$ref": "#/$defs/execution_authority"}
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"
+    },
+    "generic_contract": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "contract_item": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "type", "required"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "type": {"type": "string", "minLength": 1},
+        "required": {"type": "boolean"}
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "project_id", "task_id"],
+      "properties": {
+        "kind": {"const": "project-task-local"},
+        "project_id": {"$ref": "#/$defs/id"},
+        "task_id": {"$ref": "#/$defs/id"},
+        "project_revision": {"type": "integer", "minimum": 0}
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step_id", "sequence", "kind", "ref", "input_bindings", "output_bindings"],
+      "properties": {
+        "step_id": {"$ref": "#/$defs/id"},
+        "sequence": {"type": "integer", "minimum": 1},
+        "kind": {"enum": ["workflow", "dot"]},
+        "ref": {"$ref": "#/$defs/ref"},
+        "input_bindings": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/id"}
+        },
+        "output_bindings": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/id"}
+        }
+      }
+    },
+    "ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "lifecycle"],
+      "properties": {
+        "workflow_id": {"$ref": "#/$defs/id"},
+        "dot_id": {"$ref": "#/$defs/id"},
+        "version": {"$ref": "#/$defs/version"},
+        "lifecycle": {"enum": ["active", "candidate"]}
+      },
+      "oneOf": [
+        {"required": ["workflow_id"]},
+        {"required": ["dot_id"]}
+      ]
+    },
+    "expiry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expires_at"],
+      "properties": {
+        "expires_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(?::[0-9]{2}(?:\\.[0-9]+)?)?Z$"
+        },
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "execution_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "project_revision",
+        "task_id",
+        "allowed_side_effects",
+        "expires_at",
+        "persistence_state_change"
+      ],
+      "properties": {
+        "authority_id": {"$ref": "#/$defs/id"},
+        "project_id": {"$ref": "#/$defs/id"},
+        "project_revision": {"type": "integer", "minimum": 0},
+        "task_id": {"$ref": "#/$defs/id"},
+        "allowed_side_effects": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "persistence_state_change": {"const": false},
+        "issued_by": {"type": "string", "minLength": 1},
+        "dot_id": {"$ref": "#/$defs/id"},
+        "dot_version": {"$ref": "#/$defs/version"},
+        "scope": {"$ref": "#/$defs/scope"},
+        "allowed_step_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/id"},
+          "uniqueItems": true
+        },
+        "candidate_dot_execution": {"type": "boolean"},
+        "candidate_dot_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/id"},
+          "uniqueItems": true
+        },
+        "human_approved": {"type": "boolean"},
+        "expires_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(?::[0-9]{2}(?:\\.[0-9]+)?)?Z$"
+        },
+        "persistent": {"const": false}
+      }
+    }
+  }
+}

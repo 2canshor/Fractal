@@ -1,0 +1,6 @@
+interface:
+  display_name: "Find"
+  short_description: "Find a grounded answer"
+  default_prompt: "Use $find to retrieve the relevant knowledge and return a grounded answer."
+policy:
+  allow_implicit_invocation: true

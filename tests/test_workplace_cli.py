@@ -126,20 +126,182 @@ def test_status_first_run_bootstraps_neutral_workplace(tmp_path: Path, capsys) -
 
 
 def test_status_on_legacy_root_is_read_only_and_requires_explicit_migration(
-    tmp_path: Path, capsys
+    tmp_path: Path, monkeypatch, capsys
 ) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path / "empty-home"))
     root = tmp_path / "legacy-status"
     root.mkdir()
     source = root / "workspace.json"
     source_bytes = json.dumps(_legacy_record(), separators=(",", ":")).encode("utf-8")
     source.write_bytes(source_bytes)
+    system_root = root / "system"
+    system_root.mkdir()
+    (system_root / "active-version.json").write_text(
+        json.dumps(
+            {
+                "record_type": "active-system-version",
+                "system_version": "0.1.0-alpha.1",
+                "activation_status": "active",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (system_root / "candidate-version.json").write_text(
+        json.dumps(
+            {
+                "record_type": "candidate-system-version",
+                "system_version": "0.1.0-alpha.2",
+                "candidate_status": "candidate",
+            }
+        ),
+        encoding="utf-8",
+    )
 
-    assert main(["status", "--root", str(root)]) == 2
+    assert main(["status", "--root", str(root), "--details"]) == 2
     output = capsys.readouterr().out
 
     assert source.read_bytes() == source_bytes
     assert not (root / "workplace.json").exists()
     assert "fractal workplace migrate" in output
+    assert "System 0.1.0-alpha.1" not in output
+    assert "0.1.0-alpha.2" not in output
+    assert "fractal status --active-system PATH --live-state PATH" in output
+
+
+def test_status_discovers_verified_external_runtime_without_using_legacy_pointer(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    root = tmp_path / "legacy-with-current-runtime"
+    root.mkdir()
+    (root / "workspace.json").write_text(json.dumps(_legacy_record()), encoding="utf-8")
+
+    project_path = root / "projects" / "active" / "current-project" / "record.json"
+    project_path.parent.mkdir(parents=True)
+    project = {
+        "record_type": "project",
+        "record_version": 1,
+        "project_id": "current-project",
+        "title": "Current Project",
+        "status": "in_progress",
+        "revision": 7,
+        "system_version": "0.1.0-alpha.7-project-origin",
+        "plan": {"current_phase": 4},
+        "decisions": [],
+    }
+    project_path.write_text(json.dumps(project), encoding="utf-8")
+
+    runtime_root = home / "Library/Application Support/Fractal/runtime"
+    active_path = runtime_root / "system-version" / "active.json"
+    active_path.parent.mkdir(parents=True)
+    active = {
+        "record_type": "active-system-version",
+        "record_version": 1,
+        "version": SYSTEM_VERSION,
+        "status": "active",
+    }
+    active_path.write_text(json.dumps(active), encoding="utf-8")
+    live_path = runtime_root / "live-state" / "current.json"
+    live_path.parent.mkdir(parents=True)
+    live = {
+        "record_type": "live-runtime-state",
+        "record_version": 1,
+        "project": {
+            "project_id": "current-project",
+            "revision": 7,
+            "status": "in_progress",
+            "source_path": str(project_path),
+            "source_sha256": hashlib.sha256(project_path.read_bytes()).hexdigest(),
+        },
+        "system_version": {
+            "version": SYSTEM_VERSION,
+            "status": "active",
+            "source_path": str(active_path),
+            "source_sha256": hashlib.sha256(active_path.read_bytes()).hexdigest(),
+        },
+    }
+    live_path.write_text(json.dumps(live), encoding="utf-8")
+
+    # The legacy root still requires explicit migration, so the command stays
+    # nonzero; its current-state projection nevertheless comes from the
+    # verified runtime route rather than the stale legacy version fields.
+    assert main(["status", "--root", str(root)]) == 2
+    output = capsys.readouterr().out
+
+    assert f"System {SYSTEM_VERSION} · active" in output
+    assert "System 0.1.0-alpha.1" not in output
+    assert "Project current-project (in_progress, phase 4)" in output
+    assert "Project provenance System 0.1.0-alpha.7-project-origin" in output
+    assert "Runtime Healthy" in output
+    assert "Run the explicit fractal workplace migrate command shown above" in output
+
+
+def test_status_discovers_verified_external_runtime_for_canonical_workplace(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    root = tmp_path / "canonical-workplace"
+    workplace = create_workplace(root)
+    workplace.write_version_record(
+        {
+            "record_type": "system-version",
+            "record_version": 1,
+            "version": SYSTEM_VERSION,
+            "status": "active",
+        }
+    )
+    workplace.set_version_pointer("active", SYSTEM_VERSION)
+    project = workplace.write_project(
+        ProjectRecord(
+            project_id="canonical-project",
+            title="Canonical Project",
+            system_version="0.1.0-alpha.7-project-origin",
+        )
+    )
+    project_path = root / "projects" / "canonical-project" / "record.json"
+
+    runtime_root = home / "Library/Application Support/Fractal/runtime"
+    active_path = runtime_root / "system-version" / "active.json"
+    active_path.parent.mkdir(parents=True)
+    active = {
+        "record_type": "active-system-version",
+        "record_version": 1,
+        "version": SYSTEM_VERSION,
+        "status": "active",
+    }
+    active_path.write_text(json.dumps(active), encoding="utf-8")
+    live_path = runtime_root / "live-state" / "current.json"
+    live_path.parent.mkdir(parents=True)
+    live = {
+        "record_type": "live-runtime-state",
+        "record_version": 1,
+        "project": {
+            "project_id": "canonical-project",
+            "revision": project["revision"],
+            "status": project["status"],
+            "source_path": str(project_path),
+            "source_sha256": hashlib.sha256(project_path.read_bytes()).hexdigest(),
+        },
+        "system_version": {
+            "version": SYSTEM_VERSION,
+            "status": "active",
+            "source_path": str(active_path),
+            "source_sha256": hashlib.sha256(active_path.read_bytes()).hexdigest(),
+        },
+    }
+    live_path.write_text(json.dumps(live), encoding="utf-8")
+
+    assert main(["status", "--root", str(root)]) == 0
+    output = capsys.readouterr().out
+
+    assert f"System {SYSTEM_VERSION} · active" in output
+    assert "Project canonical-project (in_progress)" in output
+    assert "Project provenance System 0.1.0-alpha.7-project-origin" in output
+    assert "Runtime Healthy" in output
+    assert "Next action\nContinue current Project" in output
+    assert not (root / ".runtime").exists()
 
 
 def test_workplace_validate_and_migrate_are_explicit_and_safe_twice(

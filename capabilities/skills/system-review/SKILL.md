@@ -10,14 +10,14 @@ metadata:
 
 Use the deterministic System Review runtime for the completed Project snapshot and New Blueprint Flow order. Begin from the Project Completion event Carson recorded. Keep all eight Flows visible throughout the review.
 
-1. **Find Problems.** Project Assessment compares the completed Project with its baseline and records Positive Delta and Negative Delta. Issue Scan uses `Quantity over Quality`: inspect the full Project history and record raw observations before grouping, explaining, prioritising, or proposing a change.
-2. **Find Local Patterns.** Project Patterns separates symptom, proximate cause, plausible common cause, isolated incident, recurring behaviour, counterexample, and uncertainty. A confirmed cause needs supporting evidence.
-3. **Find Global Patterns.** Compare Local Patterns with previous Projects, System Reviews, proposals, hypotheses, System Versions, interventions, reversals, and outcomes.
-4. **Find the Reasons for Every Global Pattern.** Make causal uncertainty explicit. Cause Research may use independent External Research and Internal Review before Reconciliation, but it does not own this Step.
-5. **Find Solutions for Every Global Pattern.** Evaluate existing components first and preserve Subtraction First: delete, shorten, merge, simplify, reconfigure, modify, add, no-change. Curiosity supplies 60% current method, 20% dated same-field findings, and 20% related-field transfer. `No Finding` and `No Change` are valid.
-6. **Map New Implementations into the Blueprint.** Every Candidate must receive one truthful Genre, role, Principle assessment, authority boundary, context effect, evidence and recovery path before debate. A No Change result records that there are no Candidates.
-7. **Debate the Solutions for Every Global Pattern.** Two-Sided Review supplies independent Case For and Case Against for every consequential mapped Candidate before Main Agent synthesis.
-8. **Present Decisions One-by-One.** Present one fully prepared decision at a time, preserve the remaining set, state the Biggest Remaining Concern, and record Carson's decision.
+1. **Observe.** Find problems and gains. Project Assessment compares the completed Project with its baseline and records Positive Delta and Negative Delta. Issue Scan uses `Quantity over Quality`: inspect the full Project history and record raw observations before grouping, explaining, prioritising, or proposing a change.
+2. **Group.** Find Local Patterns. Project Patterns separates symptom, proximate cause, plausible common cause, isolated incident, recurring behaviour, counterexample, and uncertainty. A confirmed cause needs supporting evidence.
+3. **Connect.** Find Global Patterns by comparing Local Patterns with previous Projects, System Reviews, proposals, hypotheses, System Versions, interventions, reversals, and outcomes.
+4. **Explain.** Find the reasons for every Global Pattern and make causal uncertainty explicit. Cause Research may use independent External Research and Internal Review before Reconciliation, but it does not own this Flow.
+5. **Explore.** Find solutions for every Global Pattern. Evaluate existing components first and preserve Subtraction First: delete, shorten, merge, simplify, reconfigure, modify, add, no-change. Curiosity supplies 60% current method, 20% dated same-field findings, and 20% related-field transfer. `No Finding` and `No Change` are valid.
+6. **Map.** Map new implementations into the Blueprint. Every Candidate must receive one truthful Genre, role, Principle assessment, authority boundary, context effect, evidence and recovery path before debate. A No Change result records that there are no Candidates.
+7. **Challenge.** Debate the solutions for every Global Pattern. Two-Sided Review supplies independent Case For and Case Against for every consequential mapped Candidate before Main Agent synthesis.
+8. **Decide.** Present decisions one-by-one. Present one fully prepared decision at a time, preserve the remaining set, state the Biggest Remaining Concern, and record Carson's decision.
 
 Work through Project Assessment, Issue Scan, Project Patterns, Cross-Project Patterns, Reversal Check, Cause Research, Reconciliation, Improvement Options, Expected Effect, Local Effect, Global Effect, Blueprint Mapping, Two-Sided Review, Final Assessment, Biggest Remaining Concern, Result, and Your Decision. Link each conclusion to observed evidence. Result is Change Proposal, Experiment, Need More Evidence, or No Change. Your Decision is Carson's typed action.
 

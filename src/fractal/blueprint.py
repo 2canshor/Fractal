@@ -15,14 +15,14 @@ EXPECTED_GENRE_MARKERS = {
 ROLE_BY_MARKER = {"$": "deuteragonist", "^": "extra", "¢": "prop", "%": "principle"}
 
 EXPECTED_FLOWS = (
-    ("find-problems", "Find Problems"),
-    ("find-local-patterns", "Find Local Patterns"),
-    ("find-global-patterns", "Find Global Patterns"),
-    ("find-global-pattern-reasons", "Find the Reasons for Every Global Pattern"),
-    ("find-global-pattern-solutions", "Find Solutions for Every Global Pattern"),
-    ("map-implementations-to-blueprint", "Map New Implementations into the Blueprint"),
-    ("debate-global-pattern-solutions", "Debate the Solutions for Every Global Pattern"),
-    ("present-decisions-one-by-one", "Present Decisions One-by-One"),
+    ("find-problems", "Observe"),
+    ("find-local-patterns", "Group"),
+    ("find-global-patterns", "Connect"),
+    ("find-global-pattern-reasons", "Explain"),
+    ("find-global-pattern-solutions", "Explore"),
+    ("map-implementations-to-blueprint", "Map"),
+    ("debate-global-pattern-solutions", "Challenge"),
+    ("present-decisions-one-by-one", "Decide"),
 )
 
 REQUIRED_ELEMENTS = {
@@ -171,7 +171,7 @@ def validate_blueprint(value: dict[str, Any]) -> dict[str, Any]:
         "hands_off_to_flow": "map-implementations-to-blueprint",
         "cannot_replace": ["project-review", "cause-research", "two-sided-review"],
     }:
-        raise ValueError("Steal must remain Curiosity's bounded donor implementation route")
+        raise ValueError("Adapt must remain Curiosity's bounded donor implementation route")
 
     if flows_section.get("owner") != "system-review":
         raise ValueError("System Review must own the Flows section")
@@ -379,12 +379,12 @@ def render_blueprint(value: dict[str, Any] | None = None) -> str:
             "- Unclassified donor capabilities remain quarantined.",
             "- Bulk donor import is prohibited.",
             "",
-            "## Steal and Curiosity",
+            "## Adapt and Curiosity",
             "",
             "- `Curiosity` decides when implementation evidence beyond the current "
             "method is needed.",
-            "- `Steal` is that Value's bounded donor-facing acquisition and adaptation route.",
-            "- `Steal` serves Flow 5, hands every Candidate to Flow 6, and cannot replace "
+            "- `Adapt` is that Value's bounded donor-facing acquisition and adaptation route.",
+            "- `Adapt` serves Flow 5, hands every Candidate to Flow 6, and cannot replace "
             "`Perspective`, `Cause Research`, or `Two-Sided Review`.",
         ]
     )

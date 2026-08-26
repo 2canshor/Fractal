@@ -1,0 +1,379 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fractal.local/schemas/capability-action.schema.json",
+  "title": "Fractal Capability Action",
+  "description": "A canonical user-facing Action induced from exact reusable Workflow references.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_type",
+    "record_version",
+    "action_id",
+    "version",
+    "human_name",
+    "human_intent",
+    "match_contract",
+    "inputs",
+    "outputs",
+    "workflow_refs",
+    "success_family",
+    "lifecycle",
+    "verification",
+    "system_review",
+    "human_decision",
+    "activation",
+    "recovery",
+    "induction_evidence"
+  ],
+  "properties": {
+    "record_type": {"const": "capability-action"},
+    "record_version": {"const": 1},
+    "action_id": {"$ref": "#/$defs/action_verb"},
+    "version": {"$ref": "#/$defs/version"},
+    "human_name": {"$ref": "#/$defs/action_verb"},
+    "human_intent": {"$ref": "#/$defs/human_intent"},
+    "match_contract": {"$ref": "#/$defs/generic_contract"},
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/contract_item"}
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/contract_item"}
+    },
+    "workflow_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/workflow_ref"}
+    },
+    "success_family": {
+      "oneOf": [
+        {"type": "string", "minLength": 1},
+        {"$ref": "#/$defs/generic_contract"},
+        {"type": "array", "minItems": 1}
+      ]
+    },
+    "lifecycle": {"$ref": "#/$defs/lifecycle"},
+    "verification": {"$ref": "#/$defs/dimension"},
+    "system_review": {"$ref": "#/$defs/dimension"},
+    "human_decision": {"$ref": "#/$defs/dimension"},
+    "activation": {"$ref": "#/$defs/activation"},
+    "recovery": {"$ref": "#/$defs/generic_contract"},
+    "induction_evidence": {"$ref": "#/$defs/induction_evidence"},
+    "lineage": {"$ref": "#/$defs/lineage"},
+    "platform_projections": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/platform_projection"}
+    },
+    "name_reuse_evidence": {"type": ["object", "array", "string"]},
+    "distinct_intent_evidence": {"type": ["object", "array", "string"]}
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "action_verb": {
+      "type": "string",
+      "description": "A lowercase English one-word verb used as both Action name and id.",
+      "pattern": "^[a-z]+$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$"
+    },
+    "nonblank": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generic_contract": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "human_intent": {
+      "type": "object",
+      "required": ["statement", "familiar", "stable"],
+      "properties": {
+        "statement": {"$ref": "#/$defs/nonblank"},
+        "familiar": {"$ref": "#/$defs/action_verb"},
+        "stable": {"const": true}
+      },
+      "additionalProperties": true
+    },
+    "contract_item": {
+      "type": "object",
+      "required": ["id", "type", "required"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "type": {"$ref": "#/$defs/nonblank"},
+        "required": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "workflow_ref": {
+      "type": "object",
+      "required": ["sequence", "workflow_id", "version", "lifecycle"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "workflow_id": {"$ref": "#/$defs/id"},
+        "version": {"$ref": "#/$defs/version"},
+        "lifecycle": {"enum": ["candidate", "active"]}
+      },
+      "additionalProperties": true
+    },
+    "lifecycle": {
+      "type": "object",
+      "anyOf": [
+        {"required": ["status"]},
+        {"required": ["state"]}
+      ],
+      "properties": {
+        "status": {"enum": ["candidate", "active", "retired"]},
+        "state": {"enum": ["candidate", "active", "retired"]},
+        "candidate": {"type": "boolean"},
+        "active": {"type": "boolean"},
+        "active_surface": {"type": "boolean"},
+        "transition_evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/nonblank"},
+          "uniqueItems": true
+        },
+        "supersedes": {"type": ["string", "null"]},
+        "material_change": {"type": "boolean"},
+        "change_reason": {"$ref": "#/$defs/nonblank"}
+      },
+      "additionalProperties": true
+    },
+    "dimension": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"type": "string", "minLength": 1},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/nonblank"},
+          "uniqueItems": true
+        },
+        "decision_id": {"$ref": "#/$defs/nonblank"},
+        "decided_by": {"$ref": "#/$defs/nonblank"},
+        "review_id": {"$ref": "#/$defs/id"}
+      },
+      "additionalProperties": true
+    },
+    "activation_evidence": {
+      "type": "object",
+      "required": ["evidence_id"],
+      "properties": {
+        "evidence_id": {"$ref": "#/$defs/nonblank"},
+        "action_version": {"$ref": "#/$defs/version"},
+        "version": {"$ref": "#/$defs/version"},
+        "authorised": {"type": "boolean"},
+        "authorized": {"type": "boolean"}
+      },
+      "additionalProperties": true,
+      "anyOf": [
+        {"required": ["authorised"]},
+        {"required": ["authorized"]}
+      ]
+    },
+    "activation": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["inactive", "ready", "active", "revoked"]},
+        "authorised": {"type": "boolean"},
+        "authorized": {"type": "boolean"},
+        "activated_version": {"$ref": "#/$defs/version"},
+        "activation_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/activation_evidence"}
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/nonblank"},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "induction_evidence": {
+      "type": "object",
+      "required": [
+        "new_workflow_clusters",
+        "human_intent_analysis",
+        "compression_decision",
+        "naming_system",
+        "anti_seed_attestation",
+        "input_digest"
+      ],
+      "properties": {
+        "new_workflow_clusters": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/workflow_cluster"}
+        },
+        "human_intent_analysis": {
+          "oneOf": [
+            {"$ref": "#/$defs/nonblank"},
+            {"$ref": "#/$defs/generic_contract"},
+            {"type": "array", "minItems": 1}
+          ]
+        },
+        "compression_decision": {
+          "oneOf": [
+            {"$ref": "#/$defs/nonblank"},
+            {"$ref": "#/$defs/generic_contract"}
+          ]
+        },
+        "naming_system": {
+          "type": "object",
+          "required": [
+            "proposal",
+            "rationale",
+            "alternatives",
+            "language",
+            "part_of_speech",
+            "provenance"
+          ],
+          "properties": {
+            "proposal": {"$ref": "#/$defs/action_verb"},
+            "rationale": {"$ref": "#/$defs/nonblank"},
+            "alternatives": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/action_verb"},
+              "uniqueItems": true
+            },
+            "language": {"const": "en"},
+            "part_of_speech": {"const": "verb"},
+            "provenance": {"$ref": "#/$defs/naming_provenance"}
+          },
+          "additionalProperties": true
+        },
+        "anti_seed_attestation": {
+          "oneOf": [
+            {"$ref": "#/$defs/nonblank"},
+            {"$ref": "#/$defs/generic_contract"}
+          ]
+        },
+        "input_digest": {
+          "oneOf": [
+            {"$ref": "#/$defs/nonblank"},
+            {"$ref": "#/$defs/generic_contract"}
+          ]
+        },
+        "distinct_intent_evidence": {"type": ["object", "array", "string"]},
+        "name_reuse_evidence": {"type": ["object", "array", "string"]},
+        "same_name_evidence": {"type": ["object", "array", "string"]},
+        "reinduction_evidence": {"type": ["object", "array", "string"]}
+      },
+      "additionalProperties": true
+    },
+    "naming_provenance": {
+      "type": "object",
+      "required": ["component_id", "version", "evidence_ids"],
+      "properties": {
+        "component_id": {"const": "naming-system"},
+        "version": {"$ref": "#/$defs/version"},
+        "evidence_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/nonblank"},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "workflow_cluster": {
+      "type": "object",
+      "required": ["cluster_id"],
+      "anyOf": [
+        {"required": ["workflow_id", "version"]},
+        {"required": ["workflow_ref"]},
+        {"required": ["workflow_ids", "versions"]}
+      ],
+      "properties": {
+        "cluster_id": {"$ref": "#/$defs/id"},
+        "workflow_id": {"$ref": "#/$defs/id"},
+        "version": {"$ref": "#/$defs/version"},
+        "workflow_ref": {
+          "oneOf": [
+            {"$ref": "#/$defs/workflow_ref"},
+            {"type": "array", "minItems": 1}
+          ]
+        },
+        "workflow_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/id"}
+        },
+        "versions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/version"}
+        },
+        "workflow_versions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/version"}
+        }
+      },
+      "additionalProperties": true
+    },
+    "lineage": {
+      "type": "object",
+      "required": [
+        "predecessor_action_id",
+        "predecessor_version",
+        "change_type",
+        "reason",
+        "evidence_ids",
+        "recovery_evidence_ids"
+      ],
+      "properties": {
+        "predecessor_action_id": {"$ref": "#/$defs/id"},
+        "predecessor_version": {"$ref": "#/$defs/version"},
+        "change_type": {"$ref": "#/$defs/nonblank"},
+        "reason": {"$ref": "#/$defs/nonblank"},
+        "evidence_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/nonblank"},
+          "uniqueItems": true
+        },
+        "recovery_evidence_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/nonblank"},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "platform_projection": {
+      "type": "object",
+      "required": ["platform", "derived_from", "canonical", "authority"],
+      "properties": {
+        "record_type": {"const": "capability-action-projection"},
+        "record_version": {"const": 1},
+        "projection_id": {"$ref": "#/$defs/id"},
+        "platform": {"$ref": "#/$defs/nonblank"},
+        "derived_from": {
+          "type": "object",
+          "required": ["action_id", "version"],
+          "properties": {
+            "action_id": {"$ref": "#/$defs/id"},
+            "version": {"$ref": "#/$defs/version"}
+          },
+          "additionalProperties": true
+        },
+        "canonical": {"type": "boolean"},
+        "authority": {"enum": ["derived", "projection", "platform"]}
+      },
+      "additionalProperties": true
+    }
+  }
+}

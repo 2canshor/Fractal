@@ -268,7 +268,7 @@
       "blueprint_marker": "¢",
       "blueprint_tags": [],
       "decision_status": "approved-technical-decision",
-      "human_name": "Steal",
+      "human_name": "Adapt",
       "id": "steal",
       "intent": "Reuse bounded donor implementations while stripping donor authority and remapping the result to Fractal.",
       "operational_mapping": [
@@ -282,7 +282,7 @@
   "flows": [
     {
       "decision_status": "architecture-baseline",
-      "human_name": "Find Problems",
+      "human_name": "Observe",
       "id": "find-problems",
       "intent": "Collect the broad Project evidence before narrowing or explaining it.",
       "flow_kind": "system-review-flow",
@@ -297,7 +297,7 @@
     },
     {
       "decision_status": "architecture-baseline",
-      "human_name": "Find Local Patterns",
+      "human_name": "Group",
       "id": "find-local-patterns",
       "intent": "Identify meaningful local recurrence without confusing surface similarity with cause.",
       "flow_kind": "system-review-flow",
@@ -310,7 +310,7 @@
     },
     {
       "decision_status": "architecture-baseline",
-      "human_name": "Find Global Patterns",
+      "human_name": "Connect",
       "id": "find-global-patterns",
       "intent": "Compare patterns across the relevant Project and improvement history before treating them as isolated.",
       "flow_kind": "system-review-flow",
@@ -323,7 +323,7 @@
     },
     {
       "decision_status": "architecture-baseline",
-      "human_name": "Find the Reasons for Every Global Pattern",
+      "human_name": "Explain",
       "id": "find-global-pattern-reasons",
       "intent": "Make the causal reasoning for every Global Pattern explicit, including uncertainty and counterevidence.",
       "flow_kind": "system-review-flow",
@@ -336,7 +336,7 @@
     },
     {
       "decision_status": "architecture-baseline",
-      "human_name": "Find Solutions for Every Global Pattern",
+      "human_name": "Explore",
       "id": "find-global-pattern-solutions",
       "intent": "Search for possible responses to every Global Pattern without allowing one preferred implementation to end the search.",
       "flow_kind": "system-review-flow",
@@ -349,7 +349,7 @@
     },
     {
       "decision_status": "architecture-baseline",
-      "human_name": "Map New Implementations into the Blueprint",
+      "human_name": "Map",
       "id": "map-implementations-to-blueprint",
       "intent": "Classify every Candidate implementation by its true Blueprint role and apply the rules of its Genre before debate.",
       "flow_kind": "system-review-flow",
@@ -362,7 +362,7 @@
     },
     {
       "decision_status": "architecture-baseline",
-      "human_name": "Debate the Solutions for Every Global Pattern",
+      "human_name": "Challenge",
       "id": "debate-global-pattern-solutions",
       "intent": "Challenge the mapped solutions for every Global Pattern before Carson is asked to decide.",
       "flow_kind": "system-review-flow",
@@ -376,7 +376,7 @@
     },
     {
       "decision_status": "architecture-baseline",
-      "human_name": "Present Decisions One-by-One",
+      "human_name": "Decide",
       "id": "present-decisions-one-by-one",
       "intent": "Present one fully prepared human-scale decision at a time without hiding the remaining decision set.",
       "flow_kind": "system-review-flow",

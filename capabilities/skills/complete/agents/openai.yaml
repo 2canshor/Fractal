@@ -1,6 +1,0 @@
-interface:
-  display_name: "Complete"
-  short_description: "Prepare the complete System Review"
-  default_prompt: "Use $complete to finish the eight-Flow New Blueprint System Review before presenting decisions one-by-one."
-policy:
-  allow_implicit_invocation: true

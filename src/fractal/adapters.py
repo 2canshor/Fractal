@@ -337,6 +337,15 @@ class AdapterBuilder:
                 "managed_roots": self._managed_roots(platform),
                 "install_route": "fractal components install-candidate",
             },
+            "publication_governance": {
+                "repository_roots": ["~/Fractal", "~/Fractal Workspace"],
+                "repository_ids": ["2canshor/Fractal", "2canshor/Fractal-Workspace"],
+                "executor_route": "fractal version publish",
+                "claim_boundary": (
+                    "Fractal-owned Tool calls are guarded; Carson's external Terminal and UI "
+                    "remain outside this Hook boundary."
+                ),
+            },
         }
 
     def _select_project_snapshot(self) -> dict[str, Any]:

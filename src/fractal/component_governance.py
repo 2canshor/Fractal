@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
@@ -24,6 +24,57 @@ ACTIVE_DISPOSITIONS = {
     "approved-external-managed",
     "platform-managed-adapter",
 }
+
+APPLE_COMPONENT_PRINCIPLES = (
+    "purpose",
+    "agency",
+    "responsibility",
+    "familiarity",
+    "flexibility",
+    "simplicity",
+    "craft",
+    "delight",
+)
+
+COMPONENT_CONTINUOUS_IMPROVEMENT_ROUTE = (
+    "component-governance",
+    "capability-check",
+    "environment-adapters",
+    "system-review",
+    "continuous-improvement",
+)
+
+_AUDIT_EXECUTION_STATES = {
+    "available-unverified": "available-unverified",
+    "verified-staged": "staged",
+    "verified-live": "live",
+    "unavailable": "unavailable",
+}
+
+_CREDENTIAL_VALUE_PATTERNS = tuple(
+    re.compile(pattern)
+    for pattern in (
+        r"\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b",
+        r"\bgh[opurs]_[A-Za-z0-9]{20,}\b",
+        r"\bAKIA[0-9A-Z]{16}\b",
+        r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{12,}",
+        r"(?i)\b(?:api[_ -]?key|access[_ -]?token|client[_ -]?secret|password)"
+        r"\s*[:=]\s*['\"]?[A-Za-z0-9._~+/=-]{12,}",
+    )
+)
+
+_DESTRUCTIVE_RECOVERY_PATTERNS = tuple(
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"\brm\s+-[^\n]*r[^\n]*f\b",
+        r"\bsudo\s+rm\b",
+        r"\b(?:permanently\s+delete|delete\s+permanently)\b",
+        r"\b(?:drop\s+(?:database|schema|table)|truncate\s+table)\b",
+        r"\b(?:destroy|purge)\s+(?:all|the|this)\b",
+        r"\bno\s+(?:restore|recovery)\b",
+        r"\birrecoverable\b",
+    )
+)
 
 
 def is_transient_component_path(path: Path) -> bool:
@@ -214,6 +265,435 @@ def _validate_component_invariants(component: dict[str, Any]) -> None:
             "A non-live component cannot carry a live Claim Gate receipt: "
             f"{component['component_id']}"
         )
+
+
+def _non_empty_text(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _string_list(value: Any, *, allow_empty: bool = False) -> bool:
+    return (
+        isinstance(value, list)
+        and (allow_empty or bool(value))
+        and all(_non_empty_text(item) for item in value)
+        and len(value) == len(set(value))
+    )
+
+
+def _credential_paths(value: Any, path: str = "$") -> list[str]:
+    """Return only paths to likely credential values, never the values themselves."""
+    if isinstance(value, Mapping):
+        paths: list[str] = []
+        for key in sorted(value, key=str):
+            paths.extend(_credential_paths(value[key], f"{path}.{key}"))
+        return paths
+    if isinstance(value, list):
+        paths = []
+        for index, item in enumerate(value):
+            paths.extend(_credential_paths(item, f"{path}[{index}]"))
+        return paths
+    if isinstance(value, str) and any(
+        pattern.search(value) for pattern in _CREDENTIAL_VALUE_PATTERNS
+    ):
+        return [path]
+    return []
+
+
+def _has_destructive_recovery_instruction(value: Any) -> bool:
+    if not isinstance(value, str):
+        return True
+    return any(pattern.search(value) for pattern in _DESTRUCTIVE_RECOVERY_PATTERNS)
+
+
+def _component_apple_continuous_improvement_result(
+    component: Mapping[str, Any],
+    *,
+    index: int,
+) -> dict[str, Any]:
+    component_id = component.get("component_id")
+    result_id = (
+        component_id
+        if _non_empty_text(component_id)
+        else f"missing-component-id-at-index-{index}"
+    )
+    findings: list[str] = []
+
+    if not _non_empty_text(component_id):
+        findings.append("missing-component-id")
+    human_name = component.get("human_name")
+    if not _non_empty_text(human_name):
+        findings.append("missing-human-name")
+
+    audience = component.get("surface_audience")
+    purpose_kind = "user-job" if audience == "user-job" else "supporting-purpose"
+    trigger = component.get("trigger")
+    trigger_description = trigger.get("description") if isinstance(trigger, Mapping) else None
+    contract = component.get("job_contract")
+    if purpose_kind == "user-job":
+        purpose_description = contract.get("outcome") if isinstance(contract, Mapping) else None
+        if not isinstance(contract, Mapping) or not _non_empty_text(purpose_description):
+            findings.append("missing-user-job-purpose")
+        elif contract.get("action") != component_id:
+            findings.append("user-job-action-mismatch")
+        purpose_basis = "job-contract"
+    else:
+        purpose_description = trigger_description
+        if contract is not None:
+            findings.append("supporting-purpose-has-user-job-contract")
+        if not _non_empty_text(purpose_description):
+            findings.append("missing-supporting-trigger-purpose")
+        purpose_basis = "trigger"
+
+    permissions = component.get("permissions")
+    operations = permissions.get("operations") if isinstance(permissions, Mapping) else None
+    execution = (
+        component.get("status", {}).get("execution")
+        if isinstance(component.get("status"), Mapping)
+        else None
+    )
+    inactive_no_execution = (
+        execution == "unavailable"
+        and isinstance(permissions, Mapping)
+        and permissions.get("profile") == "inactive-no-execution"
+        and operations == []
+    )
+    if _string_list(operations):
+        effective_operations = list(operations)
+    elif inactive_no_execution:
+        effective_operations = ["no-execution"]
+    else:
+        effective_operations = []
+        findings.append("missing-or-ambiguous-operations")
+
+    owner = component.get("owner")
+    source = component.get("source")
+    owner_complete = (
+        isinstance(owner, Mapping)
+        and _non_empty_text(owner.get("owner_id"))
+        and isinstance(owner.get("source_controlled_by_owner"), bool)
+    )
+    source_complete = (
+        isinstance(source, Mapping)
+        and _non_empty_text(source.get("kind"))
+        and _non_empty_text(source.get("locator"))
+        and _non_empty_text(source.get("version"))
+    )
+    if not owner_complete:
+        findings.append("missing-owner-provenance")
+    source_hash_complete = False
+    if not source_complete:
+        findings.append("missing-source-provenance")
+    elif source.get("content_sha256") is None:
+        if source.get("kind") not in {"platform", "protocol"}:
+            findings.append("missing-source-content-hash")
+        else:
+            source_hash_complete = True
+    elif re.fullmatch(r"[0-9a-f]{64}", str(source.get("content_sha256"))) is None:
+        findings.append("invalid-source-content-hash")
+    else:
+        source_hash_complete = True
+    source_provenance_complete = source_complete and source_hash_complete
+
+    permission_complete = (
+        isinstance(permissions, Mapping)
+        and _non_empty_text(permissions.get("profile"))
+        and bool(effective_operations)
+        and _non_empty_text(permissions.get("secret_boundary"))
+    )
+    if not permission_complete:
+        findings.append("missing-permission-or-secret-boundary")
+    credential_paths = _credential_paths(component)
+    if credential_paths:
+        findings.append("credential-content-present")
+
+    status = component.get("status")
+    execution_claim = _AUDIT_EXECUTION_STATES.get(execution)
+    if execution_claim is None:
+        findings.append("unknown-or-missing-execution-state")
+    registered = _non_empty_text(component_id)
+    active = status.get("active") if isinstance(status, Mapping) else None
+    discoverable = status.get("discoverable") if isinstance(status, Mapping) else None
+    claim_receipt = status.get("claim_receipt") if isinstance(status, Mapping) else None
+    if not isinstance(active, bool) or not isinstance(discoverable, bool):
+        findings.append("missing-registration-state")
+    if execution in {"available-unverified", "verified-staged"} and (
+        active is not True or claim_receipt is not None
+    ):
+        findings.append("misleading-non-live-execution-claim")
+    if execution == "verified-live" and (
+        active is not True or not isinstance(claim_receipt, Mapping)
+    ):
+        findings.append("missing-live-claim-receipt")
+    if execution == "unavailable" and (
+        active is not False or discoverable is not False or claim_receipt is not None
+    ):
+        findings.append("misleading-unavailable-execution-claim")
+    for claim_key in ("success", "successful", "completed", "executed", "live"):
+        if (
+            isinstance(status, Mapping)
+            and status.get(claim_key) is True
+            and execution != "verified-live"
+        ):
+            findings.append("misleading-active-success-claim")
+            break
+
+    overlap = component.get("overlap")
+    overlap_complete = (
+        isinstance(overlap, Mapping)
+        and _non_empty_text(overlap.get("decision"))
+        and _string_list(overlap.get("with"), allow_empty=True)
+        and component_id not in overlap.get("with", [])
+    )
+    if not overlap_complete:
+        findings.append("missing-or-ambiguous-overlap-decision")
+
+    platforms = component.get("platforms")
+    projection = component.get("projection")
+    platform_projection_complete = (
+        _string_list(platforms)
+        and isinstance(projection, Mapping)
+        and _non_empty_text(projection.get("mode"))
+        and _non_empty_text(projection.get("target"))
+    )
+    if not platform_projection_complete:
+        findings.append("missing-platform-or-projection")
+
+    recovery = component.get("recovery")
+    removal = recovery.get("removal") if isinstance(recovery, Mapping) else None
+    restore = recovery.get("restore") if isinstance(recovery, Mapping) else None
+    recovery_complete = _non_empty_text(removal) and _non_empty_text(restore)
+    if not recovery_complete:
+        findings.append("missing-removal-or-restore-path")
+    elif _has_destructive_recovery_instruction(removal) or _has_destructive_recovery_instruction(
+        restore
+    ):
+        findings.append("destructive-or-irrecoverable-recovery")
+    recovery_safe = (
+        recovery_complete and "destructive-or-irrecoverable-recovery" not in findings
+    )
+
+    status_evidence = status.get("evidence_ids") if isinstance(status, Mapping) else None
+    verification_evidence = component.get("verification_evidence")
+    evidence_complete = (
+        _string_list(status_evidence)
+        and _string_list(verification_evidence)
+        and set(status_evidence) == set(verification_evidence)
+    )
+    if not evidence_complete:
+        findings.append("missing-or-inconsistent-evidence-ids")
+    evidence_ids = sorted(set(status_evidence or []) | set(verification_evidence or []))
+
+    purpose_complete = (
+        _non_empty_text(human_name)
+        and _non_empty_text(purpose_description)
+        and bool(effective_operations)
+    )
+    execution_honest = not any(
+        finding
+        in {
+            "unknown-or-missing-execution-state",
+            "missing-registration-state",
+            "misleading-non-live-execution-claim",
+            "missing-live-claim-receipt",
+            "misleading-unavailable-execution-claim",
+            "misleading-active-success-claim",
+        }
+        for finding in findings
+    )
+    delight_proxy = (
+        purpose_complete
+        and permission_complete
+        and execution_honest
+        and evidence_complete
+        and recovery_safe
+    )
+    human_acceptance = "pending" if purpose_kind == "user-job" else "not-applicable"
+    principle_checks: dict[str, bool | str] = {
+        "purpose": purpose_complete,
+        "agency": permission_complete and recovery_safe and execution_honest,
+        "responsibility": owner_complete
+        and source_provenance_complete
+        and permission_complete
+        and not credential_paths,
+        "familiarity": overlap_complete,
+        "flexibility": platform_projection_complete,
+        "simplicity": purpose_complete and purpose_kind in {"user-job", "supporting-purpose"},
+        "craft": evidence_complete and recovery_safe and execution_honest,
+        "delight": (
+            "proxy-observed-human-pending"
+            if human_acceptance == "pending" and delight_proxy
+            else "proxy-failed-human-pending"
+            if human_acceptance == "pending"
+            else "not-directly-user-visible"
+        ),
+    }
+
+    return {
+        "component_id": result_id,
+        "purpose": {
+            "kind": purpose_kind,
+            "basis": purpose_basis,
+            "human_name_present": _non_empty_text(human_name),
+            "description_present": _non_empty_text(purpose_description),
+            "effective_operations": effective_operations,
+        },
+        "execution": {
+            "registration_state": "registered" if registered else "missing",
+            "execution_state": execution_claim or "unknown",
+            "active": active if isinstance(active, bool) else None,
+            "successful_execution_claimed": execution == "verified-live",
+            "available_unverified_is_success": False,
+        },
+        "checks": {
+            "owner_and_source_provenance": owner_complete and source_provenance_complete,
+            "permissions_and_secret_boundary": permission_complete and not credential_paths,
+            "honest_execution_state": execution_honest,
+            "overlap_decision": overlap_complete,
+            "platform_and_projection": platform_projection_complete,
+            "safe_removal_and_restore": recovery_safe,
+            "evidence_ids": evidence_complete,
+        },
+        "apple_principle_checks": principle_checks,
+        "delight": {
+            "observable_proxy": delight_proxy,
+            "human_qualitative_acceptance": human_acceptance,
+            "claimed_pass": False,
+        },
+        "continuous_improvement_route": list(COMPONENT_CONTINUOUS_IMPROVEMENT_ROUTE),
+        "evidence_ids": evidence_ids,
+        "credential_finding_paths": credential_paths,
+        "findings": sorted(set(findings)),
+        "deterministic_result": "pass" if not findings else "fail",
+    }
+
+
+def audit_component_apple_continuous_improvement_alignment(
+    registry: Mapping[str, Any],
+    *,
+    registry_sha256: str,
+) -> dict[str, Any]:
+    """Audit every registered component against Apple-aligned governance proxies.
+
+    This audit is deliberately narrower than human experience acceptance. It verifies
+    deterministic component metadata, execution honesty, privacy boundaries, recovery,
+    and the one existing path into System Review and Continuous Improvement. Directly
+    user-visible Delight remains pending until a human evaluates the real experience.
+    """
+    registry_findings: list[str] = []
+    if re.fullmatch(r"[0-9a-f]{64}", registry_sha256) is None:
+        registry_findings.append("invalid-registry-sha256")
+    components = registry.get("components")
+    if not isinstance(components, list):
+        components = []
+        registry_findings.append("missing-components")
+    identifiers = [
+        component.get("component_id")
+        for component in components
+        if isinstance(component, Mapping)
+    ]
+    if len(identifiers) != len(components):
+        registry_findings.append("non-object-component-record")
+    valid_identifiers = [identifier for identifier in identifiers if _non_empty_text(identifier)]
+    if len(valid_identifiers) != len(set(valid_identifiers)):
+        registry_findings.append("duplicate-component-id")
+    if valid_identifiers != sorted(valid_identifiers):
+        registry_findings.append("component-ids-not-sorted")
+
+    component_results = [
+        _component_apple_continuous_improvement_result(component, index=index)
+        for index, component in enumerate(components)
+        if isinstance(component, Mapping)
+    ]
+    failed = [
+        result["component_id"]
+        for result in component_results
+        if result["deterministic_result"] != "pass"
+    ]
+    delight_pending = [
+        result["component_id"]
+        for result in component_results
+        if result["delight"]["human_qualitative_acceptance"] == "pending"
+    ]
+    technical_pass = (
+        not registry_findings and not failed and len(component_results) == len(components)
+    )
+    if technical_pass and delight_pending:
+        overall_status = "deterministic-pass-human-acceptance-pending"
+    elif technical_pass:
+        overall_status = "deterministic-pass"
+    else:
+        overall_status = "fail-closed"
+    return {
+        "record_type": "apple-continuous-improvement-component-audit",
+        "record_version": 1,
+        "snapshot_role": "current-candidate-registry-audit-evidence",
+        "authority": "evidence-only; no activation, live-success, or lifecycle authority",
+        "scope": (
+            "Component metadata and governance proxies only; target-specific accessibility, "
+            "inclusion, writing, interaction quality, and human Delight require separate "
+            "acceptance."
+        ),
+        "registry": {
+            "reference": "system/components/registry.json",
+            "sha256_mode": "exact-file-bytes",
+            "sha256": registry_sha256,
+            "component_count": len(components),
+            "record_version": registry.get("record_version"),
+            "system_version": registry.get("system_version"),
+            "candidate_status": registry.get("candidate_status"),
+        },
+        "apple_principles": list(APPLE_COMPONENT_PRINCIPLES),
+        "continuous_improvement_route": list(COMPONENT_CONTINUOUS_IMPROVEMENT_ROUTE),
+        "external_component_rule": (
+            "available-unverified proves registration or availability only and never successful "
+            "execution; external components do not require per-component verified-live proof here."
+        ),
+        "delight_rule": (
+            "Observable metadata and execution proxies are recorded, but directly user-visible "
+            "Delight is never marked passed without qualitative human acceptance."
+        ),
+        "summary": {
+            "overall_status": overall_status,
+            "deterministic_checks_passed": technical_pass,
+            "component_count": len(component_results),
+            "component_pass_count": len(component_results) - len(failed),
+            "component_fail_count": len(failed),
+            "human_qualitative_acceptance_pending_count": len(delight_pending),
+            "release_readiness": (
+                "blocked" if registry_findings or failed or delight_pending else "ready"
+            ),
+        },
+        "registry_findings": sorted(set(registry_findings)),
+        "failed_component_ids": sorted(failed),
+        "human_qualitative_acceptance_pending_component_ids": sorted(delight_pending),
+        "components": component_results,
+    }
+
+
+def audit_component_registry_apple_continuous_improvement(path: Path) -> dict[str, Any]:
+    """Load and bind the Apple/Continuous Improvement audit to exact registry bytes."""
+    registry_path = Path(path)
+    raw = registry_path.read_bytes()
+    registry = load_component_registry(registry_path)
+    return audit_component_apple_continuous_improvement_alignment(
+        registry,
+        registry_sha256=hashlib.sha256(raw).hexdigest(),
+    )
+
+
+def write_component_apple_continuous_improvement_audit(
+    registry_path: Path,
+    output_path: Path,
+) -> dict[str, Any]:
+    """Write portable, deterministic target-real component audit evidence."""
+    audit = audit_component_registry_apple_continuous_improvement(registry_path)
+    destination = Path(output_path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(
+        json.dumps(audit, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return audit
 
 
 def active_components(registry: dict[str, Any], platform: str) -> list[dict[str, Any]]:

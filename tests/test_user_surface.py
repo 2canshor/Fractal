@@ -4,15 +4,18 @@ from pathlib import Path
 
 import pytest
 
+from fractal.models import ProjectRecord
 from fractal.user_surface import (
     UserSurfaceError,
     audit_codex_skill_path_surface,
     audit_codex_skill_surface,
+    audit_user_surface_experience,
     build_codex_skill_config_edits,
     build_user_surface,
     load_user_surface,
     validate_user_surface,
 )
+from fractal.views import render_project_summary, render_user_feedback
 
 
 def skill(component_id: str, *, active: bool = True, platform: str = "codex") -> dict:
@@ -30,11 +33,11 @@ def registry() -> dict:
         "components": [
             skill("assess"),
             skill("automate"),
-            skill("complete"),
+            skill("learn"),
             skill("create"),
             skill("dot-browser"),
             skill("dot-document"),
-            skill("match"),
+            skill("align"),
             skill("version"),
         ],
     }
@@ -56,6 +59,12 @@ def surface() -> dict:
         },
         "entries": [
             {
+                "entry_id": "align",
+                "interface_type": "command",
+                "component_id": "align",
+                "outcome": "Align an active Project with current reality.",
+            },
+            {
                 "entry_id": "assess",
                 "interface_type": "command",
                 "component_id": "assess",
@@ -68,22 +77,16 @@ def surface() -> dict:
                 "outcome": "Make a repeated job run reliably.",
             },
             {
-                "entry_id": "complete",
-                "interface_type": "command",
-                "component_id": "complete",
-                "outcome": "Finish the eight-Flow New Blueprint System Review.",
-            },
-            {
                 "entry_id": "create",
                 "interface_type": "action",
                 "component_id": "create",
                 "outcome": "Make the requested outcome.",
             },
             {
-                "entry_id": "match",
+                "entry_id": "learn",
                 "interface_type": "command",
-                "component_id": "match",
-                "outcome": "Match an active Project to reality.",
+                "component_id": "learn",
+                "outcome": "Learn from a completed Project through all eight System Review Flows.",
             },
             {
                 "entry_id": "version",
@@ -222,8 +225,8 @@ def test_codex_config_edits_hide_every_non_surface_skill_and_keep_sources() -> N
             "enabled": True,
         },
         {
-            "name": "complete",
-            "path": "/candidate/skills/complete/SKILL.md",
+            "name": "learn",
+            "path": "/candidate/skills/learn/SKILL.md",
             "enabled": True,
         },
         {
@@ -232,8 +235,8 @@ def test_codex_config_edits_hide_every_non_surface_skill_and_keep_sources() -> N
             "enabled": True,
         },
         {
-            "name": "match",
-            "path": "/candidate/skills/match/SKILL.md",
+            "name": "align",
+            "path": "/candidate/skills/align/SKILL.md",
             "enabled": True,
         },
         {
@@ -352,3 +355,124 @@ def test_exact_path_audit_requires_every_candidate_entry() -> None:
 
     assert report["clean"] is False
     assert report["missing_visible_skill_paths"] == ["/candidate/create/SKILL.md"]
+
+
+def test_user_surface_experience_audit_accepts_plain_recoverable_views() -> None:
+    blocked = render_user_feedback(
+        "Could not save the change",
+        state="blocked",
+        summary="The shared record changed before this save could finish.",
+        reason="A newer revision is already available.",
+        next_action="Review the newer revision, then retry the save.",
+        authority="Only the Project owner can approve the conflicting choice.",
+        recovery="The earlier revision remains unchanged and can still be restored.",
+        ai_assistance={
+            "use": "AI compared the two revision summaries.",
+            "limits": "The comparison cannot decide which intent is correct.",
+            "retry": "Retry after the owner records the intended choice.",
+            "revert": "Discard this draft and keep the earlier revision.",
+        },
+    )
+
+    report = audit_user_surface_experience(
+        surface(),
+        normal_views=["# Project\n\n## Current status\n\n- Status: In progress"],
+        feedback_views=[
+            {
+                "state": "blocked",
+                "text": blocked,
+                "significant": True,
+                "ai_assisted": True,
+            }
+        ],
+        delight_observations=["The next action follows the reason in reading order."],
+    )
+
+    assert report["clean"] is True
+    assert report["finding_count"] == 0
+    assert report["delight"] == {
+        "status": "human-acceptance-pending",
+        "observable_proxy_count": 1,
+        "observable_proxies": ["The next action follows the reason in reading order."],
+    }
+
+
+def test_user_surface_experience_audit_rejects_internal_and_lifecycle_leaks() -> None:
+    changed = deepcopy(surface())
+    changed["entries"][1] = {
+        "entry_id": "tune",
+        "interface_type": "command",
+        "component_id": "automate",
+        "outcome": "/Workflow",
+    }
+    feedback = "# Failed\n\n- Summary: You failed to provide a valid Source.\n"
+
+    report = audit_user_surface_experience(
+        changed,
+        normal_views=["# Result\n### Provider detail\nWorkflow: internal-route"],
+        feedback_views=[
+            {
+                "state": "error",
+                "text": feedback,
+                "significant": True,
+                "ai_assisted": True,
+            }
+        ],
+    )
+
+    assert report["clean"] is False
+    check_ids = {item["check_id"] for item in report["findings"]}
+    assert {
+        "ai-assistance-is-disclosed",
+        "commands-are-lifecycle-controls",
+        "entry-copy-hides-internal-taxonomy",
+        "feedback-does-not-blame",
+        "feedback-explains-what-happened",
+        "feedback-offers-a-next-action",
+        "normal-views-hide-internal-taxonomy",
+        "significant-actions-show-authority",
+        "significant-actions-show-recovery",
+        "slash-is-syntax-only",
+        "text-has-semantic-reading-order",
+    }.issubset(check_ids)
+
+
+@pytest.mark.parametrize("state", ["blocked", "empty", "error", "unknown"])
+def test_feedback_requires_reason_and_next_action_for_non_success_states(state: str) -> None:
+    with pytest.raises(ValueError, match="reason must be specific"):
+        render_user_feedback("Status", state=state, summary="No result is available.")
+
+
+def test_feedback_requires_complete_significant_and_ai_metadata() -> None:
+    with pytest.raises(ValueError, match="both authority and recovery"):
+        render_user_feedback(
+            "Publish",
+            state="ready",
+            summary="The release is ready.",
+            authority="Only the owner can publish it.",
+        )
+    with pytest.raises(ValueError, match="AI assistance metadata is missing"):
+        render_user_feedback(
+            "Draft",
+            state="ready",
+            summary="The draft is ready.",
+            ai_assistance={"limits": "Human review remains required."},
+        )
+
+
+def test_project_summary_uses_semantic_order_and_an_honest_next_action() -> None:
+    rendered = render_project_summary(
+        ProjectRecord(
+            project_id="apple-surface",
+            title="Apple Surface",
+            system_version="0.1.0-alpha.8",
+        )
+    )
+
+    assert rendered.index("## Current status") < rendered.index("## What needs attention")
+    assert rendered.index("## What needs attention") < rendered.index("## Next action")
+    assert "Set the current phase" in rendered
+    assert "read-only view" in rendered
+    assert not any(
+        term in rendered.casefold() for term in ("provider:", "component_id", "dot_group")
+    )

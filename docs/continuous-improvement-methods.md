@@ -23,7 +23,7 @@ A Principle is a direction Fractal keeps approaching, not a checkbox it can clai
 
 ## Methods and Infrastructure
 
-Perspective is a `$` Method that sees the whole active Project. Cause Research, Two-Sided Review, and Steal are reusable `¢` Methods.
+Perspective is a `$` Method that sees the whole active Project. Cause Research, Two-Sided Review, and Adapt are reusable `¢` Methods.
 
 Reality Check, Experiment, Component Governance, Work Signature, Naming System, Capability Check, Hooks, Human Control, Donor Quarantine, Donor Registry, and Environment Adapters are `^` Infrastructure.
 

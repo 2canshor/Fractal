@@ -852,7 +852,10 @@ def _context_locator(
     # Known source ids are mapped by meaning, and a final path component match
     # handles synthetic copies with a different temporary parent.
     if root_id == "project-records":
-        return "workplace://projects/active"
+        # Canonical Project records are status-neutral. Active/completed are
+        # derived views, not storage buckets, so retrieval must cover the
+        # canonical collection rather than retain the legacy active path.
+        return "workplace://projects"
     if root_id == "current-policy":
         return "workplace://policies/current.json"
     if root_id == "current-profile":
@@ -869,6 +872,11 @@ def _context_locator(
             relative = PurePosixPath(*parts[index + 1 :])
             return f"workplace://{relative.as_posix()}" if relative.parts else "workplace://"
     for root_name, root in context_roots.items():
+        if root.is_file() and candidate.resolve(strict=False) == root.resolve(strict=False):
+            # Context rebuild roots are directories. Preserve an explicitly
+            # mapped file as a child of its named local root so callers can
+            # map that root to the file's parent without losing the filename.
+            return f"local://{root_name}/{root.name}"
         if _inside(candidate, root):
             relative = candidate.resolve(strict=False).relative_to(root.resolve(strict=False))
             # The context catalogue schema accepts ``local://`` as the
@@ -1605,6 +1613,12 @@ def _sanitise_canonical_privacy(stage: Path, operations: list[str]) -> None:
             relative
         ):
             continue
+        if path.name == ".gitignore":
+            # Ignore patterns may intentionally name sockets, local caches,
+            # credentials, or absolute-path shapes. They are controls, not
+            # retained values, and rewriting the whole file would disable the
+            # privacy boundary it enforces.
+            continue
         if relative.startswith("projects/") and path.name in {"record.json", "record.sha256"}:
             # Project evidence/provenance source strings are immutable and their
             # sidecar hash must never be rewritten as a privacy convenience.
@@ -1624,15 +1638,9 @@ def _sanitise_canonical_privacy(stage: Path, operations: list[str]) -> None:
             _write_json(path, cleaned)
             changed = True
             continue
-        try:
-            text = raw.decode("utf-8")
-        except UnicodeDecodeError:
-            continue
-        cleaned_text = _portable_privacy_value(text)
-        if cleaned_text != text:
-            _history_copy(stage, Path("privacy") / relative, raw)
-            path.write_text(cleaned_text, encoding="utf-8")
-            changed = True
+        # Plain-text canonical files are validated below but never rewritten
+        # wholesale. A single path-like token must not collapse an entire
+        # control file or human document into one redaction marker.
     if changed:
         operations.append("canonical-runtime-paths-portabilised")
 
@@ -1642,6 +1650,8 @@ def _migrate_raw_runtime(stage: Path, operations: list[str], event_root: Path | 
     candidates: list[Path] = []
     for path in _iter_files(stage):
         relative = path.relative_to(stage).as_posix()
+        if path.name == ".gitignore":
+            continue
         if relative.startswith(".runtime/") or relative.startswith("system/history/"):
             continue
         value: Any = None
@@ -1819,6 +1829,10 @@ def _validate_canonical_privacy(stage: Path) -> dict[str, Any]:
     ephemeral_files: list[str] = []
     for path in _iter_files(stage):
         relative = path.relative_to(stage).as_posix()
+        if path.name == ".gitignore":
+            # Pattern names are privacy controls, not retained secret, socket,
+            # or machine-path values.
+            continue
         if relative.startswith(".runtime/raw/") or relative.startswith(".runtime/adapters/"):
             ephemeral_files.append(relative)
             continue
@@ -2055,24 +2069,45 @@ def _plan_operations(root: Path) -> tuple[tuple[str, ...], tuple[str, ...], bool
                 operations.append("mixed-policy-split-authority-and-user-policy")
         except WorkplaceMigrationError:
             raise
-    if (
-        (root / "system" / "active-version.json").is_file()
-        or (root / "system" / "candidate-version.json").is_file()
-    ):
+    version_paths = [
+        root / "system" / "active-version.json",
+        root / "system" / "candidate-version.json",
+    ]
+    legacy_version_pointer = False
+    for version_path in version_paths:
+        if not version_path.is_file():
+            continue
+        pointer = _read_json(version_path, label="System Version pointer preflight")
+        if pointer.get("record_type") != "system-version-pointer":
+            legacy_version_pointer = True
+            break
+    if legacy_version_pointer:
         operations.append("active-candidate-version-normalisation")
     if (root / "system" / "method-registry.json").is_file():
         operations.append("duplicate-method-definitions-to-workplace-status")
-    if any((root / "adapters").rglob("*.json")) if (root / "adapters").is_dir() else False:
+    adapter_files = (
+        [
+            path
+            for path in (root / "adapters").rglob("*.json")
+            if path.relative_to(root).as_posix() != ADAPTER_PREFERENCES_RELATIVE.as_posix()
+        ]
+        if (root / "adapters").is_dir()
+        else []
+    )
+    if adapter_files:
         operations.append("adapter-preferences-separated-from-local-endpoints")
     raw_files = False
     for path in _iter_files(root):
+        relative = path.relative_to(root).as_posix()
+        if relative.startswith((".runtime/", "system/history/")):
+            continue
         value: Any = None
         if path.suffix.lower() in {".json", ".jsonl", ".ndjson"}:
             try:
                 value = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, UnicodeDecodeError, json.JSONDecodeError):
                 value = None
-        if _is_raw_relative(path.relative_to(root).as_posix(), value):
+        if _is_raw_relative(relative, value):
             raw_files = True
             break
     if raw_files:
@@ -2357,7 +2392,7 @@ def rehearse_workplace_migration(
         canonical_privacy = _validate_canonical_privacy(second)
         canonical_portable = canonical_privacy["valid"]
         source_after = inventory_workplace(source)
-        return {
+        report = {
             "record_type": "workplace-migration-rehearsal",
             "record_version": 1,
             "candidate_only": True,
@@ -2366,6 +2401,7 @@ def rehearse_workplace_migration(
             "source_unchanged": source_before == source_after,
             "source_had_git": source_git,
             "rehearsal_git_omitted": not (rehearsal / ".git").exists(),
+            # The finally block updates this after checking the actual cleanup.
             "temporary_copy_removed": False,
             "before": source_before,
             "after": first_after,
@@ -2390,8 +2426,11 @@ def rehearse_workplace_migration(
             },
             "privacy": canonical_privacy,
         }
+        return report
     finally:
         shutil.rmtree(temporary_parent, ignore_errors=True)
+        if "report" in locals():
+            report["temporary_copy_removed"] = not temporary_parent.exists()
 
 
 # Compatibility spellings make the operation easy to discover without

@@ -8,10 +8,13 @@ import pytest
 from fractal.component_governance import (
     ComponentGovernanceError,
     active_components,
+    audit_component_apple_continuous_improvement_alignment,
     audit_component_drift,
+    audit_component_registry_apple_continuous_improvement,
     load_component_registry,
     render_component_status,
     tree_sha256,
+    write_component_apple_continuous_improvement_audit,
 )
 from fractal.component_inventory import (
     _frontmatter,
@@ -386,3 +389,147 @@ def test_verified_live_status_requires_same_component_claim_gate_receipt(tmp_pat
     assert load_component_registry(path)["components"][0]["status"]["execution"] == (
         "verified-live"
     )
+
+
+def test_apple_continuous_improvement_component_audit_is_deterministic_and_portable(
+    tmp_path: Path,
+) -> None:
+    registry_path = write_registry(tmp_path / "registry.json", [component("research")])
+    first = audit_component_registry_apple_continuous_improvement(registry_path)
+    second = audit_component_registry_apple_continuous_improvement(registry_path)
+    assert first == second
+    assert first["summary"] == {
+        "overall_status": "deterministic-pass",
+        "deterministic_checks_passed": True,
+        "component_count": 1,
+        "component_pass_count": 1,
+        "component_fail_count": 0,
+        "human_qualitative_acceptance_pending_count": 0,
+        "release_readiness": "ready",
+    }
+    result = first["components"][0]
+    assert result["purpose"] == {
+        "kind": "supporting-purpose",
+        "basis": "trigger",
+        "human_name_present": True,
+        "description_present": True,
+        "effective_operations": ["read"],
+    }
+    assert result["execution"] == {
+        "registration_state": "registered",
+        "execution_state": "staged",
+        "active": True,
+        "successful_execution_claimed": False,
+        "available_unverified_is_success": False,
+    }
+    assert result["apple_principle_checks"]["delight"] == "not-directly-user-visible"
+    assert result["continuous_improvement_route"] == [
+        "component-governance",
+        "capability-check",
+        "environment-adapters",
+        "system-review",
+        "continuous-improvement",
+    ]
+    assert ("/" + "Users" + "/") not in json.dumps(first)
+
+    output = tmp_path / "evidence" / "audit.json"
+    written = write_component_apple_continuous_improvement_audit(registry_path, output)
+    assert json.loads(output.read_text()) == written
+
+
+def test_user_visible_delight_records_proxy_but_never_claims_pass(tmp_path: Path) -> None:
+    registry = load_component_registry(
+        write_registry(tmp_path / "registry.json", [component("review")])
+    )
+    user_job = registry["components"][0]
+    user_job["surface_audience"] = "user-job"
+    user_job["invocation"] = {"automatic_matching": True, "explicit_invocation": True}
+    user_job["job_contract"] = {
+        "job_id": "review",
+        "action": "review",
+        "outcome": "Review one requested object.",
+        "completion": "Evidence and next action are ready.",
+        "authority_boundary": "Read-only unless change is separately requested.",
+    }
+    audit = audit_component_apple_continuous_improvement_alignment(
+        registry,
+        registry_sha256="a" * 64,
+    )
+    result = audit["components"][0]
+    assert result["apple_principle_checks"]["delight"] == (
+        "proxy-observed-human-pending"
+    )
+    assert result["delight"] == {
+        "observable_proxy": True,
+        "human_qualitative_acceptance": "pending",
+        "claimed_pass": False,
+    }
+    assert audit["summary"]["overall_status"] == (
+        "deterministic-pass-human-acceptance-pending"
+    )
+    assert audit["summary"]["release_readiness"] == "blocked"
+
+
+@pytest.mark.parametrize(
+    ("mutation", "finding"),
+    [
+        (
+            lambda item: item["status"].update(execution="unknown"),
+            "unknown-or-missing-execution-state",
+        ),
+        (
+            lambda item: item["status"].update(success=True),
+            "misleading-active-success-claim",
+        ),
+        (
+            lambda item: item["permissions"].update(
+                secret_boundary="api_key=sk-proj-abcdefghijklmnopqrstuvwxyz"
+            ),
+            "credential-content-present",
+        ),
+        (
+            lambda item: item["recovery"].update(removal="rm -rf /tmp/component"),
+            "destructive-or-irrecoverable-recovery",
+        ),
+    ],
+)
+def test_apple_component_audit_fails_closed_without_leaking_values(
+    tmp_path: Path,
+    mutation,
+    finding: str,
+) -> None:
+    registry = load_component_registry(
+        write_registry(tmp_path / "registry.json", [component("research")])
+    )
+    mutation(registry["components"][0])
+    audit = audit_component_apple_continuous_improvement_alignment(
+        registry,
+        registry_sha256="b" * 64,
+    )
+    result = audit["components"][0]
+    assert finding in result["findings"]
+    assert result["deterministic_result"] == "fail"
+    assert audit["summary"]["overall_status"] == "fail-closed"
+    assert "sk-proj-abcdefghijklmnopqrstuvwxyz" not in json.dumps(audit)
+
+
+def test_unavailable_component_has_explicit_no_execution_purpose_operation(
+    tmp_path: Path,
+) -> None:
+    unavailable = component("old-skill", disposition="inactive-quarantined")
+    unavailable["permissions"] = {
+        "profile": "inactive-no-execution",
+        "operations": [],
+        "secret_boundary": "No execution and no secret access while quarantined.",
+    }
+    registry = load_component_registry(
+        write_registry(tmp_path / "registry.json", [unavailable])
+    )
+    audit = audit_component_apple_continuous_improvement_alignment(
+        registry,
+        registry_sha256="c" * 64,
+    )
+    result = audit["components"][0]
+    assert result["purpose"]["effective_operations"] == ["no-execution"]
+    assert result["execution"]["execution_state"] == "unavailable"
+    assert result["deterministic_result"] == "pass"

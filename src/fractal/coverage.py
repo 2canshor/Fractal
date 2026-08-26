@@ -233,6 +233,24 @@ def build_blueprint_coverage_matrix() -> dict[str, Any]:
             "remaining_gap": "A future Project under an activated candidate does not yet exist.",
         },
     ]
+    responsibility_rows = [
+        {
+            "responsibility_id": item["responsibility_id"],
+            "human_name": item["human_name"],
+            "primary_element_id": item["primary_element_id"],
+            "supporting_element_ids": item["supporting_element_ids"],
+            "flow_ids": item["flow_ids"],
+            "artifact_count": sum(
+                len(item[field])
+                for field in ("source_paths", "schema_paths", "data_paths", "test_paths")
+            ),
+            "proof_layers": item["proof_layers"],
+            "continuous_improvement_path": item["continuous_improvement_path"],
+            "apple_alignment": "deterministic-validated-human-delight-pending",
+            "claim_boundary": item["claim_boundary"],
+        }
+        for item in audit["responsibility_mappings"]
+    ]
 
     return {
         "record_type": "blueprint-coverage-matrix",
@@ -247,6 +265,7 @@ def build_blueprint_coverage_matrix() -> dict[str, Any]:
         "flow_use_rows": flow_use_rows,
         "flow_transition_rows": flow_transition_rows,
         "lifecycle_arrow_rows": lifecycle_arrow_rows,
+        "responsibility_rows": responsibility_rows,
     }
 
 
@@ -335,5 +354,28 @@ def render_blueprint_coverage_matrix() -> str:
             f"| `{row['arrow_id']}` | `{row['contract_proof']}` | "
             f"`{row['synthetic_proof']}` | `{row['staged_proof']}` | "
             f"`{row['active_live_proof']}` | {row['remaining_gap']} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Persistent Responsibilities",
+            "",
+            (
+                "| Responsibility | Primary Element | Supporting Elements | Flows | "
+                "Artifacts | Proof | Apple |"
+            ),
+            "|---|---|---|---|---|---|---|",
+        ]
+    )
+    for row in matrix["responsibility_rows"]:
+        proof = ", ".join(
+            f"{level}={row['proof_layers'][level]}" for level in PROOF_LEVELS
+        )
+        supporting = ", ".join(row["supporting_element_ids"]) or "None"
+        lines.append(
+            f"| `{row['responsibility_id']}` {row['human_name']} | "
+            f"`{row['primary_element_id']}` | {supporting} | "
+            f"{', '.join(row['flow_ids'])} | `{row['artifact_count']}` | {proof} | "
+            f"`{row['apple_alignment']}` |"
         )
     return "\n".join(lines) + "\n"

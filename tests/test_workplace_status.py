@@ -102,6 +102,7 @@ def test_dynamic_model_uses_changed_canonical_values(tmp_path: Path) -> None:
         live_state=live_state(),
     )
     assert first["system"]["version"] == PUBLIC_VERSION
+    assert first["system"]["current_version"] == LIVE_VERSION
     assert first["workplace"]["active_system_version"]["version"] == LIVE_VERSION
 
     changed_public = "0.1.0-alpha.9"
@@ -113,7 +114,11 @@ def test_dynamic_model_uses_changed_canonical_values(tmp_path: Path) -> None:
         live_state=live_state(),
     )
     assert second["system"]["version"] == changed_public
+    assert second["system"]["current_version"] is None
     assert "does not match verified live" in " ".join(second["system"]["issues"])
+    rendered = render_workplace_status(second)
+    assert "System unknown · mismatch" in rendered
+    assert f"Public System provenance {changed_public}" in rendered
 
 
 def test_activated_or_historical_candidate_matching_active_is_not_unresolved() -> None:
@@ -177,6 +182,98 @@ def test_current_project_comes_from_status_not_directory_name(tmp_path: Path) ->
     }
 
 
+def test_historical_project_decision_is_evidence_not_global_next() -> None:
+    current_decision = {
+        "id": "current-choice",
+        "subject": "Choose the current direction",
+        "status": "pending",
+    }
+    historical_decision = {
+        "id": "old-choice",
+        "subject": "Old unresolved choice",
+        "status": "open",
+    }
+    inputs = healthy_inputs()
+    inputs["projects"] = [
+        project_record("finished", status="completed", decisions=[historical_decision]),
+        project_record("working", decisions=[current_decision]),
+    ]
+
+    status = build_workplace_status(**inputs)
+
+    assert status["decisions"]["next"]["id"] == "current-choice"
+    by_id = {item["id"]: item for item in status["decisions"]["items"]}
+    assert by_id["current-choice"] | {
+        "project_id": "working",
+        "project_status": "in_progress",
+        "history_role": "current",
+    } == by_id["current-choice"]
+    assert by_id["old-choice"] | {
+        "project_id": "finished",
+        "project_status": "completed",
+        "history_role": "historical",
+    } == by_id["old-choice"]
+
+    inputs["projects"] = [
+        project_record("finished", status="completed", decisions=[historical_decision])
+    ]
+    inputs["live_state"] = live_state(project_id="finished")
+    historical_only = build_workplace_status(**inputs)
+    assert historical_only["decisions"]["next"] is None
+    assert historical_only["decisions"]["items"][0]["history_role"] == "historical"
+    assert "Next action\nNo action required" in render_workplace_status(historical_only)
+
+
+def test_project_system_version_is_labelled_as_provenance() -> None:
+    inputs = healthy_inputs()
+    project = project_record("current-project")
+    project["system_version"] = "0.1.0-alpha.7-project-origin"
+    inputs["projects"] = [project]
+    status = build_workplace_status(**inputs)
+
+    assert (
+        status["project"]["current"]["system_version"]
+        == "0.1.0-alpha.7-project-origin"
+    )
+    assert (
+        status["project"]["current"]["system_version_role"]
+        == "project-provenance"
+    )
+    rendered = render_workplace_status(status)
+    assert f"System {LIVE_VERSION} · active" in rendered
+    assert "Project provenance System 0.1.0-alpha.7-project-origin" in rendered
+    assert "Current state" in rendered
+    assert "What you can do" in rendered
+    assert "Next action" in rendered
+    assert "Next action\nContinue current Project phase 2" in rendered
+    assert status["decisions"]["next"] is None
+
+
+def test_live_source_must_match_selected_current_pointer(tmp_path: Path) -> None:
+    selected = tmp_path / "selected-active.json"
+    selected.write_text(json.dumps(active_record()), encoding="utf-8")
+    different = tmp_path / "different-active.json"
+    different.write_text(json.dumps(active_record()), encoding="utf-8")
+    live = live_state()
+    live_system = live["system_version"]
+    assert isinstance(live_system, dict)
+    live_system["source_path"] = str(different)
+    live_system["source_sha256"] = hashlib.sha256(different.read_bytes()).hexdigest()
+
+    status = build_workplace_status(
+        public_system=LIVE_VERSION,
+        workplace_active=selected,
+        projects=[project_record("current-project")],
+        live_state=live,
+    )
+
+    assert status["runtime"]["status"] == "issue"
+    assert any(
+        "does not match the selected current pointer" in issue
+        for issue in status["runtime"]["issues"]
+    )
+
+
 def test_decisions_details_and_json_are_stable_and_read_only(tmp_path: Path) -> None:
     decision = {
         "id": "decision-a",
@@ -191,7 +288,7 @@ def test_decisions_details_and_json_are_stable_and_read_only(tmp_path: Path) -> 
     detailed = render_workplace_status_details(status)
     encoded = render_workplace_status_json(status)
     assert "Fractal" in default
-    assert f"System {PUBLIC_VERSION} · active" in default
+    assert f"System {LIVE_VERSION} · active" in default
     assert "Project current-project" in default
     assert "Needs your decision Choose a direction" in default
     assert "Evidence" in detailed

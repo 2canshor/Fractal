@@ -4,14 +4,14 @@ A genuine System Review begins only after primary-user Project Completion and fo
 
 | Flow | Required outcome | Supporting Library Elements |
 |---|---|---|
-| 1. Find Problems | Whole-Project Positive Delta, Negative Delta, and high-recall observation coverage | Project Assessment and Issue Scan |
-| 2. Find Local Patterns | Local Patterns with causal uncertainty and counterevidence | Project Patterns |
-| 3. Find Global Patterns | Cross-history recurrence, contradiction, reversal, and outcome comparison | Cross-Project Patterns and Reversal Check |
-| 4. Find the Reasons for Every Global Pattern | Explicit causal account or honest uncertainty for every Global Pattern | Cause Research and Reconciliation may support |
-| 5. Find Solutions for Every Global Pattern | Current capability assessment, Subtraction First options, and Curiosity evidence when a solution is needed | Improvement Options |
-| 6. Map New Implementations into the Blueprint | Genre, role, Principles, authority, context, provenance, evidence, and recovery for every Candidate | Blueprint Mapping |
-| 7. Debate the Solutions for Every Global Pattern | Consequential mapped Candidates receive independent opposing cases | Two-Sided Review |
-| 8. Present Decisions One-by-One | One prepared handoff, Biggest Remaining Concern, and Carson decision at a time | Human Control |
+| 1. Observe | Whole-Project Positive Delta, Negative Delta, and high-recall observation coverage | Project Assessment and Issue Scan |
+| 2. Group | Local Patterns with causal uncertainty and counterevidence | Project Patterns |
+| 3. Connect | Cross-history recurrence, contradiction, reversal, and outcome comparison | Cross-Project Patterns and Reversal Check |
+| 4. Explain | Explicit causal account or honest uncertainty for every Global Pattern | Cause Research and Reconciliation may support |
+| 5. Explore | Current capability assessment, Subtraction First options, and Curiosity evidence when a solution is needed | Improvement Options |
+| 6. Map | Genre, role, Principles, authority, context, provenance, evidence, and recovery for every Candidate | Blueprint Mapping |
+| 7. Challenge | Consequential mapped Candidates receive independent opposing cases | Two-Sided Review |
+| 8. Decide | One prepared handoff, Biggest Remaining Concern, and Carson decision at a time | Human Control |
 
 Reality Check is supporting Infrastructure across the workflow. It is not a ninth Flow. Expected, Local, and Global Effect records support it.
 

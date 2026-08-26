@@ -7,6 +7,7 @@ import fcntl
 import hashlib
 import json
 import re
+import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -58,12 +59,32 @@ def handle_hook(
             "hookSpecificOutput": {
                 "hookEventName": "SessionStart",
                 "additionalContext": summary,
+                "fractalObservation": _signed_hook_observation(
+                    {
+                        "record_type": "fresh-session-hook-observation",
+                        "record_version": 1,
+                        "issuer": "fractal-adapter-hook",
+                        "observed_at": utc_now(),
+                        "version": system_version,
+                        "session_id": str(
+                            payload.get("session_id")
+                            or payload.get("conversation_id")
+                            or payload.get("source")
+                            or "unknown-session"
+                        ),
+                        "hook_sha256": _hook_module_sha256(),
+                        "decision": "session-start-verified",
+                    }
+                ),
             }
         }
     if event != "pre-tool-use":
         raise ValueError(f"Unsupported adapter hook event: {event}")
     serialized = json.dumps(payload.get("tool_input", {}), ensure_ascii=False)
     tool_name = str(payload.get("tool_name") or "")
+    publication_decision = _publication_guard(context, payload, serialized, tool_name)
+    if publication_decision is not None:
+        return publication_decision
     destructive = re.search(
         r"\b(?:rm|rmdir|unlink|trash|mv|delete|overwrite)\b",
         serialized,
@@ -119,6 +140,180 @@ def handle_hook(
             }
         }
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse"}}
+
+
+def _publication_guard(
+    context: dict[str, Any],
+    payload: dict[str, Any],
+    serialized: str,
+    tool_name: str,
+) -> dict[str, Any] | None:
+    """Close Fractal-owned publication routes without claiming external interception."""
+    governance = context.get("publication_governance", {})
+    roots = [str(Path(path).expanduser()) for path in governance.get("repository_roots", [])]
+    repository_ids = [
+        str(value).lower() for value in governance.get("repository_ids", []) if value
+    ]
+    if not roots and not repository_ids:
+        return None
+    tool_input = payload.get("tool_input", {})
+    command = ""
+    if isinstance(tool_input, dict):
+        command = str(tool_input.get("command") or tool_input.get("cmd") or "")
+    workdir = ""
+    if isinstance(tool_input, dict):
+        workdir = str(tool_input.get("workdir") or tool_input.get("cwd") or "")
+    targets_owned = any(
+        root in serialized
+        or _home_abbreviation(root) in serialized
+        or _path_is_within(workdir, root)
+        for root in roots
+    ) or any(repository_id in serialized.lower() for repository_id in repository_ids)
+    governed = _is_governed_publication_command(command)
+    raw_git = re.search(
+        r"(?:^|\s)(?:\S*/)?git\b[^\n;&|]*\b(?:push|send-pack)\b", command
+    )
+    low_level_cli = re.search(
+        r"(?:^|\s)gh\s+(?:api\b[^\n]*--method\s+(?:POST|PATCH|PUT|DELETE)"
+        r"|ref\s+(?:write|create|update|delete))",
+        command,
+        flags=re.IGNORECASE,
+    )
+    low_level_tool = re.search(
+        r"(?i)(?:github|git).*(?:create|update|delete|write).*(?:ref|branch)"
+        r"|(?:create|update|delete|write).*(?:ref|branch)",
+        tool_name,
+    )
+    mutation = raw_git or low_level_cli or low_level_tool
+    if targets_owned and governed:
+        argv = shlex.split(command)
+        order_sha256 = _option_value(argv, "--order-sha256")
+        repository_id = _owned_repository_id(
+            roots, repository_ids, serialized, workdir
+        )
+        if (
+            re.fullmatch(r"[a-f0-9]{64}", str(order_sha256)) is None
+            or repository_id is None
+        ):
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        "Governed publication requires an exact order digest and repository "
+                        "identity observation. VersionStore must validate live Hook trust."
+                    ),
+                }
+            }
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "allow",
+                "permissionDecisionReason": "Exact governed Fractal publication route.",
+                "fractalObservation": _signed_hook_observation(
+                    {
+                        "record_type": "publication-route-hook-observation",
+                        "record_version": 1,
+                        "issuer": "fractal-adapter-hook",
+                        "observed_at": utc_now(),
+                        "version": context.get("system_version"),
+                        "order_sha256": order_sha256,
+                        "repository_id": repository_id,
+                        "hook_sha256": _hook_module_sha256(),
+                        "trust_status": "requires-version-store-validation",
+                        "tool_name": tool_name or "exec_command",
+                        "tool_input_sha256": _canonical_value_sha256(tool_input),
+                        "decision": "allow-governed-publication",
+                    }
+                ),
+            }
+        }
+    if targets_owned and mutation and not governed:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": (
+                    "Fractal-owned publication must use the exact governed executor route: "
+                    "fractal version publish. This Hook does not claim to intercept Carson's "
+                    "external Terminal or UI."
+                ),
+            }
+        }
+    return None
+
+
+def _is_governed_publication_command(command: str) -> bool:
+    if re.search(r"(?:;|&&|\|\||\n|`|\$\()", command):
+        return False
+    try:
+        argv = shlex.split(command)
+    except ValueError:
+        return False
+    if not argv:
+        return False
+    executable = Path(argv[0]).name
+    if executable == "fractal":
+        return argv[1:3] == ["version", "publish"]
+    return (
+        executable in {"python", "python3"}
+        and argv[1:5] == ["-m", "fractal.cli", "version", "publish"]
+    )
+
+
+def _option_value(argv: list[str], option: str) -> str | None:
+    try:
+        return argv[argv.index(option) + 1]
+    except (ValueError, IndexError):
+        return None
+
+
+def _owned_repository_id(
+    roots: list[str],
+    repository_ids: list[str],
+    serialized: str,
+    workdir: str,
+) -> str | None:
+    for repository_id in repository_ids:
+        if repository_id in serialized.lower():
+            return repository_id
+    if workdir:
+        candidate = Path(workdir).expanduser().resolve()
+        for index, root in enumerate(roots):
+            try:
+                candidate.relative_to(Path(root).expanduser().resolve())
+            except ValueError:
+                continue
+            if index < len(repository_ids):
+                return repository_ids[index]
+    return None
+
+
+def _path_is_within(candidate_path: str, root: str) -> bool:
+    if not candidate_path:
+        return False
+    try:
+        Path(candidate_path).expanduser().resolve().relative_to(
+            Path(root).expanduser().resolve()
+        )
+    except (OSError, ValueError):
+        return False
+    return True
+
+
+def _canonical_value_sha256(value: Any) -> str:
+    encoded = json.dumps(
+        value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _hook_module_sha256() -> str:
+    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
+
+def _signed_hook_observation(content: dict[str, Any]) -> dict[str, Any]:
+    return {**content, "observation_sha256": _canonical_value_sha256(content)}
 
 
 def _home_abbreviation(path: str) -> str:

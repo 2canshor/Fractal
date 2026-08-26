@@ -30,6 +30,21 @@ def test_naming_scope_remains_supporting_infrastructure() -> None:
     ]
 
 
+def test_every_persistent_responsibility_uses_the_same_purpose_path() -> None:
+    receipt = build_continuous_improvement_purpose_receipt()
+    paths = receipt["responsibility_paths"]
+    assert list(paths) == [f"RESP-{index:02d}" for index in range(20)]
+    assert all(
+        path["path"] == ["project-review", "system-review", "continuous-improvement"]
+        for path in paths.values()
+    )
+    assert all(
+        path["apple_alignment"]
+        == "deterministic-validated-human-delight-pending"
+        for path in paths.values()
+    )
+
+
 def test_rendered_purpose_audit_matches_current_source() -> None:
     assert (ROOT / "docs" / "continuous-improvement-purpose-audit.md").read_text(
         encoding="utf-8"

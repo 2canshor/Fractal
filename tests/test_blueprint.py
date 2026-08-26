@@ -12,9 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 ACTIVE_WORKFLOW_SOURCES = [
     "README.md",
     "ARCHITECTURE.md",
-    "capabilities/skills/complete/SKILL.md",
-    "capabilities/skills/complete/agents/openai.yaml",
-    "capabilities/skills/match/SKILL.md",
+    "capabilities/skills/learn/SKILL.md",
+    "capabilities/skills/learn/agents/openai.yaml",
+    "capabilities/skills/align/SKILL.md",
     "capabilities/skills/project-review/SKILL.md",
     "capabilities/skills/project-review/agents/openai.yaml",
     "capabilities/skills/system-review/SKILL.md",
@@ -154,6 +154,7 @@ def test_hermes_is_governed_as_a_donor_and_steal_is_a_prop() -> None:
         if genre["genre_id"] == "methods"
     )
     steal = next(item for item in methods if item["element_id"] == "steal")
+    assert steal["human_name"] == "Adapt"
     assert steal["marker"] == "¢"
     assert steal["technical_id"] == "donor-implementation-reuse"
     assert "activation" in steal["does_not_own"]

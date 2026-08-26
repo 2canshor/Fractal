@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fractal.local/schemas/capability-workflow.schema.json",
+  "title": "Fractal Capability Workflow",
+  "description": "A reusable Workflow compiled from ordered Dot references.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_type",
+    "record_version",
+    "workflow_id",
+    "version",
+    "human_name",
+    "match_contract",
+    "inputs",
+    "outputs",
+    "dot_refs",
+    "success_contract",
+    "side_effect_contract",
+    "recovery",
+    "lifecycle",
+    "trial",
+    "verification",
+    "system_review",
+    "human_decision",
+    "activation",
+    "provenance"
+  ],
+  "properties": {
+    "record_type": {"const": "capability-workflow"},
+    "record_version": {"const": 1},
+    "workflow_id": {"$ref": "#/$defs/id"},
+    "version": {"$ref": "#/$defs/version"},
+    "human_name": {"type": "string", "minLength": 1},
+    "match_contract": {"$ref": "#/$defs/generic_contract"},
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/contract_item"}
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/contract_item"}
+    },
+    "dot_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/dot_ref"}
+    },
+    "success_contract": {"$ref": "#/$defs/generic_contract"},
+    "side_effect_contract": {"$ref": "#/$defs/generic_contract"},
+    "recovery": {"$ref": "#/$defs/generic_contract"},
+    "lifecycle": {"$ref": "#/$defs/lifecycle"},
+    "trial": {"$ref": "#/$defs/trial"},
+    "verification": {"$ref": "#/$defs/verification"},
+    "system_review": {"$ref": "#/$defs/system_review"},
+    "human_decision": {"$ref": "#/$defs/human_decision"},
+    "activation": {"$ref": "#/$defs/activation"},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["evidence_refs"],
+      "properties": {
+        "evidence_refs": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/id"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "provider_semantics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["is_outcome", "outcome"],
+      "properties": {
+        "is_outcome": {"type": "boolean"},
+        "outcome": {"type": "string", "minLength": 1}
+      }
+    },
+    "provider_specific": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider_id", "intrinsic_provider_responsibility"],
+      "properties": {
+        "provider_id": {"$ref": "#/$defs/id"},
+        "intrinsic_provider_responsibility": {
+          "$ref": "#/$defs/generic_contract"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "evidence_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._:@/+~=,-]{0,255}$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"
+    },
+    "generic_contract": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["unverified", "in-progress", "verified-staged", "verified", "failed"]
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence_id"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "trial": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["not-run", "pending", "running", "passed", "failed"]
+        },
+        "trial_id": {"$ref": "#/$defs/id"},
+        "workflow_version": {"$ref": "#/$defs/version"},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence_id"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "system_review": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["pending", "in-progress", "completed", "rejected"]
+        },
+        "review_id": {"$ref": "#/$defs/id"},
+        "workflow_version": {"$ref": "#/$defs/version"},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence_id"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "human_decision": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["pending", "approved", "rejected", "deferred"]
+        },
+        "decision_id": {"$ref": "#/$defs/id"},
+        "workflow_version": {"$ref": "#/$defs/version"},
+        "decided_by": {"const": "primary-user"},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence_id"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "activation_evidence": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "evidence_id",
+        "workflow_version",
+        "system_version",
+        "authority"
+      ],
+      "properties": {
+        "evidence_id": {"$ref": "#/$defs/evidence_id"},
+        "workflow_version": {"$ref": "#/$defs/version"},
+        "system_version": {"$ref": "#/$defs/version"},
+        "authority": {"const": "system-version"},
+        "authorised": {"type": "boolean"},
+        "authorized": {"type": "boolean"}
+      },
+      "anyOf": [
+        {"required": ["authorised"]},
+        {"required": ["authorized"]}
+      ]
+    },
+    "activation": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["inactive", "ready", "active", "revoked"]},
+        "authorised": {"type": "boolean"},
+        "authorized": {"type": "boolean"},
+        "activated_version": {"$ref": "#/$defs/version"},
+        "activation_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/activation_evidence"}
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence_id"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "contract_item": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "type", "required"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "type": {"type": "string", "minLength": 1},
+        "required": {"type": "boolean"}
+      }
+    },
+    "dot_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "dot_id", "version", "lifecycle"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "dot_id": {"$ref": "#/$defs/id"},
+        "version": {"$ref": "#/$defs/version"},
+        "lifecycle": {"enum": ["active", "candidate"]}
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate", "active", "active_surface"],
+      "anyOf": [
+        {"required": ["status"]},
+        {"required": ["state"]}
+      ],
+      "properties": {
+        "status": {"enum": ["candidate", "active", "retired"]},
+        "state": {"enum": ["candidate", "active", "retired"]},
+        "candidate": {"type": "boolean"},
+        "active": {"type": "boolean"},
+        "active_surface": {"type": "boolean"},
+        "transition_evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence_id"},
+          "uniqueItems": true
+        },
+        "supersedes": {"type": ["string", "null"]},
+        "material_change": {"type": "boolean"},
+        "change_reason": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

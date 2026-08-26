@@ -352,6 +352,11 @@ def test_whole_tree_migration_preserves_records_history_and_separates_domains(
         "path" not in source and source["locator"].startswith("workplace://")
         for source in context["sources"]
     )
+    assert next(
+        source["locator"]
+        for source in context["sources"]
+        if source["root_id"] == "project-records"
+    ) == "workplace://projects"
     assert (root / "system/history/context/context-catalogue.json").is_file()
 
     policy = json.loads((root / "policies/current.json").read_text())
@@ -467,14 +472,20 @@ def test_legacy_project_schema_fails_closed_without_explicit_event_journal(
 def test_migration_is_safe_twice_without_second_tree_change(tmp_path: Path) -> None:
     root = _legacy_root(tmp_path)
     _add_projects_and_events(root, tmp_path)
+    ignore_bytes = b"/sockets/\n*.sock\n.env\n*.key\n"
+    (root / ".gitignore").write_bytes(ignore_bytes)
 
     first = migrate_workplace_tree(root)
     first_inventory = inventory_workplace(root)
+    second_plan = build_migration_plan(root)
     second = migrate_workplace_tree(root)
 
     assert first.changed is True
     assert second.changed is False
     assert second.idempotent is True
+    assert second_plan.operations == ()
+    assert second_plan.already_canonical is True
+    assert (root / ".gitignore").read_bytes() == ignore_bytes
     assert inventory_workplace(root) == first_inventory
 
 
@@ -571,7 +582,7 @@ def test_rehearsal_uses_a_copy_and_is_portable_without_absolute_paths(tmp_path: 
     assert report["source_had_git"] is True
     assert report["rehearsal_git_omitted"] is True
     assert report["second_root"]["portable"] is True
-    assert report["temporary_copy_removed"] is False
+    assert report["temporary_copy_removed"] is True
     assert inventory_workplace(root) == source_before
 
 
@@ -698,6 +709,28 @@ def test_unmapped_external_context_source_fails_preflight(tmp_path: Path) -> Non
         migrate_workplace_tree(root)
 
     assert inventory_workplace(root) == before
+
+
+def test_external_context_file_retains_filename_under_directory_mapping(tmp_path: Path) -> None:
+    root = _legacy_root(tmp_path)
+    catalogue_path = root / "memory/catalogue/context-catalogue.json"
+    catalogue = json.loads(catalogue_path.read_text())
+    architecture = tmp_path / "public" / "ARCHITECTURE.md"
+    architecture.parent.mkdir()
+    architecture.write_text("# Architecture\n", encoding="utf-8")
+    catalogue["sources"].append(_source_entry("public-architecture", str(architecture)))
+    _write_json(catalogue_path, catalogue)
+
+    migrate_workplace_tree(
+        root,
+        context_roots={"public-architecture": architecture},
+    )
+
+    migrated = json.loads((root / "context/sources.json").read_text())
+    source = next(
+        item for item in migrated["sources"] if item["root_id"] == "public-architecture"
+    )
+    assert source["locator"] == "local://public-architecture/ARCHITECTURE.md"
 
 
 def test_rehearsal_reports_verified_active_version_and_idempotence(tmp_path: Path) -> None:

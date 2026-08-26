@@ -6,28 +6,25 @@ The user-facing Skill surface starts from the job a person wants done. It does n
 
 `Object-Aware Actions` is the user-facing feature name for the rule that the object named after an Action selects its specialised workflow. Its stable technical identifier is `object-aware-workflow-routing`.
 
-For example, `review this document`, `review this code`, and `review this animation` all use the same `review` Action. The named object changes the workflow and reusable dots behind it; it does not create another user-facing Skill. When the object is not explicit enough to select a safe workflow, the Action resolves the consequential unknown before acting.
+For example, `build this interface`, `fix this reducer`, and `find the rule in these documents` keep the object or question inside the request. It helps the Action select the required reusable dots without creating another user-facing Skill. When the object is not explicit enough to select a safe route, the Action resolves the consequential unknown before acting.
 
 ## Actions
 
-An Action is a complete user job. The Codex candidate exposes six:
+An Action is a complete user job. The candidate exposes three:
 
-- `create`: make a new outcome;
-- `edit`: change or repair an existing outcome;
-- `review`: judge or check an object without changing it;
-- `research`: find and verify the evidence needed to answer a question;
-- `automate`: make a repeated or triggered job run reliably;
-- `publish`: deliver a finished outcome to an explicitly named destination.
+- `build`: develop a software change and return a tested, verified result;
+- `fix`: find the cause of a software failure, repair it, and verify the result;
+- `find`: retrieve the relevant knowledge and return a grounded answer.
 
-The object stays in the request. For example, `review this document`, `create an animation`, and `edit this spreadsheet` use Object-Aware Actions to select specialised workflows inside the Action instead of adding Document Review, Animation Generator, Spreadsheet Repair, Figma Motion, or another provider name to the user surface.
+The complete job stays in the request. Existing capabilities such as create, edit, review, research, automate, and publish remain reusable internal dots where a selected Action needs them; they no longer occupy the user-facing selector. Provider and file-format names stay internal too.
 
 ## Commands
 
 A Command controls Fractal itself. There are four:
 
+- `align`: run Perspective to align an active formal Project with current reality;
 - `assess`: run Two-Sided Review on one consequential idea;
-- `complete`: finish all eight New Blueprint System Review Flows after Project Completion;
-- `match`: run Perspective for an active formal Project;
+- `learn`: learn from a primary-user-completed Project through all eight System Review Flows;
 - `version`: apply, verify, record, activate, and publish one exact permitted System Version batch.
 
 A slash or dollar sign is invocation syntax. It does not make an Action a Command. Actions and the first three Commands may also match automatically; `version` requires Carson's exact explicit order.
@@ -36,7 +33,7 @@ A slash or dollar sign is invocation syntax. It does not make an Action a Comman
 
 Each Action or Command selects the narrowest workflow that matches the object and intended result. A dot is an internal maintained method that a workflow may use: document rendering, browser control, Figma prerequisites, web retrieval, image generation, acceptance checking, or another specialist method.
 
-Dots do not own user jobs. The same browser dot can support Research retrieval, Review testing, Automation, and Publish verification. The same document dot can support Create, Edit, Review, Research, and Publish. Provider names remain available in the internal workflow map and source provenance without occupying the user-facing selector.
+Dots do not own user jobs. The same browser, document, research, review, automation, or publishing capability can support more than one selected Action. Provider names remain available in the internal workflow map and source provenance without occupying the user-facing selector.
 
 Before a route is used, the Action distinguishes four real situations: an exact maintained workflow; a partial method transfer that may need explanation; a missing workflow that starts Curiosity; or an unavailable dependency that must be reported rather than pretended to work.
 

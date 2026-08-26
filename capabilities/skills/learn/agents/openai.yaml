@@ -1,0 +1,6 @@
+interface:
+  display_name: "Learn"
+  short_description: "Learn from a completed Project"
+  default_prompt: "Use $learn to complete the eight-Flow System Review for a primary-user-completed Project before presenting decisions one-by-one."
+policy:
+  allow_implicit_invocation: true

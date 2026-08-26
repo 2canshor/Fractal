@@ -230,7 +230,7 @@
       "candidate_id": "candidate-steal-curiosity-route",
       "status": "mapped-staged-not-active",
       "global_pattern_id": "gap-steal-curiosity-duplicate-responsibility-risk",
-      "implementation_summary": "Make Steal the bounded donor implementation-acquisition route activated by Curiosity during Flow 5, with mandatory handoff to Blueprint Mapping in Flow 6.",
+      "implementation_summary": "Make Adapt the bounded donor implementation-acquisition route activated by Curiosity during Flow 5, with mandatory handoff to Blueprint Mapping in Flow 6.",
       "change_action": "reconfigure",
       "target": {
         "existing_element_id": "steal",
@@ -239,7 +239,7 @@
         "element_type": "prop",
         "marker": "¢"
       },
-      "core_concept_continuity": "Steal continues to reuse donor implementation only; Curiosity owns the search pressure and the eight-Flow guide owns sequencing while System Review retains the lifecycle.",
+      "core_concept_continuity": "Adapt continues to reuse donor implementation only; Curiosity owns the search pressure and the eight-Flow guide owns sequencing while System Review retains the lifecycle.",
       "relationships": [
         {
           "relationship": "implements",
@@ -278,7 +278,7 @@
         {
           "element_id": "subtraction-first",
           "direction": "closer",
-          "summary": "Steal becomes one Curiosity route instead of a competing improvement lifecycle."
+          "summary": "Adapt becomes one Curiosity route instead of a competing improvement lifecycle."
         },
         {
           "element_id": "global-outcome-over-local-optimisation",
@@ -300,7 +300,7 @@
         "activation": false,
         "publication": false
       },
-      "recovery": "Remove the staged activation_contract and mapping; the prior Steal Prop and Curiosity Value remain unchanged."
+      "recovery": "Remove the staged activation_contract and mapping; the prior Adapt Prop and Curiosity Value remain unchanged."
     },
     {
       "record_type": "blueprint-candidate-mapping",

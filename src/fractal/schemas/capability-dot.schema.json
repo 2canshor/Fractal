@@ -1,0 +1,501 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fractal.local/schemas/capability-dot.schema.json",
+  "title": "Fractal Capability Dot",
+  "description": "A governed reusable responsibility and its executable implementations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_type",
+    "record_version",
+    "dot_id",
+    "version",
+    "human_name",
+    "responsibility",
+    "inputs",
+    "outputs",
+    "preconditions",
+    "side_effects",
+    "lifecycle",
+    "evidence",
+    "recovery",
+    "coherence",
+    "implementations",
+    "trial",
+    "verification",
+    "system_review",
+    "human_decision",
+    "activation"
+  ],
+  "properties": {
+    "record_type": { "const": "capability-dot" },
+    "record_version": { "const": 1 },
+    "dot_id": { "$ref": "#/$defs/Id" },
+    "version": { "$ref": "#/$defs/Version" },
+    "human_name": { "$ref": "#/$defs/NonBlank" },
+    "responsibility": { "$ref": "#/$defs/NonBlank" },
+    "inputs": { "$ref": "#/$defs/PortList" },
+    "outputs": { "$ref": "#/$defs/PortList" },
+    "preconditions": { "$ref": "#/$defs/StatementList" },
+    "side_effects": { "$ref": "#/$defs/StatementList" },
+    "lifecycle": { "$ref": "#/$defs/Lifecycle" },
+    "evidence": { "$ref": "#/$defs/EvidenceBlock" },
+    "recovery": { "$ref": "#/$defs/RecoveryBlock" },
+    "coherence": { "$ref": "#/$defs/Coherence" },
+    "implementations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Implementation" }
+    },
+    "trial": { "$ref": "#/$defs/Trial" },
+    "verification": { "$ref": "#/$defs/Verification" },
+    "system_review": { "$ref": "#/$defs/SystemReview" },
+    "human_decision": { "$ref": "#/$defs/HumanDecision" },
+    "activation": { "$ref": "#/$defs/Activation" },
+    "lineage": { "$ref": "#/$defs/Lineage" },
+    "provider_specific": { "$ref": "#/$defs/ProviderSpecific" },
+    "execution_authority": { "$ref": "#/$defs/ExecutionAuthority" }
+  },
+  "allOf": [
+    {
+      "if": { "required": ["provider_specific"] },
+      "then": {
+        "required": ["provider_specific"],
+        "properties": {
+          "provider_specific": {
+            "required": ["provider_id", "intrinsic_provider_responsibility"]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "NonBlank": {
+      "type": "string",
+      "minLength": 1
+    },
+    "Id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "Version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"
+    },
+    "EvidenceIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/NonBlank" }
+    },
+    "StatementList": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/NonBlank" }
+    },
+    "Port": {
+      "oneOf": [
+        { "$ref": "#/$defs/NonBlank" },
+        {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": { "$ref": "#/$defs/NonBlank" },
+            "description": { "$ref": "#/$defs/NonBlank" },
+            "type": { "$ref": "#/$defs/NonBlank" },
+            "required": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "PortList": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Port" }
+    },
+    "Lifecycle": {
+      "type": "object",
+      "anyOf": [
+        { "required": ["status"] },
+        { "required": ["state"] }
+      ],
+      "properties": {
+        "status": {
+          "enum": ["candidate", "active", "retired"]
+        },
+        "state": {
+          "enum": ["candidate", "active", "retired"]
+        },
+        "candidate": { "type": "boolean" },
+        "active": { "type": "boolean" },
+        "active_surface": { "type": "boolean" },
+        "supersedes": { "type": ["string", "null"] },
+        "material_change": { "type": "boolean" },
+        "transition_evidence": { "$ref": "#/$defs/EvidenceIds" },
+        "changed_at": { "type": "string", "format": "date-time" },
+        "change_reason": { "$ref": "#/$defs/NonBlank" }
+      },
+      "additionalProperties": true
+    },
+    "EvidenceBlock": {
+      "type": "object",
+      "required": ["evidence_ids"],
+      "properties": {
+        "evidence_ids": { "$ref": "#/$defs/EvidenceIds" },
+        "provenance": { "type": "array", "items": { "type": "object" } },
+        "notes": { "$ref": "#/$defs/NonBlank" }
+      },
+      "additionalProperties": true
+    },
+    "RecoveryBlock": {
+      "type": "object",
+      "required": ["strategy", "evidence_ids"],
+      "properties": {
+        "strategy": { "$ref": "#/$defs/NonBlank" },
+        "restore_ref": { "$ref": "#/$defs/NonBlank" },
+        "evidence_ids": { "$ref": "#/$defs/EvidenceIds" }
+      },
+      "additionalProperties": true
+    },
+    "CoherenceHook": {
+      "type": "object",
+      "required": ["hook_id", "reason", "evidence_ids"],
+      "properties": {
+        "hook_id": { "$ref": "#/$defs/Id" },
+        "type": {
+          "enum": ["split", "merge", "boundary", "not-applicable"]
+        },
+        "kind": {
+          "enum": ["split", "merge", "boundary", "not-applicable"]
+        },
+        "reason": { "$ref": "#/$defs/NonBlank" },
+        "evidence_ids": { "$ref": "#/$defs/EvidenceIds" }
+      },
+      "additionalProperties": true
+    },
+    "Coherence": {
+      "type": "object",
+      "required": ["coherent_responsibility", "reuse_rationale"],
+      "properties": {
+        "coherent_responsibility": { "const": true },
+        "reuse_rationale": { "$ref": "#/$defs/NonBlank" },
+        "boundary_evidence_hooks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/CoherenceHook" }
+        },
+        "split_merge_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/CoherenceHook" }
+        }
+      },
+      "anyOf": [
+        { "required": ["boundary_evidence_hooks"] },
+        { "required": ["split_merge_evidence"] }
+      ],
+      "additionalProperties": true
+    },
+    "Trial": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["not-run", "pending", "running", "passed", "failed"]
+        },
+        "trial_id": { "$ref": "#/$defs/Id" },
+        "evidence_ids": { "$ref": "#/$defs/EvidenceIds" },
+        "result": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "Verification": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["unverified", "in-progress", "verified-staged", "verified", "failed"]
+        },
+        "evidence_ids": { "$ref": "#/$defs/EvidenceIds" },
+        "verified_implementation_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/Id" }
+        },
+        "compatible_implementation_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/Id" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "SystemReview": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["pending", "in-progress", "completed", "rejected"]
+        },
+        "review_id": { "$ref": "#/$defs/Id" },
+        "evidence_ids": { "$ref": "#/$defs/EvidenceIds" },
+        "outcome": { "$ref": "#/$defs/NonBlank" }
+      },
+      "additionalProperties": true
+    },
+    "HumanDecision": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["pending", "approved", "rejected", "deferred"]
+        },
+        "decision_id": { "$ref": "#/$defs/Id" },
+        "decided_by": { "$ref": "#/$defs/NonBlank" },
+        "decided_at": { "type": "string", "format": "date-time" },
+        "evidence_ids": { "$ref": "#/$defs/EvidenceIds" },
+        "reason": { "$ref": "#/$defs/NonBlank" }
+      },
+      "additionalProperties": true
+    },
+    "ActivationEvidence": {
+      "type": "object",
+      "required": ["evidence_id", "dot_version"],
+      "properties": {
+        "evidence_id": { "$ref": "#/$defs/NonBlank" },
+        "dot_version": { "$ref": "#/$defs/Version" },
+        "authorised": { "type": "boolean" },
+        "authorized": { "type": "boolean" },
+        "authority": { "$ref": "#/$defs/NonBlank" },
+        "project_id": { "$ref": "#/$defs/NonBlank" },
+        "project_revision": { "type": "integer", "minimum": 0 }
+      },
+      "anyOf": [
+        { "required": ["authorised"] },
+        { "required": ["authorized"] }
+      ],
+      "additionalProperties": true
+    },
+    "Activation": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["inactive", "ready", "active", "revoked"]
+        },
+        "authorised": { "type": "boolean" },
+        "authorized": { "type": "boolean" },
+        "activated_version": { "$ref": "#/$defs/Version" },
+        "activation_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ActivationEvidence" }
+        },
+        "evidence_ids": { "$ref": "#/$defs/EvidenceIds" }
+      },
+      "additionalProperties": true
+    },
+    "Lineage": {
+      "type": "object",
+      "required": [
+        "predecessor_dot_id",
+        "predecessor_version",
+        "change_type",
+        "reason",
+        "evidence_ids",
+        "recovery_evidence_ids"
+      ],
+      "properties": {
+        "predecessor_dot_id": { "$ref": "#/$defs/Id" },
+        "predecessor_version": { "$ref": "#/$defs/Version" },
+        "change_type": { "enum": ["material", "split", "merge", "recovery"] },
+        "reason": { "$ref": "#/$defs/NonBlank" },
+        "evidence_ids": { "$ref": "#/$defs/EvidenceIds" },
+        "recovery_evidence_ids": { "$ref": "#/$defs/EvidenceIds" }
+      },
+      "additionalProperties": true
+    },
+    "ProviderSpecific": {
+      "type": "object",
+      "required": ["provider_id", "intrinsic_provider_responsibility"],
+      "properties": {
+        "provider_id": { "$ref": "#/$defs/NonBlank" },
+        "intrinsic_provider_responsibility": {
+          "type": "object",
+          "properties": {
+            "reason_code": { "$ref": "#/$defs/NonBlank" },
+            "reason": { "$ref": "#/$defs/NonBlank" },
+            "evidence_ids": { "$ref": "#/$defs/EvidenceIds" },
+            "explanation": { "$ref": "#/$defs/NonBlank" }
+          },
+          "anyOf": [
+            { "required": ["reason_code"] },
+            { "required": ["reason"] }
+          ],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "Provider": {
+      "oneOf": [
+        { "$ref": "#/$defs/NonBlank" },
+        {
+          "type": "object",
+          "required": ["provider_id"],
+          "properties": {
+            "provider_id": { "$ref": "#/$defs/NonBlank" },
+            "version": { "$ref": "#/$defs/NonBlank" },
+            "kind": { "$ref": "#/$defs/NonBlank" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "Reference": {
+      "oneOf": [
+        { "$ref": "#/$defs/NonBlank" },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": true
+        }
+      ]
+    },
+    "Dependencies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Reference" }
+    },
+    "Permissions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "Provenance": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "Compatibility": {
+      "type": "object",
+      "required": ["compatible"],
+      "properties": {
+        "compatible": { "type": "boolean" },
+        "dot_version": { "$ref": "#/$defs/Version" },
+        "dot_versions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/Version" }
+        },
+        "constraints": { "type": "object" },
+        "reason": { "$ref": "#/$defs/NonBlank" }
+      },
+      "additionalProperties": true
+    },
+    "ImplementationVerification": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["unverified", "in-progress", "verified-staged", "verified", "failed"]
+        },
+        "evidence_ids": { "$ref": "#/$defs/EvidenceIds" },
+        "verified_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": true
+    },
+    "ImplementationRecovery": {
+      "type": "object",
+      "required": ["strategy", "evidence_ids"],
+      "properties": {
+        "strategy": { "$ref": "#/$defs/NonBlank" },
+        "evidence_ids": { "$ref": "#/$defs/EvidenceIds" },
+        "restore_ref": { "$ref": "#/$defs/NonBlank" }
+      },
+      "additionalProperties": true
+    },
+    "ImplementationEvidence": {
+      "oneOf": [
+        { "$ref": "#/$defs/EvidenceIds" },
+        {
+          "type": "object",
+          "required": ["evidence_ids"],
+          "properties": {
+            "evidence_ids": { "$ref": "#/$defs/EvidenceIds" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "Implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_id",
+        "version",
+        "provider",
+        "dependencies",
+        "capability_requirements",
+        "permissions",
+        "provenance",
+        "compatibility",
+        "verification",
+        "recovery",
+        "evidence"
+      ],
+      "properties": {
+        "implementation_id": { "$ref": "#/$defs/Id" },
+        "version": { "$ref": "#/$defs/Version" },
+        "provider": { "$ref": "#/$defs/Provider" },
+        "dependencies": { "$ref": "#/$defs/Dependencies" },
+        "capability_requirements": { "$ref": "#/$defs/Dependencies" },
+        "permissions": { "$ref": "#/$defs/Permissions" },
+        "procedure_ref": { "$ref": "#/$defs/Reference" },
+        "executable_target": { "$ref": "#/$defs/Reference" },
+        "provenance": { "$ref": "#/$defs/Provenance" },
+        "compatibility": { "$ref": "#/$defs/Compatibility" },
+        "verification": { "$ref": "#/$defs/ImplementationVerification" },
+        "recovery": { "$ref": "#/$defs/ImplementationRecovery" },
+        "evidence": { "$ref": "#/$defs/ImplementationEvidence" }
+      },
+      "oneOf": [
+        {
+          "required": ["procedure_ref"],
+          "not": { "required": ["executable_target"] }
+        },
+        {
+          "required": ["executable_target"],
+          "not": { "required": ["procedure_ref"] }
+        }
+      ]
+    },
+    "ExecutionAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "project_revision",
+        "task_id",
+        "allowed_side_effects",
+        "expires_at",
+        "persistence_state_change"
+      ],
+      "properties": {
+        "authority_id": { "$ref": "#/$defs/Id" },
+        "project_id": { "$ref": "#/$defs/NonBlank" },
+        "project_revision": { "type": "integer", "minimum": 0 },
+        "task_id": { "$ref": "#/$defs/NonBlank" },
+        "allowed_side_effects": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/NonBlank" }
+        },
+        "expires_at": { "type": "string", "format": "date-time" },
+        "persistence_state_change": { "const": false },
+        "issued_by": { "$ref": "#/$defs/NonBlank" },
+        "dot_id": { "$ref": "#/$defs/Id" },
+        "dot_version": { "$ref": "#/$defs/Version" }
+      }
+    }
+  }
+}

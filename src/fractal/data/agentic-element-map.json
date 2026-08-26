@@ -156,7 +156,7 @@
       "output": "registered active set, generated adapter, drift finding, quarantine, or restore route",
       "permissions": "Manage candidate and active projections through declared authority and secrets boundaries.",
       "primary_element": "deterministic-program",
-      "selection_reason": "A deterministic intake gate keeps quarantined or rejected donor capabilities out of Steal, requires every staged unit to have a local offline implementation, and preserves an exact recovery route.",
+      "selection_reason": "A deterministic intake gate keeps quarantined or rejected donor capabilities out of Adapt, requires every staged unit to have a local offline implementation, and preserves an exact recovery route.",
       "status": {
         "execution": "verified-staged",
         "projection": "staged",

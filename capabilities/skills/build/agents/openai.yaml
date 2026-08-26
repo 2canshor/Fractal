@@ -1,0 +1,6 @@
+interface:
+  display_name: "Build"
+  short_description: "Build and verify a software change"
+  default_prompt: "Use $build to develop this software change and return a tested, verified result."
+policy:
+  allow_implicit_invocation: true

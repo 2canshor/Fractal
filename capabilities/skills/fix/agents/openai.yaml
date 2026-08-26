@@ -1,0 +1,6 @@
+interface:
+  display_name: "Fix"
+  short_description: "Fix and verify a software failure"
+  default_prompt: "Use $fix to find the cause, repair this software failure, and verify the result."
+policy:
+  allow_implicit_invocation: true

@@ -20,7 +20,7 @@
       "separately-approved-later-capability"
     ],
     "canonical_baseline_id": "method-registry-0.1.0-alpha.8-r1",
-    "canonical_baseline_sha256": "1bf11d56cb659b20c31aecf71db53f0b82d656c7dc676bbb6bb0b5b23d86eb3d",
+    "canonical_baseline_sha256": "d2c38e600ace27340464dee4f510d87c38db48a9c4195c6141044025ea381410",
     "core_identity": "Use Perspective while a Project is active, then let System Review follow the eight Flows after primary-user Project Completion.",
     "original_system_review_backbone": [
       {

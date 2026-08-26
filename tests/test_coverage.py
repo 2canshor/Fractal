@@ -62,6 +62,25 @@ def test_matrix_separates_staged_flow_travel_from_active_live_lifecycle() -> Non
     assert lifecycle["system-version->future-project-outcome"]["synthetic_proof"] == "pending"
 
 
+def test_matrix_projects_the_same_twenty_persistent_responsibilities() -> None:
+    matrix = build_blueprint_coverage_matrix()
+    rows = matrix["responsibility_rows"]
+    assert [row["responsibility_id"] for row in rows] == [
+        f"RESP-{index:02d}" for index in range(20)
+    ]
+    assert sum(row["artifact_count"] for row in rows) == 142
+    assert all(
+        row["continuous_improvement_path"][-2:]
+        == ["system-review", "continuous-improvement"]
+        for row in rows
+    )
+    assert all(
+        row["apple_alignment"]
+        == "deterministic-validated-human-delight-pending"
+        for row in rows
+    )
+
+
 def test_rendered_matrix_matches_the_current_source() -> None:
     assert (ROOT / "docs" / "blueprint-coverage-matrix.md").read_text(
         encoding="utf-8"

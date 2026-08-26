@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter
+from collections.abc import Iterable, Mapping
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
@@ -13,6 +15,20 @@ from jsonschema import Draft202012Validator
 
 class UserSurfaceError(RuntimeError):
     """Raised when a user surface leaks internals or loses a routed capability."""
+
+
+_LIFECYCLE_COMMAND_IDS = frozenset({"align", "assess", "learn", "version"})
+_INTERNAL_SURFACE_PATTERN = re.compile(
+    r"(?:\b(?:Provider|Source|Dot|Workflow|Skill)s?\b|\bsource_refs?\b|"
+    r"\bcomponent_id\b|\bdot_group(?:_ids?)?\b|\bworkflow_id\b|"
+    r"\bimplementation_refs?\b|[Pp]rovider:)",
+)
+_BLAMING_PATTERN = re.compile(
+    r"(?:\byou failed\b|\byour fault\b|\byou did(?:n't| not)\b|\buser error\b|"
+    r"\binvalid user\b|\bobviously\b)",
+    re.IGNORECASE,
+)
+_FEEDBACK_STATES_REQUIRING_HELP = frozenset({"blocked", "empty", "error", "unknown"})
 
 
 def build_user_surface(
@@ -288,4 +304,253 @@ def audit_codex_skill_path_surface(
         "missing_visible_skill_paths": missing,
         "disabled_visible_skill_paths": disabled,
         "source_files_deleted": False,
+    }
+
+
+def audit_user_surface_experience(
+    surface: Mapping[str, Any],
+    *,
+    normal_views: Iterable[str] = (),
+    feedback_views: Iterable[Mapping[str, Any]] = (),
+    allowed_command_ids: Iterable[str] = _LIFECYCLE_COMMAND_IDS,
+    delight_observations: Iterable[str] = (),
+) -> dict[str, Any]:
+    """Audit deterministic, user-observable proxies for a clear and forgiving surface.
+
+    This audit deliberately does not claim that wording is delightful or natural to a
+    person. Those qualities need human acceptance. It does fail closed on mechanically
+    observable leaks, lifecycle-category drift, incomplete recovery feedback, and
+    unsupported AI-assistance disclosure.
+    """
+    normal_view_values = tuple(str(item) for item in normal_views)
+    feedback_view_values = tuple(feedback_views)
+    delight_values = tuple(str(item) for item in delight_observations)
+    findings: list[dict[str, str]] = []
+    allowed_commands = frozenset(str(item) for item in allowed_command_ids)
+    entries = list(surface.get("entries", ()))
+
+    def add(check_id: str, location: str, reason: str, next_action: str) -> None:
+        findings.append(
+            {
+                "check_id": check_id,
+                "location": location,
+                "reason": reason,
+                "next_action": next_action,
+            }
+        )
+
+    for index, entry in enumerate(entries):
+        location = f"entries/{index}"
+        entry_id = str(entry.get("entry_id", ""))
+        interface_type = str(entry.get("interface_type", ""))
+        outcome = str(entry.get("outcome", ""))
+        if entry_id.startswith("/") or outcome.lstrip().startswith("/"):
+            add(
+                "slash-is-syntax-only",
+                location,
+                "A slash is shown as part of the job or lifecycle name.",
+                "Keep the semantic name slash-free and add a slash only at invocation time.",
+            )
+        if interface_type == "command" and entry_id not in allowed_commands:
+            add(
+                "commands-are-lifecycle-controls",
+                location,
+                f"{entry_id or 'This entry'} is not an approved lifecycle control.",
+                "Classify an ordinary user job as an Action or review the lifecycle allowlist.",
+            )
+        if interface_type == "action" and re.search(
+            r"\b(?:activate|deactivate)\s+(?:fractal|system)|\bsystem version\b|"
+            r"\bproject completion\b",
+            outcome,
+            re.IGNORECASE,
+        ):
+            add(
+                "actions-are-ordinary-user-jobs",
+                location,
+                "An Action outcome describes a Fractal lifecycle operation.",
+                "Move lifecycle control to an existing Command and name the Action by its job.",
+            )
+        if not outcome[:1].isupper() or not outcome.endswith((".", "!", "?")):
+            add(
+                "outcomes-are-consistent-sentences",
+                location,
+                "The outcome is not a complete, consistently punctuated sentence.",
+                "Write one direct sentence that starts with the user-visible result.",
+            )
+        if interface_type == "action" and len(outcome.split()) < 3:
+            add(
+                "actions-name-complete-jobs",
+                location,
+                "The outcome is too short to identify a complete user-visible job.",
+                "State the action and the result the person will receive.",
+            )
+        leaked = _first_internal_term(outcome)
+        if leaked:
+            add(
+                "entry-copy-hides-internal-taxonomy",
+                location,
+                f"The outcome exposes internal term {leaked!r}.",
+                "Replace it with the result or choice the person can understand and act on.",
+            )
+
+    for index, text in enumerate(normal_view_values):
+        semantic_issue = _semantic_heading_issue(text)
+        if semantic_issue:
+            add(
+                "text-has-semantic-reading-order",
+                f"normal_views/{index}",
+                semantic_issue,
+                "Use one level-one title, then headings without skipping a level.",
+            )
+        leaked = _first_internal_term(text)
+        if leaked:
+            add(
+                "normal-views-hide-internal-taxonomy",
+                f"normal_views/{index}",
+                f"The normal view exposes internal term {leaked!r}.",
+                "Show the user-visible status, reason, and next action instead.",
+            )
+
+    for index, feedback in enumerate(feedback_view_values):
+        location = f"feedback_views/{index}"
+        state = str(feedback.get("state", "")).lower()
+        text = str(feedback.get("text", ""))
+        semantic_issue = _semantic_heading_issue(text)
+        if semantic_issue:
+            add(
+                "text-has-semantic-reading-order",
+                location,
+                semantic_issue,
+                "Use one level-one title, then headings without skipping a level.",
+            )
+        expected_state = {
+            "ready": "Ready",
+            "in_progress": "In progress",
+            "blocked": "Blocked",
+            "empty": "Nothing here yet",
+            "error": "Could not finish",
+            "unknown": "Not confirmed",
+            "completed": "Completed",
+        }.get(state)
+        if expected_state and not re.search(
+            rf"(?im)^\s*(?:[-*]\s*)?Status:\s*{re.escape(expected_state)}\s*$", text
+        ):
+            add(
+                "feedback-shows-current-state",
+                location,
+                f"The feedback does not show the observed {state!r} state.",
+                "Show the current state without implying unverified progress or completion.",
+            )
+        leaked = _first_internal_term(text)
+        if leaked:
+            add(
+                "normal-views-hide-internal-taxonomy",
+                location,
+                f"The feedback exposes internal term {leaked!r}.",
+                "Show the user-visible status, reason, and next action instead.",
+            )
+        if state in _FEEDBACK_STATES_REQUIRING_HELP:
+            if not _has_meaningful_label(text, "Reason"):
+                add(
+                    "feedback-explains-what-happened",
+                    location,
+                    f"The {state} view has no specific reason.",
+                    "Add a plain-language Reason line based on observed evidence.",
+                )
+            if not _has_meaningful_label(text, "Next action"):
+                add(
+                    "feedback-offers-a-next-action",
+                    location,
+                    f"The {state} view has no specific next action.",
+                    "Add one safe action that can move the job forward.",
+                )
+        if _BLAMING_PATTERN.search(text):
+            add(
+                "feedback-does-not-blame",
+                location,
+                "The feedback assigns blame to the person.",
+                "Describe the observed condition and a recoverable next action.",
+            )
+        if feedback.get("significant") is True:
+            if not _has_meaningful_label(text, "Authority"):
+                add(
+                    "significant-actions-show-authority",
+                    location,
+                    "The significant action does not say who can authorise it.",
+                    "Add an Authority line before the person decides.",
+                )
+            if not _has_meaningful_label(text, "Recovery"):
+                add(
+                    "significant-actions-show-recovery",
+                    location,
+                    "The significant action does not explain recovery.",
+                    "Add the tested restore or revert path.",
+                )
+        if feedback.get("ai_assisted") is True:
+            for label in ("AI assistance", "Limits", "Retry", "Revert"):
+                if not _has_meaningful_label(text, label, heading=label == "AI assistance"):
+                    add(
+                        "ai-assistance-is-disclosed",
+                        location,
+                        f"AI-assisted feedback is missing {label!r} disclosure.",
+                        "State that AI was used, its limits, and how to retry or revert.",
+                    )
+                    break
+
+    observations = sorted({item.strip() for item in delight_values if item.strip()})
+    findings.sort(key=lambda item: (item["check_id"], item["location"], item["reason"]))
+    return {
+        "record_type": "user-surface-experience-audit",
+        "clean": not findings,
+        "finding_count": len(findings),
+        "findings": findings,
+        "checked_entry_count": len(entries),
+        "checked_normal_view_count": len(normal_view_values),
+        "checked_feedback_view_count": len(feedback_view_values),
+        "delight": {
+            "status": "human-acceptance-pending",
+            "observable_proxy_count": len(observations),
+            "observable_proxies": observations,
+        },
+    }
+
+
+def _first_internal_term(text: str) -> str | None:
+    match = _INTERNAL_SURFACE_PATTERN.search(text)
+    return match.group(0) if match else None
+
+
+def _semantic_heading_issue(text: str) -> str | None:
+    levels = [len(match.group(1)) for match in re.finditer(r"(?m)^(#{1,6})\s+\S", text)]
+    if not levels:
+        return None
+    if levels[0] != 1:
+        return "The first heading is not the level-one title."
+    if levels.count(1) != 1:
+        return "The view has more than one level-one title."
+    if any(
+        current > previous + 1
+        for previous, current in zip(levels, levels[1:], strict=False)
+    ):
+        return "The heading order skips a semantic level."
+    return None
+
+
+def _has_meaningful_label(text: str, label: str, *, heading: bool = False) -> bool:
+    if heading:
+        pattern = rf"(?im)^#+\s+{re.escape(label)}\s*$"
+    else:
+        pattern = rf"(?im)^\s*(?:[-*]\s*)?{re.escape(label)}:\s*(.+?)\s*$"
+    match = re.search(pattern, text)
+    if not match:
+        return False
+    if heading:
+        return True
+    return match.group(1).strip().casefold() not in {
+        "",
+        "n/a",
+        "none",
+        "not provided",
+        "not set",
+        "unknown",
     }
