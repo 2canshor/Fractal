@@ -350,9 +350,15 @@ class AdapterBuilder:
 
     def _select_project_snapshot(self) -> dict[str, Any]:
         """Select the one current Project without depending on filesystem order."""
+        project_root = self.private_root / "projects"
+        neutral_paths = sorted(project_root.glob("*/record.json"))
+        # A migrated Workplace stores Projects directly below ``projects``.
+        # The status-directory route remains a read-only fallback for an
+        # earlier private checkout that has not completed that migration.
+        record_paths = neutral_paths or sorted((project_root / "active").glob("*/record.json"))
         records = [
             json.loads(path.read_text(encoding="utf-8"))
-            for path in sorted((self.private_root / "projects" / "active").glob("*/record.json"))
+            for path in record_paths
         ]
         if not records:
             raise AdapterError("Adapter build requires a canonical Project snapshot")

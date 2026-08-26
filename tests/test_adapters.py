@@ -100,6 +100,27 @@ def test_adapter_selects_unique_non_completed_project_without_filesystem_order(
     assert selected["project_id"] == "project-a"
 
 
+def test_adapter_selects_project_from_migrated_neutral_path(tmp_path: Path) -> None:
+    private = private_workspace(tmp_path / "private-neutral-project-selection")
+    active = private / "projects" / "active"
+    neutral = private / "projects" / "project-a"
+    active.rename(neutral.parent / "legacy-status-directories")
+    (neutral.parent / "legacy-status-directories" / "project-a").rename(neutral)
+
+    selected = AdapterBuilder(
+        public_root=ROOT,
+        private_root=private,
+        output_root=tmp_path / "neutral-project-selection-output",
+        public_commit="a" * 40,
+        private_commit="b" * 40,
+        system_version="0.1.0-alpha.9-test",
+        legacy_root=None,
+        verify_source_commits=False,
+    )._select_project_snapshot()
+
+    assert selected["project_id"] == "project-a"
+
+
 def test_adapter_rejects_multiple_non_completed_projects(tmp_path: Path) -> None:
     private = private_workspace(tmp_path / "private-project-conflict")
     second = private / "projects" / "active" / "project-b"
