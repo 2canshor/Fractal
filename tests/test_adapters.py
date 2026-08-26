@@ -121,6 +121,48 @@ def test_adapter_selects_project_from_migrated_neutral_path(tmp_path: Path) -> N
     assert selected["project_id"] == "project-a"
 
 
+def test_adapter_resolves_migrated_split_authority_bindings(tmp_path: Path) -> None:
+    private = private_workspace(tmp_path / "private-split-authority")
+    (private / "policies" / "current.json").write_text(
+        json.dumps(
+            {
+                "record_type": "user-policy",
+                "authority_bindings": "workplace://authority/bindings.json",
+            }
+        )
+    )
+    authority = private / "authority"
+    authority.mkdir()
+    (authority / "bindings.json").write_text(
+        json.dumps(
+            {
+                "record_type": "authority-bindings",
+                "authorities": {
+                    "project_completion": "primary-user-only",
+                    "external_action": "must-stay-within-explicitly-approved-scope",
+                },
+            }
+        )
+    )
+
+    context = AdapterBuilder(
+        public_root=ROOT,
+        private_root=private,
+        output_root=tmp_path / "split-authority-output",
+        public_commit="a" * 40,
+        private_commit="b" * 40,
+        system_version="0.1.0-alpha.9-test",
+        legacy_root=None,
+        verify_source_commits=False,
+    )._build_context("codex")
+
+    assert context["authority"] == {
+        "project_completion": "primary-user-only",
+        "external_action": "must-stay-within-explicitly-approved-scope",
+        "legacy_removal_enabled": True,
+    }
+
+
 def test_adapter_rejects_multiple_non_completed_projects(tmp_path: Path) -> None:
     private = private_workspace(tmp_path / "private-project-conflict")
     second = private / "projects" / "active" / "project-b"

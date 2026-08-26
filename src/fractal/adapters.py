@@ -301,6 +301,7 @@ class AdapterBuilder:
     def _build_context(self, platform: str) -> dict[str, Any]:
         profile = json.loads((self.private_root / "profile" / "current.json").read_text())
         policy = json.loads((self.private_root / "policies" / "current.json").read_text())
+        authorities = self._authority_values(policy)
         project = self._select_project_snapshot()
         return {
             "record_type": "adapter-context",
@@ -322,8 +323,8 @@ class AdapterBuilder:
             "communication": profile["communication"],
             "interaction": profile["interaction"],
             "authority": {
-                "project_completion": policy["authorities"]["project_completion"],
-                "external_action": policy["authorities"]["external_action"],
+                "project_completion": authorities["project_completion"],
+                "external_action": authorities["external_action"],
                 "legacy_removal_enabled": self.legacy_root is None,
             },
             "protected_legacy_roots": (
@@ -347,6 +348,24 @@ class AdapterBuilder:
                 ),
             },
         }
+
+    def _authority_values(self, policy: dict[str, Any]) -> dict[str, Any]:
+        """Resolve the canonical split authority record or the legacy inline form."""
+        inline = policy.get("authorities")
+        if isinstance(inline, dict):
+            return inline
+        if policy.get("authority_bindings") != "workplace://authority/bindings.json":
+            raise AdapterError("Adapter build requires canonical authority bindings")
+        path = self.private_root / "authority" / "bindings.json"
+        if not path.is_file():
+            raise AdapterError("Canonical authority bindings are missing")
+        record = json.loads(path.read_text(encoding="utf-8"))
+        if record.get("record_type") != "authority-bindings":
+            raise AdapterError("Canonical authority bindings record is invalid")
+        authorities = record.get("authorities")
+        if not isinstance(authorities, dict):
+            raise AdapterError("Canonical authority values are missing")
+        return authorities
 
     def _select_project_snapshot(self) -> dict[str, Any]:
         """Select the one current Project without depending on filesystem order."""
