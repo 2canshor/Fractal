@@ -262,6 +262,17 @@ def _normalise_hook_event(value: str) -> str:
     return "".join(character.lower() for character in value if character.isalnum())
 
 
+def _canonical_hook_event_label(value: str) -> str:
+    canonical = {
+        "pretooluse": "PreToolUse",
+        "sessionstart": "SessionStart",
+        "stop": "Stop",
+    }.get(_normalise_hook_event(value))
+    if canonical is None:
+        raise CodexAppServerError(f"Unsupported registered Hook event: {value}")
+    return canonical
+
+
 def _all_mcp_status(client: CodexAppServerClient) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     cursor: str | None = None
@@ -1021,7 +1032,9 @@ def trust_registered_codex_hooks(
         "record_type": "codex-hook-trust-evidence",
         "status": "verified",
         "hook_count": len(verified_hooks),
-        "hook_events": sorted(hook["eventName"] for hook in verified_hooks),
+        "hook_events": sorted(
+            {_canonical_hook_event_label(hook["eventName"]) for hook in verified_hooks}
+        ),
         "trusted_hashes": sorted(hook["currentHash"] for hook in verified_hooks),
         "transaction": transaction,
         "persistent_system_version_activated": False,

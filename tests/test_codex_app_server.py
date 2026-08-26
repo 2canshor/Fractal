@@ -15,6 +15,7 @@ from fractal.codex_app_server import (
     load_codex_skill_catalog,
     reconcile_codex_components,
     resolve_agents_hierarchy,
+    trust_registered_codex_hooks,
     verify_live_turn_completion,
 )
 
@@ -388,6 +389,64 @@ def test_config_transaction_handles_quoted_hook_state_keys(tmp_path: Path) -> No
     assert report["status"] == "verified"
     recovery = json.loads((tmp_path / "restore.json").read_text())
     assert recovery["before_values"][key_path] == "old"
+
+
+def test_hook_trust_report_uses_canonical_event_labels(tmp_path: Path) -> None:
+    codex_home = tmp_path / ".codex"
+    hook = {
+        "key": "pre-tool-use-a",
+        "eventName": "preToolUse",
+        "sourcePath": str(codex_home / "hooks.json"),
+        "enabled": True,
+        "trustStatus": "trusted",
+        "currentHash": "a" * 64,
+    }
+    before = {
+        "config": {"hooks": {"state": {}}},
+        "layers": [{"name": {"type": "user"}, "version": "v1"}],
+    }
+    after = {
+        "config": {
+            "hooks": {
+                "state": {"pre-tool-use-a": {"trusted_hash": "a" * 64}}
+            }
+        },
+        "layers": [{"name": {"type": "user"}, "version": "v2"}],
+    }
+    client = FakeClient(
+        {
+            "hooks/list": [
+                {"data": [{"hooks": [hook]}]},
+                {"data": [{"hooks": [hook]}]},
+            ],
+            "config/read": [before, after],
+            "configRequirements/read": {"requirements": None},
+            "config/batchWrite": {"status": "ok", "version": "v2"},
+        }
+    )
+    registry = {
+        "components": [
+            {
+                **governed_component(
+                    "hook-codex-pre-tool-use",
+                    "hook",
+                    external="PreToolUse",
+                    target="hooks.json",
+                ),
+                "platforms": ["codex"],
+            }
+        ]
+    }
+
+    report = trust_registered_codex_hooks(
+        client,  # type: ignore[arg-type]
+        registry,
+        cwd=tmp_path,
+        codex_home=codex_home,
+        recovery_path=tmp_path / "hook-recovery.json",
+    )
+
+    assert report["hook_events"] == ["PreToolUse"]
 
 
 def test_config_projection_audit_exposes_only_activation_flags() -> None:
